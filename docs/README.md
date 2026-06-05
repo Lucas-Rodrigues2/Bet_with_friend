@@ -14,6 +14,7 @@ Site de paris sur des événements entre amis.
 | 05 | [05-pari-oui-non.md](05-pari-oui-non.md) | Pari oui/non négocié 1 contre 1 |
 | 06 | [06-resolution-litiges-argent.md](06-resolution-litiges-argent.md) | **Le problème dur** : qui décide du gagnant, litiges, argent |
 | 07 | [07-idees-supplementaires.md](07-idees-supplementaires.md) | Autres types de paris & idées |
+| 08 | [08-gages.md](08-gages.md) | Gages : mise non monétaire (le perdant fait une action) |
 
 ## Statut
 

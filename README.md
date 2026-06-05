@@ -4,7 +4,8 @@ A web app to bet on events between friends — for fun, not real gambling.
 
 Users create an account, form **groups**, invite friends via a link, and place
 bets. The app never handles money: it keeps a **tab** ("ardoise") of who owes
-whom. Bets are resolved by a **jury** chosen for each bet.
+whom — or the stake can be a **forfeit** ("gage": the loser performs a dare).
+Bets are resolved by a **jury** chosen for each bet.
 
 ## Bet types
 

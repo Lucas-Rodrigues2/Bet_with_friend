@@ -16,8 +16,10 @@ accepter, refuser, ou **renégocier la mise ET la cote** — aller-retour possib
 - Il propose à **une ou plusieurs personnes** et fixe un **nombre max
   d'acceptations** : ce sont **les premiers qui acceptent** qui verrouillent,
   dans la limite de ce max.
-- La cible peut envoyer une **contre-proposition** sur le montant, la cote
-  **et/ou la liste de jurés**.
+- La mise peut être des **points/ardoise** ou un **gage** (voir [08](08-gages.md)),
+  négociable comme le reste.
+- La cible peut envoyer une **contre-proposition** sur le montant, la cote, le
+  **gage** **et/ou la liste de jurés**.
 - Boucle de négociation jusqu'à **accepter** ou **annuler**.
 - Résolution par le **jury** défini à la création (voir [06](06-resolution-litiges-argent.md)).
 

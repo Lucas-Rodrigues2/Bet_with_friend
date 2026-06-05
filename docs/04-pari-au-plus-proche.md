@@ -10,7 +10,8 @@ l'estimation est la plus proche de la valeur réelle gagne.
 
 ## Fonctionnement retenu
 
-- Le créateur écrit la **description** et fixe la **mise** pour participer.
+- Le créateur écrit la **description** et fixe la **mise** pour participer
+  (points/ardoise **ou gage**, voir [08](08-gages.md)).
 - Chaque participant écrit son estimation (« ce qu'il pense le plus proche »).
 - **La réponse libre est autorisée** : pas besoin que ce soit un nombre. À la
   résolution, **le jury choisit le(s) gagnant(s)** (voir [06](06-resolution-litiges-argent.md))
