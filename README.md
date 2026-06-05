@@ -12,6 +12,11 @@ Bets are resolved by a **jury** chosen for each bet.
 - **Closest** — everyone submits a guess; the jury picks the closest (ties split the pot).
 - **Yes/No (duel)** — a negotiated 1v1 bet with stake, odds, and jury agreed by both sides.
 
+## Tech stack
+
+SvelteKit (web) + Capacitor (iOS/Android) · Supabase (PostgreSQL, Auth,
+Realtime) · TypeScript · Tailwind CSS. See [`docs/09`](docs/09-stack-technique.md).
+
 ## Documentation
 
 Design specs live in [`docs/`](docs/README.md) (in French).
