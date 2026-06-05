@@ -16,6 +16,7 @@ Site de paris sur des événements entre amis.
 | 07 | [07-idees-supplementaires.md](07-idees-supplementaires.md) | Autres types de paris & idées |
 | 08 | [08-gages.md](08-gages.md) | Gages : mise non monétaire (le perdant fait une action) |
 | 09 | [09-stack-technique.md](09-stack-technique.md) | Stack : SvelteKit + Capacitor + Supabase (PostgreSQL) |
+| 10 | [10-modele-de-donnees.md](10-modele-de-donnees.md) | Schéma PostgreSQL : tables, relations, RLS |
 
 ## Statut
 
