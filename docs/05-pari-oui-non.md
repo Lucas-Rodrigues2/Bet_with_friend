@@ -14,8 +14,8 @@ accepter, refuser, ou **renégocier la mise ET la cote** — aller-retour possib
 - Le créateur définit : **description**, les **deux choix**, la **mise** et la
   **cote** (rapport entre sa mise et celle de l'adversaire).
 - Il propose à **une ou plusieurs personnes** et fixe un **nombre max
-  d'acceptations** : ce sont **les premiers qui acceptent** qui verrouillent,
-  dans la limite de ce max.
+  d'adversaires** (`max_opponents`) : ce sont **les premiers qui acceptent** qui
+  verrouillent, dans la limite de ce max.
 - La mise peut être des **points/ardoise** ou un **gage** (voir [08](08-gages.md)),
   négociable comme le reste.
 - La cible peut envoyer une **contre-proposition** sur le montant, la cote, le
@@ -49,7 +49,7 @@ Ces deux features se gênent :
 
 - **Pari** : `id`, `groupe_id`, `créateur_id`, `description`, `choix_a`,
   `choix_b`, `camp_créateur`, `type=yesno`, `mode` (duel/ouvert),
-  `nb_max_acceptations`, `jury[]`, `mode_jury`, `statut`.
+  `max_opponents`, `jury[]`, `mode_jury`, `statut`.
 - **Proposition** : `pari_id`, `cible_id`, `mise_créateur`, `mise_cible`
   (= mise × cote), `dernier_proposant`, `statut` (en_négociation / acceptée /
   refusée / annulée / expirée), `date_expiration`.

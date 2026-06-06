@@ -66,6 +66,7 @@ create table groups (
   name        text not null,
   description text,
   image_url   text,
+  currency    text not null default 'EUR',  -- une seule devise par groupe
   creator_id  uuid not null references profiles(id),
   created_at  timestamptz not null default now()
 );
@@ -75,6 +76,10 @@ create table group_members (
   user_id    uuid not null references profiles(id) on delete cascade,
   role       member_role not null default 'member',
   joined_at  timestamptz not null default now(),
+  -- Suppression DOUCE : un membre retiré garde sa ligne (removed_at non null).
+  -- Tout son historique (paris, réponses, ardoise) est conservé. Il continue
+  -- de voir l'ardoise du groupe, mais plus le contenu (paris) du groupe.
+  removed_at timestamptz,
   primary key (group_id, user_id)
 );
 
@@ -133,7 +138,8 @@ create table yesno_bets (
   choice_b        text not null,
   creator_side    text not null,   -- 'a' ou 'b' : le camp du créateur
   mode            yesno_mode not null,   -- duel | open
-  max_acceptances int              -- mode 'open' : nb max de duels
+  max_opponents   int,             -- mode 'open' : nb max d'adversaires
+  accepted_count  int not null default 0 -- compteur atomique (verrouillage)
 );
 
 -- Liste de visibilité : qui peut VOIR/participer au pari (base RLS).
@@ -324,23 +330,28 @@ RLS critiques :
 - **`ledger_entries`** : lisible par `debtor_id` et `creditor_id` (et admin du
   groupe). Écriture **uniquement** par une Edge Function / fonction Postgres
   (jamais par le client).
+- **Membre retiré** (`group_members.removed_at` non null) : il peut **encore
+  lire `ledger_entries` de ce groupe** (il voit son ardoise), mais **plus**
+  `bets` / `matches` / contenu du groupe. Son historique reste intact.
 - Transitions de `status`, dépouillement du jury, création de `ledger_entries` →
   **fonctions serveur** atomiques, pas le front.
 
 ---
 
-## Points à trancher (révélés par le schéma)
+## Décisions (révélées par le schéma)
 
-- [ ] **Jury négocié (yesno)** : on stocke le jury sur `proposition_jurors`
-      *puis* on le recopie dans `match_jurors` à l'acceptation ? (reco : oui)
-- [ ] **`max_acceptances` dépassé** : verrouiller au niveau base (compteur de
-      propositions acceptées) pour éviter les courses (deux acceptent en même temps).
-- [ ] **Ardoise** : compenser au sein d'un groupe seulement, ou globalement
-      entre groupes ? (reco : par groupe, plus clair).
-- [ ] **Devise** de l'ardoise : une seule par groupe ? champ `currency` ?
-- [ ] **Suppression d'un membre** avec matchs en cours : `on delete` →
-      actuellement `restrict` implicite sur `profiles` (à confirmer pour ne pas
-      casser l'historique).
-- [ ] **Réponses libres + `hide_answers`** : pour le closest numérique, garder
-      la possibilité d'un tri auto en option ?
+- [x] **Jury négocié (yesno)** : stocké sur `proposition_jurors`, **recopié dans
+      `match_jurors` à l'acceptation** de la proposition.
+- [x] **`max_opponents` dépassé** : empêché côté base par un **`UPDATE`
+      conditionnel atomique** (`... where accepted_count < max_opponents`), dans
+      une fonction serveur — jamais en « lire puis écrire » côté client.
+- [x] **Ardoise** : compensée **par groupe** (chaque `ledger_entries.group_id`).
+      Pas de compensation globale entre groupes.
+- [x] **Devise** : **une seule par groupe** (`groups.currency`, défaut `EUR`).
+- [x] **Suppression d'un membre** : **soft-delete** (`group_members.removed_at`).
+      Tout l'historique du joueur est **conservé**. Il **voit encore l'ardoise**
+      du groupe mais **plus le contenu** (paris, matchs). Cf. règle RLS §7.
+- [x] **Réponses libres + `hide_answers`** : si la réponse closest est
+      **numérique**, on garde la possibilité d'un **tri auto en option** (le jury
+      ne sert alors que d'arbitre en cas de litige).
 ```
