@@ -114,13 +114,6 @@ create table bets (
   participation_deadline timestamptz,     -- optionnelle
   jury_mode              jury_mode not null,
 
-  -- spécifiques 'yesno' (null pour 'closest')
-  choice_a               text,
-  choice_b               text,
-  creator_side           text,            -- 'a' ou 'b' : le camp du créateur
-  yesno_mode             yesno_mode,      -- duel | open
-  max_acceptances        int,             -- mode 'open' : nb max de duels
-
   status                 bet_status not null default 'open',
   created_at             timestamptz not null default now(),
 
@@ -128,6 +121,19 @@ create table bets (
     check (stake_type <> 'points' or stake_amount is not null),
   constraint stake_forfeit_has_desc
     check (stake_type <> 'forfeit' or forfeit_description is not null)
+);
+
+-- Extension 1:1 : champs PROPRES au oui/non.
+-- (Le "au plus proche" n'a aucun champ en plus → pas de table dédiée.)
+-- Avantage : zéro colonne nullable inutile, et `bets.id` reste la seule cible
+-- des clés étrangères (matches, visibility, propositions...).
+create table yesno_bets (
+  bet_id          uuid primary key references bets(id) on delete cascade,
+  choice_a        text not null,
+  choice_b        text not null,
+  creator_side    text not null,   -- 'a' ou 'b' : le camp du créateur
+  mode            yesno_mode not null,   -- duel | open
+  max_acceptances int              -- mode 'open' : nb max de duels
 );
 
 -- Liste de visibilité : qui peut VOIR/participer au pari (base RLS).
@@ -139,10 +145,14 @@ create table bet_visibility (
 );
 ```
 
-> Note : `creator_side`, `choice_*`, `yesno_mode`, `max_acceptances` sont propres
-> au oui/non. On accepte ces colonnes nullables plutôt qu'une table séparée
-> (plus simple ; les `check` garantissent la cohérence). À reconsidérer si le
-> oui/non se complexifie.
+> **Pourquoi une table d'extension plutôt que tout dans `bets`, ou deux tables
+> totalement séparées ?**
+> - *Tout dans `bets`* → plein de colonnes `null` pour le closest, intégrité faible.
+> - *Deux tables séparées* (`closest_bets` / `yesno_bets`) → `matches`,
+>   `bet_visibility`, `propositions` ne sauraient plus quelle table référencer
+>   (clé étrangère **polymorphe**, ingérable).
+> - *Extension 1:1* (retenu) → `bets` porte le commun et reste la cible unique
+>   des FK ; `yesno_bets` ne contient que le spécifique. Le bon compromis.
 
 ---
 
