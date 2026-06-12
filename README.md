@@ -1,26 +1,42 @@
-# Bet with Friend
+# sv
 
-A web app to bet on events between friends — for fun, not real gambling.
+Everything you need to build a Svelte project, powered by [`sv`](https://github.com/sveltejs/cli).
 
-Users create an account, form **groups**, invite friends via a link, and place
-bets. The app never handles money: it keeps a **tab** ("ardoise") of who owes
-whom — or the stake can be a **forfeit** ("gage": the loser performs a dare).
-Bets are resolved by a **jury** chosen for each bet.
+## Creating a project
 
-## Bet types
+If you're seeing this, you've probably already done this step. Congrats!
 
-- **Closest** — everyone submits a guess; the jury picks the closest (ties split the pot).
-- **Yes/No (duel)** — a negotiated 1v1 bet with stake, odds, and jury agreed by both sides.
+```sh
+# create a new project
+npx sv create my-app
+```
 
-## Tech stack
+To recreate this project with the same configuration:
 
-SvelteKit (web) + Capacitor (iOS/Android) · Supabase (PostgreSQL, Auth,
-Realtime) · TypeScript · Tailwind CSS. See [`docs/09`](docs/09-stack-technique.md).
+```sh
+# recreate this project
+npx sv@0.16.1 create --template minimal --types ts --add prettier eslint tailwindcss="plugins:none" drizzle="database:postgresql+postgresql:postgres.js+docker:no" --no-download-check --install npm .
+```
 
-## Documentation
+## Developing
 
-Design specs live in [`docs/`](docs/README.md) (in French).
+Once you've created a project and installed dependencies with `npm install` (or `pnpm install` or `yarn`), start a development server:
 
-## Status
+```sh
+npm run dev
 
-🚧 Design phase — see the "Points à trancher" sections in each doc.
+# or start the server and open the app in a new browser tab
+npm run dev -- --open
+```
+
+## Building
+
+To create a production version of your app:
+
+```sh
+npm run build
+```
+
+You can preview the production build with `npm run preview`.
+
+> To deploy your app, you may need to install an [adapter](https://svelte.dev/docs/kit/adapters) for your target environment.
