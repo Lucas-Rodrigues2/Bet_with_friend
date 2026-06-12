@@ -61,9 +61,11 @@ nombre impair imposé). L'utilisateur peut vivre avec des paris ouverts à l'inf
 
 ## B. Litiges
 
-- Statut **« contesté »** → bascule vers l'admin du groupe en dernier recours.
+- Statut **« contesté »** → bascule vers l'admin du groupe en dernier recours
+  (uniquement **pendant** la phase de jugement).
 - **Historique immuable** (mises, cotes, négociations, votes du jury) pour arbitrer.
-- **Délai de contestation** après le verdict avant que les gains soient définitifs.
+- **Pas de délai de contestation** : le verdict du jury est **immédiatement
+  définitif** (décision). Le seul recours après coup est l'annulation unanime.
 
 ## C. Argent — modèle « ardoise » (retenu)
 
@@ -109,6 +111,8 @@ gains sur l'ardoise, litige ouvert.
 - [x] Un juré peut jouer le pari : **oui**.
 - [x] Jury d'un oui/non : **négocié** entre les deux camps.
 - [x] Filet anti-blocage : **annulation unanime** (sinon pari persistant).
-- [ ] Jugement anonymisé ou non.
-- [ ] Répartition entre plusieurs gagnants (égale / prorata).
-- [ ] Délai de contestation après verdict.
+- [x] **DÉCIDÉ : jugement non anonymisé** — les votes des jurés sont visibles
+      de tous (transparence entre amis).
+- [x] **DÉCIDÉ : répartition égale** entre les gagnants désignés.
+- [x] **DÉCIDÉ : aucun délai** — le verdict est immédiatement définitif et
+      l'ardoise mise à jour ; recours = annulation unanime uniquement.

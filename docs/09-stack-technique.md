@@ -58,7 +58,14 @@ Sinon un joueur pourrait trafiquer l'ardoise ou se déclarer gagnant côté clie
 
 ## Points à trancher (plus tard)
 
-- [ ] Capacitor (sûr, mature) vs **Tauri 2** (plus léger, plus tendance) ?
-- [ ] shadcn-svelte vs Skeleton pour l'UI.
-- [ ] Logique métier en Edge Functions (TS) vs fonctions Postgres (SQL).
-- [ ] supabase-js seul vs ajout de Drizzle.
+- [x] **DÉCIDÉ : Capacitor** (déjà configuré dans le repo, Tauri écarté).
+- [x] **DÉCIDÉ : shadcn-svelte** (composants possédés dans le repo,
+      Tailwind v4).
+- [x] **DÉCIDÉ : SvelteKit server + Drizzle** — la logique métier vit dans les
+      form actions / endpoints SvelteKit (transactions Drizzle), la RLS
+      Supabase reste le filet de sécurité. Pas d'Edge Functions ni de
+      procédures SQL pour l'instant. *(Conséquence : le front passe par le
+      serveur SvelteKit pour écrire, supabase-js sert surtout à l'auth, au
+      realtime et au storage.)*
+- [x] **DÉCIDÉ : Drizzle ORM** (déjà installé), supabase-js en complément
+      (auth/realtime/storage).

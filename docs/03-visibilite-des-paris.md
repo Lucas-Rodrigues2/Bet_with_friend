@@ -3,15 +3,16 @@
 ## Objectif
 
 À la création d'un pari, le créateur choisit **qui peut le voir** parmi les
-membres du groupe. Il peut **modifier cette liste à tout moment** (notamment
-pour inclure les nouveaux arrivants).
+membres du groupe. **La liste est figée dès la création du pari** — elle n'est
+plus jamais modifiable ensuite (décision : élimine tout risque de triche par
+ajout/retrait tardif).
 
 ## Fonctionnement retenu
 
 - Sélection d'un sous-ensemble des membres du groupe = la « liste de visibilité ».
   **Les paris invisibles pour certains membres sont la base du site.**
 - Seuls ces membres voient le pari et peuvent y participer.
-- La liste est éditable, mais figée à la **deadline de participation**.
+- La liste est **figée à la création du pari** (jamais éditable).
 - Une **deadline de participation** (paramétrable) ferme les mises.
 - **Spectateur** : un membre de la liste qui n'a **pas participé avant la
   deadline** devient spectateur — il voit le pari mais ne peut plus miser. Il le
@@ -41,8 +42,10 @@ C'est une bonne idée mais elle cache plusieurs pièges :
 
 ## Points à trancher
 
-- [x] Modification de la liste figée à la deadline de participation.
+- [x] **DÉCIDÉ (révisé) : liste figée à la création du pari**, jamais
+      modifiable — remplace l'ancienne règle « figée à la deadline ».
 - [x] Spectateur = membre n'ayant pas misé avant la deadline.
-- [ ] Que faire de la mise d'un membre retiré de la liste **avant** la deadline ?
-- [ ] Sans deadline (paris « libres »), la liste reste-t-elle modifiable
-      jusqu'à la soumission au jury ?
+- [x] **Sans objet** : la liste n'étant jamais modifiable, on ne peut pas
+      retirer un membre qui a misé.
+- [x] **Sans objet** : même sans deadline, la liste reste figée dès la
+      création.

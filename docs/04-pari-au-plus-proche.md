@@ -54,9 +54,17 @@ l'estimation est la plus proche de la valeur réelle gagne.
 
 ## Points à trancher
 
-- [ ] Qui saisit la valeur réelle ? (créateur / arbitre / consensus)
-- [ ] Estimations secrètes jusqu'à la deadline ? (reco : oui)
-- [ ] Règle d'égalité (partage / premier / report).
-- [ ] « Plus proche » ou « plus proche sans dépasser » ?
-- [ ] Le gagnant prend tout, ou répartition top-N ?
-- [ ] Le créateur peut-il participer ?
+- [x] **DÉCIDÉ : le jury désigne directement le(s) gagnant(s)** — personne ne
+      saisit de « valeur réelle », pas de calcul automatique de distance
+      (cohérent avec les réponses libres et le schéma `jury_vote_winners`).
+- [x] **DÉCIDÉ : cachées par défaut**, option `hide_answers` décochable à la
+      création par le créateur.
+- [x] **DÉCIDÉ : partage égal** — le jury peut désigner plusieurs gagnants,
+      le pot est divisé à parts égales entre eux.
+- [x] **Sans objet** : le jury appréciant « le plus proche » humainement, la
+      règle « sans dépasser » n'est pas codée — le créateur peut la préciser
+      dans la description du pari.
+- [x] **DÉCIDÉ : les gagnants désignés par le jury se partagent tout le pot**
+      (pas de répartition top-N codée).
+- [x] **DÉCIDÉ : oui, le créateur peut participer** — c'est le jury qui
+      tranche, pas lui, donc pas de conflit d'intérêt.

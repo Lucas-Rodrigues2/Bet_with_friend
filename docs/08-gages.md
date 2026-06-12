@@ -52,8 +52,16 @@ points / une ligne d'ardoise. Le perdant doit accomplir une action convenue
 
 ## Points à trancher
 
-- [ ] Qui confirme l'accomplissement : jury, gagnant, ou preuve obligatoire ?
-- [ ] Duel : gage unique, ou un gage différent par camp ?
-- [ ] « Au plus proche » : tous les perdants, ou seulement le dernier ?
-- [ ] Un seul type de mise par pari, ou mélange points + gage autorisé ?
-- [ ] Comment tracer / sanctionner un gage non tenu ?
+- [x] **DÉCIDÉ : le(s) gagnant(s) confirment** — le perdant marque le gage
+      « fait » (preuve photo/vidéo **optionnelle**), un gagnant confirme
+      (`confirmed_by`).
+- [x] **DÉCIDÉ : un gage différent par camp** — chaque camp négocie son gage
+      (⇒ champs `forfeit_creator` / `forfeit_target` sur propositions/offres).
+- [x] **DÉCIDÉ : au choix à la création** — le créateur choisit entre « tous
+      les perdants » et « seulement le dernier » (⇒ champ `forfeit_scope`,
+      enum `all_losers | last_one` ; si `last_one`, le jury désigne aussi le
+      dernier).
+- [x] **DÉCIDÉ : un seul type de mise par pari** (points OU gage), contrainte
+      `stake_type` déjà au schéma.
+- [x] **DÉCIDÉ : aucune sanction** — un gage non tenu reste simplement visible
+      en statut `not_done` dans l'historique ; pas de mécanique punitive.

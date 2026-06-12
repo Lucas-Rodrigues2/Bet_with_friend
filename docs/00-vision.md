@@ -35,6 +35,10 @@ l'expérience sociale sans le cauchemar légal. Voir [06](06-resolution-litiges-
 
 ## Points à trancher
 
-- [ ] Argent réel, points virtuels, ou simple « ardoise » de dettes ?
-- [ ] Web uniquement, ou mobile aussi (PWA) ?
-- [ ] Notifications : email, push, in-app ?
+- [x] **DÉCIDÉ : points virtuels + ardoise de dettes** — l'appli tient les
+      comptes (`ledger_entries` par groupe), elle ne touche **jamais** à
+      l'argent réel.
+- [x] **DÉCIDÉ : web d'abord, mobile ensuite** — SvelteKit web en MVP, puis
+      app mobile via Capacitor (déjà configuré) en fin de backlog.
+- [x] **DÉCIDÉ : in-app + email + web push** — chaque canal et chaque type de
+      notification est **paramétrable dans les settings utilisateur**.

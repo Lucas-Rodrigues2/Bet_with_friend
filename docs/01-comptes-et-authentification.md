@@ -50,7 +50,11 @@ possibles (détaillées dans la réponse de conception) :
 
 ## Points à trancher
 
-- [ ] Email/mdp, OAuth (Google/Apple), magic link, ou plusieurs ?
-- [ ] Vérification d'email obligatoire ?
-- [ ] Réinitialisation de mot de passe (si mdp classique).
-- [ ] Que se passe-t-il pour un invité qui n'a pas encore de compte ?
+- [x] **DÉCIDÉ : Google OAuth + email/password public** — les deux méthodes
+      sont proposées à tous les utilisateurs.
+- [x] **DÉCIDÉ : oui, vérification d'email obligatoire** pour les comptes
+      email/password (gérée par Supabase Auth).
+- [x] **DÉCIDÉ : oui, réinitialisation de mot de passe** (flux Supabase Auth).
+- [x] **DÉCIDÉ : profil invité réclamable (option A)** — on joue tout de suite
+      via le lien (compte anonyme Supabase), et on rattache plus tard son
+      compte Google ou email/password pour consolider l'ardoise.

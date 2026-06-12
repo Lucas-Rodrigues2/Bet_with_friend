@@ -39,7 +39,13 @@ Le groupe est le cercle social dans lequel vivent les paris.
 
 ## Points à trancher
 
-- [ ] Lien réutilisable ou à usage unique ? Expiration ?
-- [ ] Validation admin à l'entrée, ou entrée directe ?
-- [ ] Tout membre peut-il inviter, ou seulement l'admin ?
-- [ ] Gestion du départ/exclusion avec paris en cours.
+- [x] **DÉCIDÉ : lien réutilisable** avec expiration et limite d'usages
+      optionnelles (`expires_at`, `max_uses`), révocable par l'admin.
+- [x] **DÉCIDÉ : entrée directe** — cliquer le lien = rejoindre, pas de
+      validation admin.
+- [x] **DÉCIDÉ : admin seul par défaut, droit délégable** — seul l'admin crée
+      des liens, mais il peut accorder ce droit à des membres (flag
+      `can_invite` sur `group_members`).
+- [x] **DÉCIDÉ : soft-delete, les paris continuent** — un membre qui part ou
+      est exclu (`removed_at`) ne voit plus le groupe, mais ses paris en cours
+      vont à leur terme et l'ardoise est mise à jour normalement.

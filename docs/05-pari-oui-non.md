@@ -58,7 +58,13 @@ Ces deux features se gênent :
 
 ## Points à trancher
 
-- [ ] Deux modes distincts (duel négociable / défi ouvert à termes fixes) ?
-- [ ] Le créateur choisit son camp, ou la cible ?
-- [ ] Durée d'expiration d'une proposition.
-- [ ] Jury accepté par les deux camps (voir [06](06-resolution-litiges-argent.md)).
+- [x] **DÉCIDÉ : oui, deux modes distincts** — `duel` (1 cible, négociation
+      libre) et `open` (multi-cibles, termes fixes), enum `yesno_mode` au schéma.
+- [x] **DÉCIDÉ : le créateur choisit son camp** (`creator_side`), la cible
+      hérite de l'autre — confirmé à l'écran avant d'accepter.
+- [x] **DÉCIDÉ : 48 h par défaut**, personnalisable à la création du pari.
+- [x] **DÉCIDÉ : oui, jury négocié** — la cible peut contre-proposer la liste
+      de jurés comme la mise et la cote (`proposition_jurors`).
+- [x] **DÉCIDÉ (gage en duel) : un gage différent par camp possible** — « si
+      je perds je fais X, si tu perds tu fais Y », négociable
+      (⇒ champs `forfeit_creator` / `forfeit_target`, voir [08](08-gages.md)).
