@@ -65,26 +65,27 @@ npx supabase start|stop|status            # instance Supabase locale (Docker)
   `docs/backlog/S-0XX-*.md` (statut dans le frontmatter).
 - Pipeline d'une story : dev → QA (PASS) → audit sécurité (PASS) → commit feature
   → statut `tracking` + agent tracker PostHog → passe sécu ciblée sur le diff de
-  tracking (PII / secrets / sink) → merge → contrôle d'intégration.
+  tracking (PII / secrets / sink) → `done`. Tout se passe **en place sur `master`**
+  (pas de worktree ni de merge) : la suite E2E complète lancée par la QA EST le
+  contrôle de non-régression.
 - Statuts story : `todo` → `in-progress` → `testing` (QA + sécu) → `tracking`
   (PostHog) → `done`.
-- `/story S-0XX` : une story, en place sur `master`.
-- `/story wave` : jusqu'à 3 stories parallélisables en parallèle, chacune dans un
-  worktree isolé (`.worktrees/<ID>`, branche `story/<ID>`, stack Supabase + port
-  dev dédiés via `scripts/worktree.mjs`), puis merge sérialisé sur `master` avec
-  contrôle d'intégration après chaque merge.
+- `/story` : traite les stories **une par une, séquentiellement**, et **enchaîne**
+  automatiquement la suivante sans s'arrêter, jusqu'à épuisement du backlog jouable.
+- `/story S-0XX` : traite cette seule story puis s'arrête.
+- `claude_resume.bash` : lance `/story` en bypass total des permissions
+  (`--dangerously-skip-permissions`, claude + sous-agents) et relance après quota
+  en reprenant la conversation. À n'utiliser que dans le devcontainer isolé.
 - Agents : `.claude/agents/story-dev.md` (implémente), `.claude/agents/story-qa.md`
   (teste, n'écrit que dans `e2e/`), `.claude/agents/story-security.md` (audit
   sécu après PASS QA, lecture seule, **toujours sur Opus 4.8**, vérifie les CVE
   récentes en ligne), `.claude/agents/story-tracker.md` (instrumente PostHog
-  client+serveur après le PASS QA, vérifie l'envoi réel en E2E),
-  `.claude/agents/integration-qa.md` (vérifie l'app intégrée après merge, lecture seule).
+  client+serveur après le PASS QA, vérifie l'envoi réel en E2E).
 - Analytics : PostHog client (`posthog-js`) + serveur (`posthog-node`), même
   `distinct_id` (= `user.id` Supabase). Events serveur émis après commit DB.
   En test, sink DB (`analytics_events_test`) + interception réseau pour vérifier.
-- Isolation parallèle : `node scripts/worktree.mjs setup|teardown|list` gère les
-  worktrees + stacks Supabase décalées (slots 1-3). `playwright.config.ts` lit le
-  port via `PLAYWRIGHT_PORT` (depuis le `.env` du worktree).
+- `scripts/worktree.mjs` et `.claude/agents/integration-qa.md` ne sont plus
+  utilisés par `/story` (hérités du mode parallèle abandonné) — conservés au cas où.
 - La QA explore l'app avec **playwright-cli** (skill
   `.claude/skills/playwright-cli/`) avant d'écrire ses specs : snapshots,
   locators générés, debug via `npx playwright test --debug=cli` + `playwright-cli attach`.
