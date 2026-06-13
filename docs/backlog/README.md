@@ -6,7 +6,8 @@ chaque fichier story ; ce tableau doit rester synchronisé.
 **Workflow** : `/story S-0XX` lance la boucle dev → QA Playwright → corrections
 → PASS. Une story n'est jouable que si toutes ses dépendances sont `done`.
 
-**Statuts** : `todo` → `in-progress` (dev) → `testing` (QA) → `done`.
+**Statuts** : `todo` → `in-progress` (dev) → `testing` (QA + audit sécurité) →
+`tracking` (instrumentation PostHog) → `done`.
 
 ## E01 — Fondations & Auth
 

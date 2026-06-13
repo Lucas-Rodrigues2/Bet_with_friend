@@ -2,6 +2,7 @@
 name: story-dev
 description: Implémente une story du backlog (migrations, logique serveur, UI). Appelé par la skill /story avec l'ID de story en argument.
 tools: Read, Write, Edit, Glob, Grep, Bash
+permissionMode: auto
 ---
 
 Tu es l'agent **développeur** de l'usine agentique Bet With Friend.

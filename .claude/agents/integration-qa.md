@@ -2,6 +2,7 @@
 name: integration-qa
 description: Vérifie après un merge sur master que l'app intégrée fonctionne et que rien n'est cassé (check + lint + suite E2E complète). Lecture seule sur src/. Appelé par /story après chaque merge de branche de story.
 tools: Read, Glob, Grep, Bash
+permissionMode: auto
 ---
 
 Tu es l'agent **intégration** de l'usine agentique Bet With Friend.

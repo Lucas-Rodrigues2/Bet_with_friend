@@ -6,17 +6,22 @@ description: Orchestre l'implémentation des stories du backlog. Deux modes - /s
 # /story — orchestrateur de l'usine agentique
 
 Tu es l'**orchestrateur**. Tu ne codes/testes pas toi-même : tu lances et
-coordonnes des sous-agents (`story-dev`, `story-qa`, `story-tracker`,
-`integration-qa`) jusqu'à ce que les stories soient `done` et intégrées sur
-`master`.
+coordonnes des sous-agents (`story-dev`, `story-qa`, `story-security`,
+`story-tracker`, `integration-qa`) jusqu'à ce que les stories soient `done` et
+intégrées sur `master`.
 
 **Contrainte clé** : un sous-agent ne peut pas en lancer d'autres. C'est toi
 (session principale) qui lances tous les agents, conserves leurs IDs, et les
 relances par SendMessage (contexte conservé). Tu peux paralléliser avec
 `run_in_background: true`.
 
-**Pipeline d'une story** : dev → QA (boucle jusqu'à PASS) → **commit feature** →
-**tracker PostHog** → (commit tracking) → merge → contrôle d'intégration.
+**Pipeline d'une story** : dev → QA (boucle jusqu'à PASS) → **audit sécurité**
+(boucle jusqu'à PASS) → **commit feature** → statut `tracking` puis agent
+**tracker PostHog** (commit tracking) → **passe sécu ciblée tracking** → merge →
+contrôle d'intégration.
+
+(« `tracking` » = le **statut** de la story ; le « **tracker** » = l'agent
+`story-tracker` qui instrumente PostHog. Deux choses distinctes.)
 
 ## Choix du mode
 
@@ -46,11 +51,17 @@ relances par SendMessage (contexte conservé). Tu peux paralléliser avec
 
 Cœur de boucle commun en §C, dans le dépôt principal (pas de worktree).
 
+### A3.5. Audit sécurité
+
+QA PASS → **gate sécurité** : §E. PASS → on continue (A4). FAIL → renvoi au dev
+puis re-QA puis re-sécu (boucle décrite en §E).
+
 ### A4. Commit feature + tracker
 
-1. QA PASS → commit de la feature validée :
+1. Sécu PASS → commit de la feature validée :
    `git add -A && git commit -m "feat(<ID>): <titre>"`.
-2. **Tracker** : §D (mode story). PASS → tracking committé. DEFERRED → ajouts
+2. Story → `tracking` (frontmatter + `docs/backlog/README.md`).
+3. **Tracker** : §D (mode story). PASS → tracking committé. DEFERRED → ajouts
    annulés, suivi noté.
 
 ### A5. Clôture
@@ -104,14 +115,16 @@ en parallèle des autres :
    > Tu travailles dans le worktree `.worktrees/<ID>` (et nulle part ailleurs).
    > Place-t'y avant toute commande. Serveur dev sur http://localhost:<devPort>.
    > Stack Supabase isolée (project_id <projectId>).
-2. QA PASS → **commit feature** sur la branche (depuis le worktree) :
+2. QA PASS → **gate sécurité** (§E, dans le worktree) jusqu'à PASS.
+3. Sécu PASS → **commit feature** sur la branche (depuis le worktree) :
    `git add -A && git commit -m "feat(<ID>): <titre>"`.
-3. **Tracker** (§D, mode story) dans le worktree.
+4. Story → `tracking` (frontmatter + README).
+5. **Tracker** (§D, mode story) dans le worktree.
    - PASS → il a committé le tracking.
    - DEFERRED → ajouts annulés, branche au state QA-validé, suivi noté.
 
 Gère les 3 pipelines indépendamment : avance chaque story dès que son agent rend
-la main, sans attendre les autres. Une story est « prête au merge » après B2.3.
+la main, sans attendre les autres. Une story est « prête au merge » après B2.5.
 
 ### B3. File de merge (sérialisée)
 
@@ -220,14 +233,72 @@ honnête (ce qui marche/échoue, causes, options).
 
 Traite le verdict :
 
-- `PASS` → le tracker a committé le tracking ; on continue (clôture / merge).
+- `PASS` → le tracker a committé le tracking ; **passe par la passe sécu ciblée
+  ci-dessous (§D.bis) avant clôture / merge**.
 - `DEFERRED` → le tracker a annulé ses ajouts (branche = state QA-validé) ;
-  merge la feature seule, note un suivi « tracking <ID> à reprendre ».
+  merge la feature seule, note un suivi « tracking <ID> à reprendre ». Pas de
+  passe sécu tracking nécessaire (aucun code analytics ajouté).
 - `FAIL` (état non récupérable) → relance le tracker une fois (SendMessage) ; si
   ça persiste, annule toi-même ses changements non committés
   (`git checkout -- . && git clean -fd src e2e` dans le worktree) pour préserver
   le state QA-validé, puis traite comme DEFERRED.
-- Le tracking ne doit **jamais** bloquer le pipeline d'une feature déjà validée.
+- Le tracking ne doit **jamais** bloquer le pipeline d'une feature déjà validée
+  (sauf finding sécu bloquant : §D.bis).
+
+### §D.bis — Passe sécu ciblée sur le tracking (uniquement si tracker PASS)
+
+L'instrumentation analytics ajoute du code **après** la gate sécu feature (§E) ;
+elle doit donc être auditée à son tour avant d'atteindre `master`. Relance
+`story-security` (`subagent_type: story-security`, toujours Opus 4.8), **scopé au
+diff de tracking** :
+
+> Passe sécu ciblée tracking <ID> (worktree `.worktrees/<ID>` le cas échéant).
+> Audite **uniquement** le diff d'instrumentation : `git diff <commit-feature>..HEAD`
+> (le commit de tracking). Cherche en priorité : PII dans les events (email,
+> pseudo, token, ids privés), confusion `PUBLIC_*` vs secrets serveur (clé
+> serveur exposée au client), logique du sink de test (`ANALYTICS_TEST_SINK`)
+> qui exposerait/écrirait en prod, capture côté client de params de route
+> sensibles. Rends ton SECURITY RAPPORT (VERDICT: PASS | FAIL).
+
+Traite le verdict :
+
+- `PASS` → on continue (clôture / merge).
+- `FAIL` (≥ 1 finding bloquant) → renvoie les findings au **même `story-tracker`**
+  (SendMessage), il corrige son instrumentation, recommit le tracking, puis
+  **re-sécu tracking**. Max **3** itérations. Si ça ne converge pas : demande au
+  tracker d'**annuler ses ajouts** (retour au state QA-validé), traite comme
+  `DEFERRED` (merge feature seule, suivi « tracking <ID> à reprendre »). Une
+  faille analytics ne doit jamais partir sur `master`, mais elle ne bloque pas la
+  feature déjà validée → on dégrade en DEFERRED plutôt que de tout stopper.
+
+---
+
+# §E — Gate sécurité (après QA PASS, avant le commit feature)
+
+`story-security` (`subagent_type: story-security`). Cet agent tourne
+**toujours sur Claude Opus 4.8** (figé dans son frontmatter — ne le surcharge
+pas). Il est **lecture seule** : il diagnostique, il ne corrige pas. Il peut
+consulter internet (WebSearch/WebFetch) pour les CVE/avis récents.
+
+Lance-le après chaque QA PASS, **avant** le commit feature :
+
+> Audit sécurité de la story <ID> (worktree `.worktrees/<ID>` le cas échéant).
+> Audite le diff de la story, vérifie les CVE récentes des dépendances touchées,
+> rends ton SECURITY RAPPORT (VERDICT: PASS | FAIL).
+> --- RAPPORT QA ---
+> <coller le QA RAPPORT pour le contexte de surface d'attaque>
+
+Traite le verdict :
+
+- `PASS` (aucun finding HIGH/CRITICAL) → on continue (commit feature). Note les
+  findings MEDIUM/LOW comme suivi, sans bloquer.
+- `FAIL` (≥ 1 finding bloquant) → **renvoie les findings bloquants au même
+  `story-dev`** (SendMessage, colle les findings), il corrige, puis **re-QA**
+  (même `story-qa`, car le code a changé), puis **re-sécu** (même agent). 1
+  itération = dev → QA → sécu. Au-delà de **3** itérations sécu sans PASS : stop
+  la story (garde son worktree en vague), rapport honnête (failles restantes,
+  causes, options). Ne commits/merges **jamais** une feature avec un finding
+  bloquant non résolu.
 
 ## Règles d'arbitrage (communes)
 
