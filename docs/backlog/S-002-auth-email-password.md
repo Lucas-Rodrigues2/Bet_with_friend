@@ -1,7 +1,7 @@
 ---
 id: S-002
 epic: E01 — Fondations & Auth
-status: testing
+status: done
 depends_on: [S-001]
 ---
 
