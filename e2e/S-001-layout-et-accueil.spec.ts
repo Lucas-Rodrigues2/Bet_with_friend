@@ -21,20 +21,20 @@ test.describe('S-001 — Layout et page accueil', () => {
 		// Accroche presente
 		await expect(page.getByText(/paris entre amis/i)).toBeVisible();
 
-		// Boutons presents
-		await expect(page.getByRole('link', { name: 'Se connecter' })).toBeVisible();
-		await expect(page.getByRole('link', { name: 'Créer un compte' })).toBeVisible();
+		// Boutons presents dans le contenu principal (le header en a aussi depuis S-002)
+		await expect(page.getByRole('main').getByRole('link', { name: 'Se connecter' })).toBeVisible();
+		await expect(page.getByRole('main').getByRole('link', { name: 'Créer un compte' })).toBeVisible();
 	});
 
 	test('bouton Se connecter navigue vers /login', async ({ page }) => {
 		await page.goto('/');
-		await page.getByRole('link', { name: 'Se connecter' }).click();
+		await page.getByRole('main').getByRole('link', { name: 'Se connecter' }).click();
 		await expect(page).toHaveURL(/\/login/);
 	});
 
 	test('bouton Creer un compte navigue vers /signup', async ({ page }) => {
 		await page.goto('/');
-		await page.getByRole('link', { name: 'Créer un compte' }).click();
+		await page.getByRole('main').getByRole('link', { name: 'Créer un compte' }).click();
 		await expect(page).toHaveURL(/\/signup/);
 	});
 
