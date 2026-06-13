@@ -9,7 +9,8 @@ import {
 	integer,
 	primaryKey,
 	unique,
-	check
+	check,
+	jsonb
 } from 'drizzle-orm/pg-core';
 import { sql } from 'drizzle-orm';
 
@@ -371,5 +372,17 @@ export const notifications = pgTable('notifications', {
 	type: text('type').notNull(),
 	payload: text('payload'), // JSON stored as text (use JSON.parse/stringify)
 	readAt: timestamp('read_at', { withTimezone: true }),
+	createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
+});
+
+// ─── Analytics (test sink — écrite uniquement quand ANALYTICS_TEST_SINK=db) ───
+
+export const analyticsEventsTest = pgTable('analytics_events_test', {
+	id: uuid('id')
+		.primaryKey()
+		.default(sql`gen_random_uuid()`),
+	distinctId: text('distinct_id').notNull(),
+	event: text('event').notNull(),
+	properties: jsonb('properties').notNull().default(sql`'{}'::jsonb`),
 	createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
 });
