@@ -2,6 +2,7 @@ import { fail, redirect } from '@sveltejs/kit';
 import { z } from 'zod';
 import { db } from '$lib/server/db/index';
 import { profiles } from '$lib/server/db/schema';
+import { captureServer } from '$lib/server/analytics';
 import type { Actions, PageServerLoad } from './$types';
 
 const signupSchema = z.object({
@@ -76,6 +77,13 @@ export const actions: Actions = {
 			} catch {
 				// Profile may already exist (e.g., via trigger). Continue.
 			}
+
+			// Track après l'insertion du profil (fait réel)
+			await captureServer({
+				distinctId: data.user.id,
+				event: 'user_signed_up',
+				properties: { pseudo }
+			});
 		}
 
 		return { success: true, email };

@@ -1,5 +1,6 @@
 import { fail, redirect } from '@sveltejs/kit';
 import { z } from 'zod';
+import { captureServer } from '$lib/server/analytics';
 import type { Actions, PageServerLoad } from './$types';
 
 const loginSchema = z.object({
@@ -34,13 +35,21 @@ export const actions: Actions = {
 
 		const { email, password } = result.data;
 
-		const { error } = await locals.supabase.auth.signInWithPassword({ email, password });
+		const { data, error } = await locals.supabase.auth.signInWithPassword({ email, password });
 
 		if (error) {
 			return fail(400, {
 				errors: {},
 				email,
 				message: 'Identifiants incorrects. Vérifiez votre email et mot de passe.'
+			});
+		}
+
+		// Track après connexion réussie (fait réel)
+		if (data.user) {
+			await captureServer({
+				distinctId: data.user.id,
+				event: 'user_logged_in'
 			});
 		}
 

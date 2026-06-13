@@ -43,7 +43,11 @@ interface CaptureOptions {
  * En mode test (ANALYTICS_TEST_SINK=db), insère aussi l'event dans
  * analytics_events_test pour que les specs E2E puissent vérifier l'envoi.
  */
-export async function captureServer({ distinctId, event, properties }: CaptureOptions): Promise<void> {
+export async function captureServer({
+	distinctId,
+	event,
+	properties
+}: CaptureOptions): Promise<void> {
 	const client = getClient();
 
 	if (client) {

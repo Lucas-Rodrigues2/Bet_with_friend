@@ -383,6 +383,8 @@ export const analyticsEventsTest = pgTable('analytics_events_test', {
 		.default(sql`gen_random_uuid()`),
 	distinctId: text('distinct_id').notNull(),
 	event: text('event').notNull(),
-	properties: jsonb('properties').notNull().default(sql`'{}'::jsonb`),
+	properties: jsonb('properties')
+		.notNull()
+		.default(sql`'{}'::jsonb`),
 	createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
 });
