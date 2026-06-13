@@ -1,5 +1,7 @@
 <script lang="ts">
 	import { Button } from '$lib/components/ui/button/index.js';
+
+	let { data } = $props();
 </script>
 
 <div
@@ -15,9 +17,11 @@
 			Créez vos groupes, lancez vos défis et départagez les gagnants !
 		</p>
 
-		<div class="mt-4 flex flex-col gap-3 sm:flex-row">
-			<Button href="/login" size="lg">Se connecter</Button>
-			<Button href="/signup" variant="outline" size="lg">Créer un compte</Button>
-		</div>
+		{#if !data.session}
+			<div class="mt-4 flex flex-col gap-3 sm:flex-row">
+				<Button href="/login" size="lg">Se connecter</Button>
+				<Button href="/signup" variant="outline" size="lg">Créer un compte</Button>
+			</div>
+		{/if}
 	</div>
 </div>

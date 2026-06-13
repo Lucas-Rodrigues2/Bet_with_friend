@@ -22,6 +22,7 @@ INSERT INTO auth.users (
   created_at,
   updated_at,
   confirmation_token,
+  email_change,
   email_change_token_new,
   recovery_token,
   is_sso_user,
@@ -37,7 +38,7 @@ INSERT INTO auth.users (
     now(),
     '{"provider":"email","providers":["email"]}',
     '{"pseudo":"Alice"}',
-    now(), now(), '', '', '', false, false
+    now(), now(), '', '', '', '', false, false
   ),
   (
     'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb',
@@ -49,7 +50,7 @@ INSERT INTO auth.users (
     now(),
     '{"provider":"email","providers":["email"]}',
     '{"pseudo":"Bob"}',
-    now(), now(), '', '', '', false, false
+    now(), now(), '', '', '', '', false, false
   ),
   (
     'cccccccc-cccc-cccc-cccc-cccccccccccc',
@@ -61,7 +62,7 @@ INSERT INTO auth.users (
     now(),
     '{"provider":"email","providers":["email"]}',
     '{"pseudo":"Carol"}',
-    now(), now(), '', '', '', false, false
+    now(), now(), '', '', '', '', false, false
   ),
   (
     'dddddddd-dddd-dddd-dddd-dddddddddddd',
@@ -73,7 +74,7 @@ INSERT INTO auth.users (
     now(),
     '{"provider":"email","providers":["email"]}',
     '{"pseudo":"Dave"}',
-    now(), now(), '', '', '', false, false
+    now(), now(), '', '', '', '', false, false
   )
 ON CONFLICT (id) DO NOTHING;
 

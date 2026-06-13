@@ -14,3 +14,6 @@ bun.lockb
 
 # Temporary data files
 init-data.json
+
+# Local Claude settings (managed by Claude Code, not subject to project formatting)
+.claude/settings.local.json

@@ -44,7 +44,7 @@ L'orchestrateur te précise lequel :
    - **Sink de test** (clé du dispositif de vérif serveur) : quand
      `ANALYTICS_TEST_SINK=db` (positionné en test), `captureServer` insère AUSSI
      l'event dans la table `analytics_events_test (id, distinct_id, event,
-     properties jsonb, created_at)` via le client serveur. Cette table n'est
+properties jsonb, created_at)` via le client serveur. Cette table n'est
      écrite qu'en test ; en prod le flag est absent → seul PostHog reçoit.
      Ajoute la table au schéma Drizzle + `npm run db:push`.
 4. **Env** : ajoute à `.env.test` (et documente dans `.env.example` si présent) :

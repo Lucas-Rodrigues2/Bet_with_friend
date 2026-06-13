@@ -85,9 +85,11 @@ créeraient en parallèle → conflits de merge garantis).
 ### B1. Monter les worktrees isolés
 
 Pour chaque story, en parallèle (commandes longues → arrière-plan) :
+
 ```bash
 node scripts/worktree.mjs setup <ID> <slot>
 ```
+
 Crée `.worktrees/<ID>` sur `story/<ID>`, décale ports Supabase + dev, écrit le
 `.env`, installe les deps, démarre la stack dédiée. Note pour chaque story :
 chemin du worktree, port dev, project_id. Passe chaque story à `in-progress`.
@@ -116,9 +118,11 @@ la main, sans attendre les autres. Une story est « prête au merge » après B2
 Dès qu'une story est prête, ajoute-la à la file. Traite les merges **un par un**
 (jamais en parallèle), dans l'ordre des IDs, depuis le dépôt principal sur
 `master` à jour :
+
 ```bash
 git merge --no-ff story/<ID> -m "feat(<ID>): <titre>"
 ```
+
 - **Conflit** : trivial → résous + `git commit`. Non trivial → relance l'agent
   `story-dev` de la story (SendMessage) pour qu'il résolve sur sa branche, ou
   demande à l'utilisateur si l'arbitrage est métier. Ne devine jamais.
@@ -127,6 +131,7 @@ git merge --no-ff story/<ID> -m "feat(<ID>): <titre>"
 ### B4. Contrôle d'intégration (après CHAQUE merge)
 
 Lance `integration-qa` (`subagent_type: integration-qa`) sur le dépôt principal :
+
 > Merge de <ID> sur master fait. Vérifie l'app intégrée : npm ci, db:reset,
 > check, lint, suite E2E COMPLÈTE. Rends ton INTEGRATION RAPPORT.
 
@@ -139,9 +144,11 @@ Lance `integration-qa` (`subagent_type: integration-qa`) sur le dépôt principa
 ### B5. Teardown
 
 Story mergée **et** intégration verte → démonte son worktree :
+
 ```bash
 node scripts/worktree.mjs teardown <ID> --delete-branch
 ```
+
 Échec persistant (boucle §C épuisée, conflit/tracking non résolu) → **garde** le
 worktree pour debug, ne merge pas, signale.
 
@@ -164,7 +171,8 @@ worktree pour debug, ne merge pas, signale.
 ### Dev
 
 `story-dev` (`subagent_type: story-dev`) :
-> Implémente la story <ID>. Fichier : docs/backlog/<ID>-*.md. Lis CLAUDE.md et
+
+> Implémente la story <ID>. Fichier : docs/backlog/<ID>-\*.md. Lis CLAUDE.md et
 > les docs liées. Rends ton `DEV RAPPORT` quand `npm run check` et `npm run lint`
 > passent.
 
@@ -173,8 +181,9 @@ Conserve l'ID de l'agent (corrections via SendMessage au **même** agent).
 ### QA
 
 Story → `testing`. `story-qa` (`subagent_type: story-qa`) :
-> Valide la story <ID>. Fichier : docs/backlog/<ID>-*.md. Rapport du dev
-> ci-dessous. Explore avec playwright-cli, écris e2e/<ID>-*.spec.ts, lance tes
+
+> Valide la story <ID>. Fichier : docs/backlog/<ID>-_.md. Rapport du dev
+> ci-dessous. Explore avec playwright-cli, écris e2e/<ID>-_.spec.ts, lance tes
 > tests PUIS la suite complète, rends ton `QA RAPPORT` (VERDICT: PASS|FAIL).
 >
 > --- RAPPORT DEV ---
@@ -196,6 +205,7 @@ honnête (ce qui marche/échoue, causes, options).
 `story-tracker` (`subagent_type: story-tracker`). Deux invocations :
 
 - **bootstrap** (une fois, master, §B0.5) :
+
   > Mode bootstrap : mets en place l'infra PostHog (client + serveur + sink de
   > test + helpers e2e + env). N'instrumente aucune story. Rends ton TRACKER
   > RAPPORT.
@@ -209,6 +219,7 @@ honnête (ce qui marche/échoue, causes, options).
   > <coller le QA RAPPORT pour qu'il sache quoi tester>
 
 Traite le verdict :
+
 - `PASS` → le tracker a committé le tracking ; on continue (clôture / merge).
 - `DEFERRED` → le tracker a annulé ses ajouts (branche = state QA-validé) ;
   merge la feature seule, note un suivi « tracking <ID> à reprendre ».
@@ -229,4 +240,7 @@ Traite le verdict :
   non-régression).
 - En vague : jamais deux merges simultanés, jamais le merge suivant avant
   intégration verte.
+
+```
+
 ```
