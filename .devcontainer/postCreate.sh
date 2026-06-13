@@ -2,6 +2,9 @@
 # Provisionne le conteneur après sa création. Idempotent : relançable sans risque.
 set -euo pipefail
 
+echo "==> CLI Claude Code (commande 'claude' dans le terminal)"
+npm install -g @anthropic-ai/claude-code
+
 echo "==> Dépendances npm"
 npm install
 
