@@ -58,6 +58,7 @@ immédiate des bugs évidents avant même d'écrire les tests.
 
 Un fichier `e2e/<ID>-<slug>.spec.ts` couvrant **tous** les scénarios listés
 dans la story, à partir du code généré en étape 2. Conventions :
+
 - Locators sémantiques (`getByRole`, `getByLabel`, `getByTestId`) — pas de CSS fragile.
 - Réutilise `login()`, `USERS`, `db` des helpers.
 - Préfixe `[E2E]` sur les noms de groupes/paris créés pour le nettoyage.

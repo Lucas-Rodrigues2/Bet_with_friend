@@ -16,16 +16,16 @@ retrouver ses groupes, ses paris et son historique.
 
 Tu veux idéalement zéro connexion. Mais l'**ardoise accumule des dettes dans le
 temps et entre paris** → il faut une **identité persistante** pour savoir « qui
-doit quoi ». Cookie effacé / autre appareil = identité perdue. Donc *zéro
-connexion pour toujours* et *ardoise fiable* sont en tension. Solutions
+doit quoi ». Cookie effacé / autre appareil = identité perdue. Donc _zéro
+connexion pour toujours_ et _ardoise fiable_ sont en tension. Solutions
 possibles (détaillées dans la réponse de conception) :
 
-- **A. Profil invité réclamable** *(recommandé)* : on joue tout de suite via le
+- **A. Profil invité réclamable** _(recommandé)_ : on joue tout de suite via le
   lien (identité = cookie + pseudo), et on **rattache** son compte à Google plus
   tard pour consolider l'ardoise — l'historique est préservé.
 - **B. Google one-tap au 1er pari** : voir = libre, **miser** (= argent en jeu) =
   1 tap Google. On ne demande l'identité qu'au moment où il y a de l'argent.
-- **C. Le créateur tient l'ardoise** *(déconseillé)* : les invités ne sont que
+- **C. Le créateur tient l'ardoise** _(déconseillé)_ : les invités ne sont que
   des noms → pas d'auto-confirmation des dettes, litiges difficiles.
 
 ## Données minimales par utilisateur
@@ -41,10 +41,10 @@ possibles (détaillées dans la réponse de conception) :
   - ou **lien magique** (magic link) par email, sans mot de passe.
 - **Inviter d'abord, inscrire ensuite** : idéalement on clique sur le lien
   d'invitation, on voit le groupe, et on ne crée son compte qu'au moment de
-  participer. L'inscription doit être *au milieu* du parcours, pas un mur à
+  participer. L'inscription doit être _au milieu_ du parcours, pas un mur à
   l'entrée.
 - **Pseudo unique ou pas ?** Dans un groupe, deux « Alex » prêtent à confusion.
-  Unicité du pseudo *par groupe* plutôt que global ?
+  Unicité du pseudo _par groupe_ plutôt que global ?
 - **Mineurs** : si un jour il y a de l'argent réel, l'âge devient une
   obligation légale (voir [00](00-vision.md)).
 

@@ -12,7 +12,7 @@ description: Affiche l'état du backlog des stories et propose la prochaine stor
 2. Affiche un tableau compact par épic :
 
    | Story | Titre | Statut | Bloquée par |
-   |---|---|---|---|
+   | ----- | ----- | ------ | ----------- |
 
    Statuts : `todo` · `in-progress` · `testing` · `done` (✅).
    « Bloquée par » = dépendances pas encore `done`.

@@ -1,4 +1,4 @@
-import { defineConfig, devices } from '@playwright/test'
+import { defineConfig, devices } from '@playwright/test';
 
 export default defineConfig({
 	testDir: './e2e',
@@ -24,7 +24,7 @@ export default defineConfig({
 		},
 		{
 			name: 'chromium',
-			testMatch: /S-0[1-9]\d\d.*\.spec\.ts/,
+			testMatch: /S-(?!000)\d{3}.*\.spec\.ts/,
 			use: {
 				...devices['Desktop Chrome']
 			},
@@ -37,4 +37,4 @@ export default defineConfig({
 		reuseExistingServer: !process.env.CI,
 		timeout: 120_000
 	}
-})
+});

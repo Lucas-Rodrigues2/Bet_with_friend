@@ -23,7 +23,7 @@ ajout/retrait tardif).
 C'est une bonne idée mais elle cache plusieurs pièges :
 
 - **Le risque de triche par ajout tardif** ⚠️ : si je peux ajouter quelqu'un
-  *après* que les participations sont faites — voire après que le résultat est
+  _après_ que les participations sont faites — voire après que le résultat est
   connu — je peux faire « gagner » un pote. **Règle nécessaire** : on ne peut
   ajouter quelqu'un que tant que le pari est **ouvert** (avant la deadline de
   participation). Après, la liste se fige.

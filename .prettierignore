@@ -8,3 +8,9 @@ bun.lockb
 # Miscellaneous
 /static/
 /drizzle/
+
+# QA agent — managed separately, may use French characters in string literals
+/e2e/
+
+# Temporary data files
+init-data.json

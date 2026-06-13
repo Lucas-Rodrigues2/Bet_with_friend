@@ -5,22 +5,22 @@
  *
  * Dépend de : `supabase start` + `db:reset` déjà fait.
  */
-import { test as setup, expect } from '@playwright/test'
-import { login, storageStatePath, USERS, type TestUser } from './helpers/auth'
-import fs from 'fs'
+import { test as setup, expect } from '@playwright/test';
+import { login, storageStatePath, USERS, type TestUser } from './helpers/auth';
+import fs from 'fs';
 
-const users: TestUser[] = ['alice', 'bob', 'carol', 'dave']
+const users: TestUser[] = ['alice', 'bob', 'carol', 'dave'];
 
 // S'assure que le répertoire .auth existe
 setup.beforeAll(() => {
-	fs.mkdirSync('e2e/.auth', { recursive: true })
-})
+	fs.mkdirSync('e2e/.auth', { recursive: true });
+});
 
 for (const user of users) {
 	setup(`authenticate ${user}`, async ({ page }) => {
-		await login(page, user)
+		await login(page, user);
 		// Vérifie qu'on est bien connecté (un élément du header connecté)
-		await expect(page.locator('body')).toBeVisible()
-		await page.context().storageState({ path: storageStatePath(user) })
-	})
+		await expect(page.locator('body')).toBeVisible();
+		await page.context().storageState({ path: storageStatePath(user) });
+	});
 }

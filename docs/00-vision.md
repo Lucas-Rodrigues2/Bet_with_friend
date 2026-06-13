@@ -23,7 +23,7 @@ la technique, le risque.
 
 - **Monnaie virtuelle / points** : pas de paiement, pas de régulation, on garde
   juste un score. Simple, légal partout, lançable vite. L'appli ne fait que
-  *tenir les comptes*.
+  _tenir les comptes_.
 - **Argent réel** : dès qu'il y a une mise en argent réel sur un événement
   aléatoire, **c'est juridiquement du jeu d'argent** dans beaucoup de pays
   (licence ANJ en France, KYC, lutte anti-blanchiment, limite d'âge...).

@@ -31,7 +31,7 @@ L'argument est l'ID de la story (ex : `S-001`). Sans argument, demande-le.
 
 Lance l'agent **story-dev** (tool Agent, `subagent_type: story-dev`) avec :
 
-> Implémente la story <ID>. Fichier : docs/backlog/<ID>-*.md.
+> Implémente la story <ID>. Fichier : docs/backlog/<ID>-\*.md.
 > Lis CLAUDE.md et les docs liées avant de coder. Rends ton rapport
 > `DEV RAPPORT` quand `npm run check` et `npm run lint` passent.
 
@@ -43,9 +43,9 @@ SendMessage au **même** agent (contexte conservé).
 Passe la story à `status: testing`. Lance l'agent **story-qa**
 (`subagent_type: story-qa`) avec :
 
-> Valide la story <ID>. Fichier : docs/backlog/<ID>-*.md.
+> Valide la story <ID>. Fichier : docs/backlog/<ID>-_.md.
 > Rapport du dev ci-dessous. Explore l'app avec playwright-cli, écris
-> e2e/<ID>-*.spec.ts, lance tes tests PUIS la suite complète, et rends ton
+> e2e/<ID>-_.spec.ts, lance tes tests PUIS la suite complète, et rends ton
 > `QA RAPPORT` avec VERDICT: PASS ou FAIL.
 >
 > --- RAPPORT DEV ---

@@ -1,7 +1,7 @@
-import postgres from 'postgres'
+import postgres from 'postgres';
 
 const DATABASE_URL =
-	process.env.DATABASE_URL ?? 'postgresql://postgres:postgres@127.0.0.1:54322/postgres'
+	process.env.DATABASE_URL ?? 'postgresql://postgres:postgres@127.0.0.1:54322/postgres';
 
 /**
  * Client postgres pour les helpers de test (accès direct à la DB locale).
@@ -12,7 +12,7 @@ const DATABASE_URL =
  *   await db`DELETE FROM public.groups WHERE name LIKE 'E2E%'`
  *   await db.end()   // dans afterAll si besoin
  */
-export const db = postgres(DATABASE_URL, { max: 3 })
+export const db = postgres(DATABASE_URL, { max: 3 });
 
 /**
  * Supprime toutes les données de test créées pendant un run E2E
@@ -25,7 +25,7 @@ export async function cleanTestData() {
     SELECT m.id FROM public.matches m
     JOIN public.bets b ON b.id = m.bet_id
     WHERE b.title LIKE '[E2E]%'
-  )`
-	await db`DELETE FROM public.bets WHERE title LIKE '[E2E]%'`
-	await db`DELETE FROM public.groups WHERE name LIKE '[E2E]%'`
+  )`;
+	await db`DELETE FROM public.bets WHERE title LIKE '[E2E]%'`;
+	await db`DELETE FROM public.groups WHERE name LIKE '[E2E]%'`;
 }

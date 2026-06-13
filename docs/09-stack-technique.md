@@ -10,17 +10,17 @@
 
 ## La stack
 
-| Couche | Techno | Rôle |
-|--------|--------|------|
-| Langage | **TypeScript** | Un seul langage front web + mobile. |
-| Web | **SvelteKit** (`adapter-static`, mode SPA) | App web. Le build SPA est réutilisé pour le mobile. |
-| Mobile | **Capacitor** | Emballe le build SvelteKit → apps iOS/Android sur les stores. Accès caméra, push, etc. *(Alternative : Tauri 2.)* |
-| UI | **Tailwind CSS** + **shadcn-svelte** (ou **Skeleton**) | Composants pros que l'on possède et personnalise. |
-| DB / Auth / Realtime / Storage | **Supabase (PostgreSQL)** | Données relationnelles, Google OAuth, anonyme→Google, realtime, stockage des preuves de gage. |
-| Accès données | **supabase-js** (types générés depuis le schéma) | Requêtes typées. *(Drizzle en option pour le complexe.)* |
-| Validation | **Zod** | Schémas partagés (paris, négociation). |
-| Push | **Capacitor Push** + FCM/APNs | Notifications natives (Supabase ne fait pas le push). |
-| Hébergement | **Vercel / Cloudflare Pages** (web) + **Supabase** managé | Tiers gratuits pour démarrer. |
+| Couche                         | Techno                                                    | Rôle                                                                                                              |
+| ------------------------------ | --------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| Langage                        | **TypeScript**                                            | Un seul langage front web + mobile.                                                                               |
+| Web                            | **SvelteKit** (`adapter-static`, mode SPA)                | App web. Le build SPA est réutilisé pour le mobile.                                                               |
+| Mobile                         | **Capacitor**                                             | Emballe le build SvelteKit → apps iOS/Android sur les stores. Accès caméra, push, etc. _(Alternative : Tauri 2.)_ |
+| UI                             | **Tailwind CSS** + **shadcn-svelte** (ou **Skeleton**)    | Composants pros que l'on possède et personnalise.                                                                 |
+| DB / Auth / Realtime / Storage | **Supabase (PostgreSQL)**                                 | Données relationnelles, Google OAuth, anonyme→Google, realtime, stockage des preuves de gage.                     |
+| Accès données                  | **supabase-js** (types générés depuis le schéma)          | Requêtes typées. _(Drizzle en option pour le complexe.)_                                                          |
+| Validation                     | **Zod**                                                   | Schémas partagés (paris, négociation).                                                                            |
+| Push                           | **Capacitor Push** + FCM/APNs                             | Notifications natives (Supabase ne fait pas le push).                                                             |
+| Hébergement                    | **Vercel / Cloudflare Pages** (web) + **Supabase** managé | Tiers gratuits pour démarrer.                                                                                     |
 
 ## Pourquoi ces choix collent au projet
 
@@ -64,8 +64,8 @@ Sinon un joueur pourrait trafiquer l'ardoise ou se déclarer gagnant côté clie
 - [x] **DÉCIDÉ : SvelteKit server + Drizzle** — la logique métier vit dans les
       form actions / endpoints SvelteKit (transactions Drizzle), la RLS
       Supabase reste le filet de sécurité. Pas d'Edge Functions ni de
-      procédures SQL pour l'instant. *(Conséquence : le front passe par le
+      procédures SQL pour l'instant. _(Conséquence : le front passe par le
       serveur SvelteKit pour écrire, supabase-js sert surtout à l'auth, au
-      realtime et au storage.)*
+      realtime et au storage.)_
 - [x] **DÉCIDÉ : Drizzle ORM** (déjà installé), supabase-js en complément
       (auth/realtime/storage).

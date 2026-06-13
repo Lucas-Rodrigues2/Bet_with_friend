@@ -47,6 +47,6 @@ verrouillent. Chaque acceptation = un duel 1v1 indépendant (un match).
 ## Notes techniques
 
 - `UPDATE yesno_bets SET accepted_count = accepted_count + 1 WHERE bet_id = X
-  AND accepted_count < max_opponents RETURNING ...` dans la transaction de
+AND accepted_count < max_opponents RETURNING ...` dans la transaction de
   création du match — si 0 ligne, refuser (course perdue).
 - Réutiliser la fabrique de match de S-031.

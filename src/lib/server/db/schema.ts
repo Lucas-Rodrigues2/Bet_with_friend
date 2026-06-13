@@ -50,7 +50,9 @@ export const profiles = pgTable('profiles', {
 });
 
 export const groups = pgTable('groups', {
-	id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
+	id: uuid('id')
+		.primaryKey()
+		.default(sql`gen_random_uuid()`),
 	name: text('name').notNull(),
 	description: text('description'),
 	imageUrl: text('image_url'),
@@ -80,7 +82,9 @@ export const groupMembers = pgTable(
 );
 
 export const groupInvitations = pgTable('group_invitations', {
-	id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
+	id: uuid('id')
+		.primaryKey()
+		.default(sql`gen_random_uuid()`),
 	groupId: uuid('group_id')
 		.notNull()
 		.references(() => groups.id, { onDelete: 'cascade' }),
@@ -99,7 +103,9 @@ export const groupInvitations = pgTable('group_invitations', {
 export const bets = pgTable(
 	'bets',
 	{
-		id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
+		id: uuid('id')
+			.primaryKey()
+			.default(sql`gen_random_uuid()`),
 		groupId: uuid('group_id')
 			.notNull()
 			.references(() => groups.id, { onDelete: 'cascade' }),
@@ -119,7 +125,10 @@ export const bets = pgTable(
 		createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
 	},
 	(t) => [
-		check('stake_points_has_amount', sql`${t.stakeType} <> 'points' OR ${t.stakeAmount} IS NOT NULL`),
+		check(
+			'stake_points_has_amount',
+			sql`${t.stakeType} <> 'points' OR ${t.stakeAmount} IS NOT NULL`
+		),
 		check(
 			'stake_forfeit_has_desc',
 			sql`${t.stakeType} <> 'forfeit' OR ${t.forfeitDescription} IS NOT NULL`
@@ -158,7 +167,9 @@ export const betVisibility = pgTable(
 export const propositions = pgTable(
 	'propositions',
 	{
-		id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
+		id: uuid('id')
+			.primaryKey()
+			.default(sql`gen_random_uuid()`),
 		betId: uuid('bet_id')
 			.notNull()
 			.references(() => bets.id, { onDelete: 'cascade' }),
@@ -179,7 +190,9 @@ export const propositions = pgTable(
 );
 
 export const propositionOffers = pgTable('proposition_offers', {
-	id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
+	id: uuid('id')
+		.primaryKey()
+		.default(sql`gen_random_uuid()`),
 	propositionId: uuid('proposition_id')
 		.notNull()
 		.references(() => propositions.id, { onDelete: 'cascade' }),
@@ -208,7 +221,9 @@ export const propositionJurors = pgTable(
 // ─── Matches (resolution) ─────────────────────────────────────────────────────
 
 export const matches = pgTable('matches', {
-	id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
+	id: uuid('id')
+		.primaryKey()
+		.default(sql`gen_random_uuid()`),
 	betId: uuid('bet_id')
 		.notNull()
 		.references(() => bets.id, { onDelete: 'cascade' }),
@@ -251,7 +266,9 @@ export const matchJurors = pgTable(
 export const juryVotes = pgTable(
 	'jury_votes',
 	{
-		id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
+		id: uuid('id')
+			.primaryKey()
+			.default(sql`gen_random_uuid()`),
 		matchId: uuid('match_id')
 			.notNull()
 			.references(() => matches.id, { onDelete: 'cascade' }),
@@ -308,7 +325,9 @@ export const matchWinners = pgTable(
 // ─── Ledger & Forfeits ────────────────────────────────────────────────────────
 
 export const ledgerEntries = pgTable('ledger_entries', {
-	id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
+	id: uuid('id')
+		.primaryKey()
+		.default(sql`gen_random_uuid()`),
 	groupId: uuid('group_id')
 		.notNull()
 		.references(() => groups.id, { onDelete: 'cascade' }),
@@ -325,7 +344,9 @@ export const ledgerEntries = pgTable('ledger_entries', {
 });
 
 export const forfeits = pgTable('forfeits', {
-	id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
+	id: uuid('id')
+		.primaryKey()
+		.default(sql`gen_random_uuid()`),
 	matchId: uuid('match_id')
 		.notNull()
 		.references(() => matches.id, { onDelete: 'cascade' }),
@@ -341,7 +362,9 @@ export const forfeits = pgTable('forfeits', {
 // ─── Notifications ────────────────────────────────────────────────────────────
 
 export const notifications = pgTable('notifications', {
-	id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
+	id: uuid('id')
+		.primaryKey()
+		.default(sql`gen_random_uuid()`),
 	userId: uuid('user_id')
 		.notNull()
 		.references(() => profiles.id, { onDelete: 'cascade' }),

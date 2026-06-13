@@ -1,7 +1,7 @@
 ---
 id: S-001
 epic: E01 — Fondations & Auth
-status: todo
+status: done
 depends_on: []
 ---
 

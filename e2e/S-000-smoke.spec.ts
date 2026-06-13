@@ -8,7 +8,7 @@ import { test, expect } from '@playwright/test'
 import { db } from './helpers/db'
 
 test.describe('smoke test — environnement', () => {
-	test('page accueil répond 200 et affiche le nom de l'app', async ({ page }) => {
+	test("page accueil répond 200 et affiche le nom de l'app", async ({ page }) => {
 		const response = await page.goto('/')
 		expect(response?.status()).toBe(200)
 		// L'app doit au moins charger quelque chose (titre ou body non vide)

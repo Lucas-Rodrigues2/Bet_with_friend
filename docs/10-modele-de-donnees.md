@@ -17,8 +17,8 @@ si on n'y prend pas garde :
 
 Pour unifier proprement, on sépare :
 
-- **`bet`** = la *définition* du pari (qui, quoi, type, mise, visibilité…).
-- **`match`** = une *instance résolvable* (jury, votes, gagnants, ardoise).
+- **`bet`** = la _définition_ du pari (qui, quoi, type, mise, visibilité…).
+- **`match`** = une _instance résolvable_ (jury, votes, gagnants, ardoise).
   - Au plus proche → **1 match** par pari (créé automatiquement).
   - Oui/non → **1 match par adversaire** qui accepte.
 
@@ -153,11 +153,12 @@ create table bet_visibility (
 
 > **Pourquoi une table d'extension plutôt que tout dans `bets`, ou deux tables
 > totalement séparées ?**
-> - *Tout dans `bets`* → plein de colonnes `null` pour le closest, intégrité faible.
-> - *Deux tables séparées* (`closest_bets` / `yesno_bets`) → `matches`,
+>
+> - _Tout dans `bets`_ → plein de colonnes `null` pour le closest, intégrité faible.
+> - _Deux tables séparées_ (`closest_bets` / `yesno_bets`) → `matches`,
 >   `bet_visibility`, `propositions` ne sauraient plus quelle table référencer
 >   (clé étrangère **polymorphe**, ingérable).
-> - *Extension 1:1* (retenu) → `bets` porte le commun et reste la cible unique
+> - _Extension 1:1_ (retenu) → `bets` porte le commun et reste la cible unique
 >   des FK ; `yesno_bets` ne contient que le spécifique. Le bon compromis.
 
 ---
@@ -354,4 +355,7 @@ RLS critiques :
 - [x] **Réponses libres + `hide_answers`** : si la réponse closest est
       **numérique**, on garde la possibilité d'un **tri auto en option** (le jury
       ne sert alors que d'arbitre en cas de litige).
+
+```
+
 ```

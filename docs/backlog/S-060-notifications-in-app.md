@@ -25,7 +25,7 @@ panneau listant les événements qui concernent l'utilisateur, badge non-lu.
 ## Critères d'acceptation
 
 1. Module serveur `src/lib/server/notifications.ts` : `notify(userIds, type,
-   payload)` appelé par les actions concernées (négociation, soumission,
+payload)` appelé par les actions concernées (négociation, soumission,
    verdict, ledger, gages) — un point d'entrée unique pour les futurs canaux.
 2. Header : cloche avec badge du nombre de non-lues.
 3. Panneau : liste antéchronologique, libellé en français par type + lien

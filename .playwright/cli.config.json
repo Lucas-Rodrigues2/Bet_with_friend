@@ -1,5 +1,5 @@
 {
-  "browser": {
-    "browserName": "chromium"
-  }
+	"browser": {
+		"browserName": "chromium"
+	}
 }

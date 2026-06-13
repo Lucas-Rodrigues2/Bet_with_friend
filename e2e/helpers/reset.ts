@@ -11,5 +11,5 @@
  * à importer dans les fichiers spec.
  */
 
-export { cleanTestData, db } from './db'
-export { login, storageStatePath, USERS, type TestUser } from './auth'
+export { cleanTestData, db } from './db';
+export { login, storageStatePath, USERS, type TestUser } from './auth';

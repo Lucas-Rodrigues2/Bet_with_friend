@@ -63,6 +63,7 @@ Supabase local doit être up (`npx supabase status`).
 ## Si tu reçois un rapport QA en échec
 
 Tu recevras le rapport avec les tests qui échouent. Pour chaque échec :
+
 1. Reproduis le problème (lis le test, utilise `npx playwright-cli` pour explorer
    la page incriminée à la main).
 2. Corrige le **code de l'app**, pas le test. Si tu es convaincu que le test
