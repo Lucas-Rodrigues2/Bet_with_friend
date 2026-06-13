@@ -63,14 +63,20 @@ npx supabase start|stop|status            # instance Supabase locale (Docker)
 
 - Backlog : `docs/backlog/README.md` (tableau de bord) + une story par fichier
   `docs/backlog/S-0XX-*.md` (statut dans le frontmatter).
-- `/story S-0XX` : une story, en place sur `master`, boucle dev → QA → PASS.
+- Pipeline d'une story : dev → QA (PASS) → commit feature → tracking PostHog →
+  merge → contrôle d'intégration.
+- `/story S-0XX` : une story, en place sur `master`.
 - `/story wave` : jusqu'à 3 stories parallélisables en parallèle, chacune dans un
   worktree isolé (`.worktrees/<ID>`, branche `story/<ID>`, stack Supabase + port
   dev dédiés via `scripts/worktree.mjs`), puis merge sérialisé sur `master` avec
   contrôle d'intégration après chaque merge.
 - Agents : `.claude/agents/story-dev.md` (implémente), `.claude/agents/story-qa.md`
-  (teste, n'écrit que dans `e2e/`), `.claude/agents/integration-qa.md` (vérifie
-  l'app intégrée après merge, lecture seule).
+  (teste, n'écrit que dans `e2e/`), `.claude/agents/story-tracker.md` (instrumente
+  PostHog client+serveur après le PASS QA, vérifie l'envoi réel en E2E),
+  `.claude/agents/integration-qa.md` (vérifie l'app intégrée après merge, lecture seule).
+- Analytics : PostHog client (`posthog-js`) + serveur (`posthog-node`), même
+  `distinct_id` (= `user.id` Supabase). Events serveur émis après commit DB.
+  En test, sink DB (`analytics_events_test`) + interception réseau pour vérifier.
 - Isolation parallèle : `node scripts/worktree.mjs setup|teardown|list` gère les
   worktrees + stacks Supabase décalées (slots 1-3). `playwright.config.ts` lit le
   port via `PLAYWRIGHT_PORT` (depuis le `.env` du worktree).
