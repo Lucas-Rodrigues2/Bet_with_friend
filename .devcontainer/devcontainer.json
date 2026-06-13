@@ -1,0 +1,51 @@
+{
+	"name": "Bet With Friend — usine agentique",
+	"image": "mcr.microsoft.com/devcontainers/javascript-node:22-bookworm",
+
+	// Docker-in-Docker : un démon Docker dédié DANS le conteneur. La CLI Supabase
+	// y lance ses stacks (postgres, gotrue, postgrest…) sans toucher au Docker de
+	// l'hôte. Tout est jetable : détruire le conteneur = tout repartir à neuf.
+	"features": {
+		"ghcr.io/devcontainers/features/docker-in-docker:2": {
+			"moby": true,
+			"version": "latest"
+		},
+		"ghcr.io/devcontainers/features/github-cli:1": {}
+	},
+
+	// Ports exposés à l'hôte : serveurs de dev (principal + slots 1-3) et Studio
+	// Supabase (principal + slots) pour inspecter la base depuis le navigateur.
+	"forwardPorts": [5173, 5174, 5175, 5176, 54323, 54423, 54523, 54623],
+	"portsAttributes": {
+		"5173": { "label": "dev (master)" },
+		"5174": { "label": "dev (slot 1)" },
+		"5175": { "label": "dev (slot 2)" },
+		"5176": { "label": "dev (slot 3)" },
+		"54323": { "label": "Supabase Studio (master)" }
+	},
+
+	"postCreateCommand": "bash .devcontainer/postCreate.sh",
+
+	// DinD + jusqu'à 3 stacks Supabase en parallèle = gourmand. Donne de la marge
+	// à Docker Desktop (Settings > Resources). Ajuste si ta machine est plus petite.
+	"hostRequirements": {
+		"cpus": 4,
+		"memory": "8gb",
+		"storage": "32gb"
+	},
+
+	"remoteUser": "node",
+
+	"customizations": {
+		"vscode": {
+			"extensions": [
+				"svelte.svelte-vscode",
+				"dbaeumer.vscode-eslint",
+				"esbenp.prettier-vscode",
+				"ms-playwright.playwright",
+				"bradlc.vscode-tailwindcss",
+				"anthropic.claude-code"
+			]
+		}
+	}
+}
