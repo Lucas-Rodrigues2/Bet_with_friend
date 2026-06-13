@@ -33,6 +33,12 @@
 
 	"postCreateCommand": "bash .devcontainer/postCreate.sh",
 
+	// Coupe le transfert de l'agent SSH de l'hôte → pas de push par clé SSH avec
+	// ton identité. (Le credential helper HTTPS est neutralisé dans postCreate.sh.)
+	"remoteEnv": {
+		"SSH_AUTH_SOCK": ""
+	},
+
 	// DinD + jusqu'à 3 stacks Supabase en parallèle = gourmand. Donne de la marge
 	// à Docker Desktop (Settings > Resources). Ajuste si ta machine est plus petite.
 	"hostRequirements": {

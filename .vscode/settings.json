@@ -1,5 +1,11 @@
 {
 	"files.associations": {
 		"*.css": "tailwindcss"
-	}
+	},
+	// Devcontainer : ne PAS copier le .gitconfig de l'hôte ni câbler le credential
+	// helper hôte dans le conteneur. Combiné à SSH_AUTH_SOCK vidé (devcontainer.json)
+	// et au credential.helper désactivé (postCreate.sh), le conteneur ne peut pas
+	// pousser avec ton identité git.
+	"dev.containers.copyGitConfig": false,
+	"dev.containers.gitCredentialHelperConfigLocation": "none"
 }

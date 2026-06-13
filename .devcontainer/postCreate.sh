@@ -14,6 +14,17 @@ npx playwright install --with-deps chromium
 echo "==> Pré-fetch de la CLI Supabase"
 npx --yes supabase --version || true
 
+echo "==> Git : identité locale (pour les commits) + credentials hôte neutralisés"
+# Le pipeline committe/merge/branch en local : il faut une identité.
+git config --global user.name "devcontainer (isolé)"
+git config --global user.email "devcontainer@local.invalid"
+# Neutralise tout credential helper (une valeur vide réinitialise la liste,
+# y compris un helper défini en config system par l'IDE) → aucun push HTTPS
+# avec ton identité depuis le conteneur.
+git config --global --unset-all credential.helper 2>/dev/null || true
+git config --global credential.helper ""
+git config --system --unset-all credential.helper 2>/dev/null || true
+
 cat <<'EOF'
 
 ✅ Conteneur prêt.

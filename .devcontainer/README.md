@@ -58,10 +58,24 @@ Une fois dans le conteneur, tu peux lancer Claude Code en bypass permissions :
 les commandes destructives de l'usine (`git clean`, `git worktree remove`,
 `git branch -D`, `npm install`…) restent confinées au conteneur.
 
-> Ce qui n'est **pas** protégé par le conteneur : les pushes git vers le remote
-> et les appels réseau sortants (un agent peut toujours pousser/exfiltrer s'il
-> a les identifiants). Ne monte des credentials git/registry dans le conteneur
-> que si tu en as besoin.
+### Credentials git coupés
+
+Le conteneur **ne peut pas pousser avec ton identité git**. Trois verrous :
+
+- `.vscode/settings.json` : `dev.containers.copyGitConfig: false` +
+  `gitCredentialHelperConfigLocation: none` → le `.gitconfig` et le credential
+  helper de l'hôte ne sont pas câblés dans le conteneur.
+- `devcontainer.json` : `SSH_AUTH_SOCK` vidé → pas de push par clé SSH.
+- `postCreate.sh` : `credential.helper` neutralisé → pas de push HTTPS.
+
+Les commits/merges/branches **locaux** marchent (une identité locale neutre,
+`devcontainer@local.invalid`, est posée — le pipeline en a besoin). Pour
+réautoriser le push depuis le conteneur, remets `copyGitConfig: true` (ou
+configure un credential helper / token dédié à l'intérieur).
+
+> Reste ouvert : le **réseau sortant** (un agent peut toujours faire des
+> requêtes HTTP). L'isolation porte sur le système de fichiers, le Docker hôte
+> et l'identité git, pas sur le réseau.
 
 ## Reconstruire à neuf
 
