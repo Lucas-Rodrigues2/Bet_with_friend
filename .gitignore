@@ -27,3 +27,6 @@ vite.config.ts.timestamp-*
 /test-results/
 e2e/.auth/
 .playwright-cli/
+
+# Worktrees isolés des stories parallèles (gérés par scripts/worktree.mjs)
+/.worktrees/
