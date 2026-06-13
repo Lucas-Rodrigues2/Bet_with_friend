@@ -2,6 +2,13 @@
 	"name": "Bet With Friend — usine agentique",
 	"image": "mcr.microsoft.com/devcontainers/javascript-node:22-bookworm",
 
+	// PORTÉE FICHIERS (explicite) : SEUL ce dossier projet est monté dans le
+	// conteneur, à /workspaces/<dossier>. Aucun autre dossier de l'hôte n'est
+	// accessible — il n'y a volontairement aucune entrée "mounts" pointant
+	// ailleurs. Les agents ne voient donc QUE ce projet.
+	"workspaceMount": "source=${localWorkspaceFolder},target=/workspaces/${localWorkspaceFolderBasename},type=bind",
+	"workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
+
 	// Docker-in-Docker : un démon Docker dédié DANS le conteneur. La CLI Supabase
 	// y lance ses stacks (postgres, gotrue, postgrest…) sans toucher au Docker de
 	// l'hôte. Tout est jetable : détruire le conteneur = tout repartir à neuf.

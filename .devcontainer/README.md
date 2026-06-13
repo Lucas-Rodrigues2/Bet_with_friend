@@ -15,6 +15,25 @@ Docker tourne en **Docker-in-Docker** : un démon Docker dédié vit dans le
 conteneur, et la CLI Supabase y lance ses stacks. Rien n'atterrit sur le Docker
 de l'hôte.
 
+## Portée d'accès aux fichiers (ce qui est monté)
+
+Le conteneur ne voit **que ce dossier projet**, monté à
+`/workspaces/Project_bet_with_friend`. C'est rendu explicite dans
+`devcontainer.json` via `workspaceMount` + `workspaceFolder`. Il n'y a
+**aucune** autre entrée `mounts` → aucun autre dossier de l'hôte (`C:\Users\…`,
+tes autres repos) n'est accessible aux agents.
+
+Vérifier depuis le conteneur :
+
+```bash
+pwd                 # /workspaces/Project_bet_with_friend
+ls /workspaces      # uniquement ce projet
+cat /proc/mounts | grep workspaces   # le seul bind-mount hôte
+```
+
+Si un jour tu veux partager un autre dossier, il faudrait l'ajouter
+**volontairement** dans `mounts` — tant que ce n'est pas fait, c'est cloisonné.
+
 ## Prérequis (hôte)
 
 - Docker Desktop (WSL2) en marche.
