@@ -100,8 +100,14 @@ Sécu PASS → `git add -A && git commit -m "feat(<ID>): <titre>"`.
 
 ### B7. Clôture de la story
 
-Story → `done` (frontmatter + README). (Le `format`/`check` global est fait en
-A2 à la fin du chaînage.)
+1. **Persiste les constats ergonomie** : reprends la section « ERGONOMIE — à
+   changer pour le dev » du dernier QA RAPPORT. S'il y a des constats
+   `majeur`/`mineur` (les `bloquant` ont déjà été corrigés via la boucle FAIL),
+   ajoute une entrée pour la story en tête de `docs/backlog/suivi-ergonomie.md`
+   (gabarit dans le fichier, ordre antéchronologique, statut `à faire`). Si
+   « RAS », n'écris rien.
+2. Story → `done` (frontmatter + README). (Le `format`/`check` global est fait
+   en A2 à la fin du chaînage.)
 
 ---
 

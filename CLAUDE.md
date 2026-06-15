@@ -70,6 +70,9 @@ npx supabase start|stop|status            # instance Supabase locale (Docker)
   contrôle de non-régression.
 - Statuts story : `todo` → `in-progress` → `testing` (QA + sécu) → `tracking`
   (PostHog) → `done`.
+- La QA rend aussi un **rapport d'ergonomie** : constats `bloquant` = FAIL (corrigés
+  par la boucle dev↔QA) ; `majeur`/`mineur` persistés à la clôture dans
+  `docs/backlog/suivi-ergonomie.md` (suivi, non bloquant).
 - `/story` : traite les stories **une par une, séquentiellement**, et **enchaîne**
   automatiquement la suivante sans s'arrêter, jusqu'à épuisement du backlog jouable.
 - `/story S-0XX` : traite cette seule story puis s'arrête.
