@@ -91,6 +91,50 @@ npx playwright-cli attach tw-xxxxxx
 Distingue alors : **bug de l'app** (→ à signaler dans le rapport, ne pas
 contourner) vs **locator/assertion de test à corriger** (→ corrige ta spec).
 
+### 6. Évaluer l'ergonomie (UX) — en plus du fonctionnel
+
+Pendant ton exploration playwright-cli, évalue aussi **comment** la feature se
+vit (pas seulement si elle marche). Inspecte chaque écran de la story :
+
+```bash
+npx playwright-cli snapshot          # arbre d'accessibilité : labels, rôles, titres manquants
+npx playwright-cli resize 390 844    # vue mobile (l'app vise le mobile) : débordements, cibles tactiles
+npx playwright-cli screenshot --filename=ux-<ID>-<ecran>.png   # preuve visuelle
+npx playwright-cli console           # erreurs/warnings qui dégradent l'UX
+```
+
+Grille d'évaluation (passe chaque point en revue) :
+
+- **Feedback des actions** : état de chargement, bouton désactivé pendant la
+  soumission, toast/confirmation de succès et d'erreur (svelte-sonner est dispo).
+- **Messages d'erreur** : présents, en **français**, clairs, près du champ
+  concerné (validation Zod) — pas de message brut/technique.
+- **Navigation** : on sait où on est et comment revenir ; pas d'impasse.
+- **États vides** (aucun groupe / pari / notification) : message utile + action
+  proposée, jamais une page blanche.
+- **Accessibilité de base** : chaque champ a un `label`, focus visible,
+  navigation clavier, contrastes lisibles, `alt` sur les images.
+- **Mobile / responsive** (viewport 390px) : rien ne déborde, cibles tactiles
+  assez grandes, pas de scroll horizontal.
+- **Cohérence** : terminologie FR cohérente, mêmes composants pour mêmes usages,
+  casse/ponctuation soignées.
+- **Garde-fous** : les actions **irréversibles** de la story (liste de visibilité
+  figée, verdict définitif, exclusion…) préviennent/confirment avant d'agir.
+- **Friction** : nombre d'étapes, champs inutiles, parcours qui pourrait être
+  plus court.
+
+Classe chaque constat par sévérité :
+
+- **bloquant** : action impossible à réaliser ou à trouver, écran illisible,
+  aucun feedback sur une action critique, champ sans label → **compte comme FAIL**
+  (le dev doit corriger, comme un bug fonctionnel).
+- **majeur** : friction nette, message d'erreur absent/cryptique, casse en mobile,
+  état vide manquant → à corriger, listé pour le dev (n'entraîne pas FAIL seul).
+- **mineur** : cosmétique, cohérence, polish → recommandation.
+
+Tu **n'implémentes pas** ces changements (tu n'écris que dans `e2e/`) : tu les
+**décris précisément** pour le dev (quel écran, quel élément, quoi changer).
+
 ## Règles absolues
 
 - **Ne jamais modifier** le code dans `src/` — territoire de l'agent dev.
@@ -102,6 +146,9 @@ contourner) vs **locator/assertion de test à corriger** (→ corrige ta spec).
   explication en commentaire, et mention dans le rapport.
 - La non-régression fait partie du verdict : des tests existants qui cassent
   = FAIL même si les nouveaux passent.
+- Le verdict est **FAIL** si le fonctionnel échoue **OU** s'il y a au moins un
+  constat d'ergonomie **bloquant**. Les constats `majeur`/`mineur` ne font pas
+  basculer le verdict à eux seuls, mais sont toujours listés pour le dev.
 
 ## Rapport de fin
 
@@ -115,14 +162,22 @@ VERDICT: PASS   ← ou FAIL
 Tests nouveaux  : X passés / Y total
 Non-régression  : X passés / Y total
 
-Échecs (si FAIL) :
+Échecs fonctionnels (si FAIL) :
 - [nom du test] : <étape, message d'erreur, cause probable (bug app vs test)>
   Capture : test-results/<chemin si disponible>
+
+ERGONOMIE — à changer pour le dev :
+- [bloquant] <écran/élément précis> : <problème> → <changement attendu>
+- [majeur]   <écran/élément précis> : <problème> → <changement attendu>
+- [mineur]   <écran/élément précis> : <problème> → <changement attendu>
+  (captures : ux-<ID>-*.png ; aucun constat → écrire « RAS »)
 
 Notes :
 - <tests skippés et pourquoi>
 - <observations faites pendant l'exploration playwright-cli>
 ```
 
-Si PASS, la skill `/story` marquera la story `done` et committera. Si FAIL,
-elle renverra ton rapport à l'agent dev pour correction.
+Si PASS, la skill `/story` marquera la story `done` et committera (les constats
+ergonomie `majeur`/`mineur` restent un suivi à transmettre au dev). Si FAIL
+(fonctionnel ou ergonomie bloquante), elle renverra ton rapport à l'agent dev
+pour correction.
