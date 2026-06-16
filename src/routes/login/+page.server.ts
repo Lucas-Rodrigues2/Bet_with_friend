@@ -8,12 +8,18 @@ const loginSchema = z.object({
 	password: z.string().min(1, 'Mot de passe requis')
 });
 
-export const load: PageServerLoad = async ({ locals }) => {
+export const load: PageServerLoad = async ({ locals, url }) => {
 	const { session } = await locals.safeGetSession();
 	if (session) {
 		throw redirect(303, '/');
 	}
-	return {};
+
+	// Message d'erreur provenant d'un retour OAuth (ex: accès refusé)
+	const oauthError = url.searchParams.get('error');
+
+	return {
+		oauthError: oauthError ? decodeURIComponent(oauthError) : null
+	};
 };
 
 export const actions: Actions = {
