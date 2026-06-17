@@ -22,6 +22,12 @@ Statuts : `à faire` · `fait` · `ignoré` (avec raison).
 
 -->
 
+## S-005 — Profil : pseudo & avatar — 2026-06-17
+
+- [mineur] `à faire` — `/app/profile` (section Avatar) : l'input file natif affiche "Choose File / No file chosen" en anglais (texte navigateur non stylable en CSS pur). → Remplacer par un composant custom avec bouton "Choisir un fichier" stylé et affichage du nom du fichier sélectionné en-dessous, pour cohérence FR et meilleure UX mobile.
+- [mineur] `à faire` — `/app/profile` (section Pseudo) : le label "Pseudo (2–30 caractères)" remplit un double rôle (label + hint). → Séparer en un label court "Pseudo" + un texte d'aide discret (`text-muted-foreground text-xs`) sous le champ pour plus de clarté.
+- [mineur] `à faire` — Header mobile (< sm) : le pseudo est caché (`hidden sm:inline`), seul l'avatar/initiale est visible. Un utilisateur mobile ne voit pas son pseudo dans le header. → Afficher le pseudo même en mobile, tronqué si nécessaire (`truncate max-w-[80px]`).
+
 ## S-004 — Mode invité + réclamation de compte — 2026-06-17
 
 - [majeur] `à faire` — `/claim` (page de succès) : après réclamation email réussie, le `load()` de `/claim` redirige vers `/` car `is_anonymous` est désormais `false`, et la page de succès (`{#if f?.success}`) n'est jamais affichée. L'utilisateur ne voit pas l'instruction de vérifier sa boîte mail (email de confirmation). → Stocker l'état de succès en cookie de session ou ajouter un paramètre de query (`?claimed=1`) pour afficher le message sur `/` après la redirection, ou ne pas rediriger si `f?.success` est vrai (SvelteKit ne re-run le load() que si la page re-rend, donc un `{#if f?.success}` dans le composant suffirait si le redirect est conditionnel).
