@@ -6,6 +6,7 @@ import { profiles } from '$lib/server/db/schema';
 import { eq } from 'drizzle-orm';
 import { env } from '$env/dynamic/private';
 import { env as pubEnv } from '$env/dynamic/public';
+import { captureServer } from '$lib/server/analytics';
 import type { Actions, PageServerLoad } from './$types';
 
 const pseudoSchema = z.object({
@@ -69,6 +70,8 @@ export const actions: Actions = {
 		const { pseudo } = result.data;
 
 		await db.update(profiles).set({ pseudo }).where(eq(profiles.id, user.id));
+
+		await captureServer({ distinctId: user.id, event: 'profile_pseudo_updated' });
 
 		return { action: 'updatePseudo', success: true, pseudo };
 	},
@@ -139,6 +142,8 @@ export const actions: Actions = {
 
 		await db.update(profiles).set({ avatarUrl }).where(eq(profiles.id, user.id));
 
+		await captureServer({ distinctId: user.id, event: 'profile_avatar_uploaded' });
+
 		return { action: 'uploadAvatar', success: true, avatarUrl };
 	},
 
@@ -157,6 +162,8 @@ export const actions: Actions = {
 		await supabaseService.storage.from('avatars').remove(paths);
 
 		await db.update(profiles).set({ avatarUrl: null }).where(eq(profiles.id, user.id));
+
+		await captureServer({ distinctId: user.id, event: 'profile_avatar_deleted' });
 
 		return { action: 'deleteAvatar', success: true };
 	}

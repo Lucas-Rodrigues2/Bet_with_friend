@@ -155,8 +155,8 @@ test.describe('S-005 — Profil : pseudo & avatar', () => {
 		await page.getByTestId('pseudo-input').fill('X');
 		await page.getByTestId('save-pseudo-btn').click();
 
-		// La page reste sur /app/profile
-		await expect(page).toHaveURL('/app/profile');
+		// La page reste sur /app/profile (SvelteKit named action peut exposer ?/updatePseudo)
+		await expect(page).toHaveURL(/\/app\/profile/);
 
 		// Message d'erreur Zod visible
 		await expect(page.getByTestId('pseudo-error')).toBeVisible({ timeout: 5000 });
@@ -183,13 +183,12 @@ test.describe('S-005 — Profil : pseudo & avatar', () => {
 		// Cliquer sur "Changer l'avatar"
 		await page.getByRole('button', { name: "Changer l'avatar" }).click();
 
-		// Attendre que l'avatar apparaisse (img dans la section profil + header)
-		// L'image peut mettre un peu de temps après l'upload Supabase Storage
-		await expect(page.getByTestId('avatar-img')).toBeVisible({ timeout: 15000 });
-
-		// L'src de l'avatar doit pointer vers Supabase Storage
-		const avatarSrc = await page.getByTestId('avatar-img').getAttribute('src');
-		expect(avatarSrc).toContain('/storage/v1/object/public/avatars/');
+		// Attendre que l'avatar affiche l'URL Storage (pas juste le blob de prévisualisation locale)
+		await expect(page.getByTestId('avatar-img')).toHaveAttribute(
+			'src',
+			/\/storage\/v1\/object\/public\/avatars\//,
+			{ timeout: 15000 }
+		);
 
 		// Vérifier que le header reflète aussi l'avatar
 		await expect(page.getByTestId('header-avatar')).toBeVisible({ timeout: 5000 });
