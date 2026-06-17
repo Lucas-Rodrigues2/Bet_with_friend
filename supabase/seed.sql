@@ -154,3 +154,16 @@ INSERT INTO public.group_members (group_id, user_id, role, joined_at) VALUES
 ON CONFLICT (group_id, user_id) DO NOTHING;
 
 -- Dave n'est pas dans le groupe seedé (utile pour tester l'isolation)
+
+-- ─── Bucket Storage : avatars ─────────────────────────────────────────────────
+-- Bucket public, lecture sans auth, écriture server-side (service role)
+
+INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+VALUES (
+  'avatars',
+  'avatars',
+  true,
+  2097152,
+  ARRAY['image/jpeg', 'image/png', 'image/webp']
+)
+ON CONFLICT (id) DO NOTHING;

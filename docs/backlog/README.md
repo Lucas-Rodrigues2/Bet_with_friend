@@ -16,8 +16,8 @@ chaque fichier story ; ce tableau doit rester synchronisé.
 | [S-001](S-001-layout-et-accueil.md)   | Layout, shadcn-svelte, page d'accueil  | done        | —            |
 | [S-002](S-002-auth-email-password.md) | Inscription / connexion email+password | done        | S-001        |
 | [S-003](S-003-connexion-google.md)    | Connexion Google OAuth                 | done        | S-002        |
-| [S-004](S-004-invite-reclamable.md)   | Mode invité + réclamation de compte    | tracking    | S-002, S-003 |
-| [S-005](S-005-profil.md)              | Profil : pseudo, avatar                | todo        | S-002        |
+| [S-004](S-004-invite-reclamable.md)   | Mode invité + réclamation de compte    | done        | S-002, S-003 |
+| [S-005](S-005-profil.md)              | Profil : pseudo, avatar                | testing     | S-002        |
 
 ## E02 — Groupes & invitations
 

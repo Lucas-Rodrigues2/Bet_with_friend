@@ -9,6 +9,19 @@
 	let { children, data } = $props();
 
 	const homeHref = resolveRoute('/');
+	const profileHref = resolveRoute('/app/profile');
+
+	// Initiales pour l'avatar par défaut
+	const initials = $derived(
+		data.profile?.pseudo
+			? data.profile.pseudo
+					.split(' ')
+					.map((w: string) => w[0])
+					.join('')
+					.toUpperCase()
+					.slice(0, 2)
+			: '?'
+	);
 </script>
 
 <svelte:head>
@@ -26,9 +39,33 @@
 
 			<nav class="flex items-center gap-3">
 				{#if data.session && data.profile}
-					<span class="text-muted-foreground text-sm">
-						Bonjour, <strong class="text-foreground">{data.profile.pseudo}</strong>
-					</span>
+					<a
+						href={profileHref}
+						class="flex items-center gap-2 hover:opacity-80"
+						aria-label="Mon profil"
+						data-testid="header-profile-link"
+					>
+						{#if data.profile.avatarUrl}
+							<img
+								src={data.profile.avatarUrl}
+								alt="Avatar de {data.profile.pseudo}"
+								class="h-8 w-8 rounded-full border object-cover"
+								data-testid="header-avatar"
+							/>
+						{:else}
+							<div
+								class="bg-primary text-primary-foreground flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold"
+								data-testid="header-avatar-initials"
+							>
+								{initials}
+							</div>
+						{/if}
+						<span class="text-muted-foreground hidden text-sm sm:inline">
+							<strong class="text-foreground" data-testid="header-pseudo"
+								>{data.profile.pseudo}</strong
+							>
+						</span>
+					</a>
 					<form method="POST" action="/logout">
 						<Button type="submit" variant="outline" size="sm">Déconnexion</Button>
 					</form>

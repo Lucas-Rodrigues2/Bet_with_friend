@@ -187,8 +187,8 @@ test.describe('S-004 — Mode invité + réclamation de compte', () => {
 		await page.getByRole('textbox', { name: 'Choisir un mot de passe' }).fill('test-password-123');
 		await page.getByRole('button', { name: 'Sécuriser avec email' }).click();
 
-		// Reste sur /claim (HTML5 validation or Zod catches it)
-		await expect(page).toHaveURL('/claim');
+		// Reste sur /claim (HTML5 validation bloque avant soumission)
+		await expect(page).toHaveURL(/\/claim/);
 	});
 
 	// ─── Scénario 7 : Réclamation — mot de passe trop court ──────────────────
@@ -210,8 +210,8 @@ test.describe('S-004 — Mode invité + réclamation de compte', () => {
 		await page.getByRole('textbox', { name: 'Choisir un mot de passe' }).fill('court');
 		await page.getByRole('button', { name: 'Sécuriser avec email' }).click();
 
-		// Reste sur /claim
-		await expect(page).toHaveURL('/claim');
+		// Reste sur /claim (SvelteKit named action peut exposer ?/email dans l'URL)
+		await expect(page).toHaveURL(/\/claim/);
 
 		// Message d'erreur Zod en français
 		await expect(page.getByText('Le mot de passe doit faire au moins 8 caractères')).toBeVisible();

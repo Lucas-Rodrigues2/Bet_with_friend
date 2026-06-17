@@ -22,6 +22,7 @@
 
 	const loginHref = resolveRoute('/login');
 	const googleHref = resolveRoute('/auth/google');
+	const guestHref = resolveRoute('/guest');
 </script>
 
 <div
@@ -158,6 +159,21 @@
 			<p class="text-muted-foreground mt-6 text-center text-sm">
 				Déjà un compte ?
 				<a href={loginHref} class="text-primary hover:underline">Se connecter</a>
+			</p>
+
+			<div class="relative my-6">
+				<div class="absolute inset-0 flex items-center">
+					<span class="border-border w-full border-t"></span>
+				</div>
+				<div class="relative flex justify-center text-xs uppercase">
+					<span class="bg-background text-muted-foreground px-2">ou</span>
+				</div>
+			</div>
+
+			<p class="text-center text-sm">
+				<a href={guestHref} class="text-muted-foreground hover:text-foreground hover:underline">
+					Continuer en invité
+				</a>
 			</p>
 		{/if}
 	</div>

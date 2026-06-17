@@ -200,8 +200,8 @@ test.describe('S-004 — Tracking PostHog mode invité + réclamation', () => {
 		await page.getByRole('textbox', { name: 'Choisir un mot de passe' }).fill('court');
 		await page.getByRole('button', { name: 'Sécuriser avec email' }).click();
 
-		// Reste sur /claim
-		await expect(page).toHaveURL('/claim');
+		// Reste sur /claim (SvelteKit named action peut exposer ?/email dans l'URL)
+		await expect(page).toHaveURL(/\/claim/);
 
 		// Aucun event guest_account_claimed ne doit être émis
 		const events = await readServerEvents(db, { event: 'guest_account_claimed' });
