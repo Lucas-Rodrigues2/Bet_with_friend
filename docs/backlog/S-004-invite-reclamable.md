@@ -1,7 +1,7 @@
 ---
 id: S-004
 epic: E01 — Fondations & Auth
-status: testing
+status: tracking
 depends_on: [S-002, S-003]
 ---
 
