@@ -27,7 +27,6 @@ test.describe('S-002 — Tracking PostHog auth', () => {
 
 	test.afterAll(async () => {
 		await clearServerEvents(db);
-		await db.end();
 	});
 
 	// ─── user_logged_in ───────────────────────────────────────────────────────

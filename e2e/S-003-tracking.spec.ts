@@ -29,7 +29,6 @@ test.describe('S-003 — Tracking PostHog connexion Google', () => {
 
 	test.afterAll(async () => {
 		await clearServerEvents(db);
-		await db.end();
 	});
 
 	// ─── Infrastructure ────────────────────────────────────────────────────────

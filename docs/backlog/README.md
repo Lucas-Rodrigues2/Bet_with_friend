@@ -11,13 +11,13 @@ chaque fichier story ; ce tableau doit rester synchronisé.
 
 ## E01 — Fondations & Auth
 
-| Story                                 | Titre                                  | Statut | Dépend de    |
-| ------------------------------------- | -------------------------------------- | ------ | ------------ |
-| [S-001](S-001-layout-et-accueil.md)   | Layout, shadcn-svelte, page d'accueil  | done   | —            |
-| [S-002](S-002-auth-email-password.md) | Inscription / connexion email+password | done   | S-001        |
-| [S-003](S-003-connexion-google.md)    | Connexion Google OAuth                 | todo   | S-002        |
-| [S-004](S-004-invite-reclamable.md)   | Mode invité + réclamation de compte    | todo   | S-002, S-003 |
-| [S-005](S-005-profil.md)              | Profil : pseudo, avatar                | todo   | S-002        |
+| Story                                 | Titre                                  | Statut      | Dépend de    |
+| ------------------------------------- | -------------------------------------- | ----------- | ------------ |
+| [S-001](S-001-layout-et-accueil.md)   | Layout, shadcn-svelte, page d'accueil  | done        | —            |
+| [S-002](S-002-auth-email-password.md) | Inscription / connexion email+password | done        | S-001        |
+| [S-003](S-003-connexion-google.md)    | Connexion Google OAuth                 | done        | S-002        |
+| [S-004](S-004-invite-reclamable.md)   | Mode invité + réclamation de compte    | in-progress | S-002, S-003 |
+| [S-005](S-005-profil.md)              | Profil : pseudo, avatar                | todo        | S-002        |
 
 ## E02 — Groupes & invitations
 

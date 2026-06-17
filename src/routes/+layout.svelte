@@ -4,6 +4,7 @@
 	import { Toaster } from '$lib/components/ui/sonner/index.js';
 	import { Button } from '$lib/components/ui/button/index.js';
 	import { resolveRoute } from '$app/paths';
+	import GuestBanner from '$lib/components/GuestBanner.svelte';
 
 	let { children, data } = $props();
 
@@ -42,6 +43,10 @@
 			</nav>
 		</div>
 	</header>
+
+	{#if data.profile?.isAnonymous}
+		<GuestBanner />
+	{/if}
 
 	<main class="flex-1">
 		{@render children()}

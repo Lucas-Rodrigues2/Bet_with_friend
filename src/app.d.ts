@@ -14,7 +14,7 @@ declare global {
 		interface PageData {
 			session: Session | null;
 			user: User | null;
-			profile: { pseudo: string; avatarUrl: string | null } | null;
+			profile: { pseudo: string; avatarUrl: string | null; isAnonymous: boolean } | null;
 		}
 		// interface PageState {}
 		// interface Platform {}
