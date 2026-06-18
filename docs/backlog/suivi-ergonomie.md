@@ -13,6 +13,14 @@ Statuts : `à faire` · `fait` · `ignoré` (avec raison).
 
 ---
 
+## S-010 — Créer un groupe — 2026-06-18
+
+- [mineur] `à faire` — `/app/groups/new` (Textarea description) : le composant utilise `<textarea>{value}</textarea>` sans `bind:value`. Playwright `fill()` ne soumet pas la valeur correctement (Svelte 5 SSR-hydrate la textarea différemment). → Remplacer par `<textarea bind:value={descriptionValue}>` avec un `$state` local.
+- [mineur] `à faire` — `/app/groups/new` (Devise) : le `<select>` de devise est un élément HTML natif non stylisé par shadcn, incohérent avec les autres champs Input/Label. → Utiliser le composant shadcn `Select`.
+- [mineur] `à faire` — `/app/groups/new` (Navigation) : la flèche "← Retour" est un caractère Unicode codé en dur, pas un composant icône (incohérence avec les conventions arrow/icon potentielles à venir).
+
+---
+
 <!-- Gabarit d'entrée (copier-coller, garder l'ordre antéchronologique) :
 
 ## S-0XX — <titre court> — <AAAA-MM-JJ>
