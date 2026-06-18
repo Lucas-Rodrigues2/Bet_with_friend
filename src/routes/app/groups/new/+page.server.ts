@@ -1,6 +1,7 @@
 import { fail, redirect } from '@sveltejs/kit';
 import { z } from 'zod';
 import { createGroup } from '$lib/server/groups';
+import { captureServer } from '$lib/server/analytics';
 import type { Actions, PageServerLoad } from './$types';
 
 const createGroupSchema = z.object({
@@ -62,6 +63,13 @@ export const actions: Actions = {
 			description: description ?? null,
 			currency,
 			creatorId: user.id
+		});
+
+		// Tracking PostHog — émis après la transaction DB (fait métier confirmé)
+		await captureServer({
+			distinctId: user.id,
+			event: 'group_created',
+			properties: { currency }
 		});
 
 		throw redirect(303, `/app/groups/${groupId}`);

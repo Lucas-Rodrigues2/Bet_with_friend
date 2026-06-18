@@ -23,7 +23,7 @@ chaque fichier story ; ce tableau doit rester synchronisé.
 
 | Story                          | Titre                                  | Statut      | Dépend de |
 | ------------------------------ | -------------------------------------- | ----------- | --------- |
-| [S-010](S-010-creer-groupe.md) | Créer un groupe                        | testing     | S-002     |
+| [S-010](S-010-creer-groupe.md) | Créer un groupe                        | tracking    | S-002     |
 | [S-011](S-011-invitations.md)  | Liens d'invitation + droit délégable   | todo        | S-010     |
 | [S-012](S-012-membres.md)      | Gestion des membres (rôles, exclusion) | todo        | S-011     |
 | [S-013](S-013-page-groupe.md)  | Page groupe (dashboard)                | todo        | S-010     |

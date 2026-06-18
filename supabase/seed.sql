@@ -138,7 +138,7 @@ ON CONFLICT (id) DO NOTHING;
 
 INSERT INTO public.groups (id, name, description, currency, creator_id, created_at) VALUES
   (
-    '11111111-1111-1111-1111-111111111111',
+    '11111111-1111-1111-8111-111111111111',
     'Les potes du test',
     'Groupe seedé pour les tests E2E',
     'EUR',
@@ -148,9 +148,9 @@ INSERT INTO public.groups (id, name, description, currency, creator_id, created_
 ON CONFLICT (id) DO NOTHING;
 
 INSERT INTO public.group_members (group_id, user_id, role, joined_at) VALUES
-  ('11111111-1111-1111-1111-111111111111', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'admin',  now()),
-  ('11111111-1111-1111-1111-111111111111', 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', 'member', now()),
-  ('11111111-1111-1111-1111-111111111111', 'cccccccc-cccc-cccc-cccc-cccccccccccc', 'member', now())
+  ('11111111-1111-1111-8111-111111111111', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'admin',  now()),
+  ('11111111-1111-1111-8111-111111111111', 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', 'member', now()),
+  ('11111111-1111-1111-8111-111111111111', 'cccccccc-cccc-cccc-cccc-cccccccccccc', 'member', now())
 ON CONFLICT (group_id, user_id) DO NOTHING;
 
 -- Dave n'est pas dans le groupe seedé (utile pour tester l'isolation)

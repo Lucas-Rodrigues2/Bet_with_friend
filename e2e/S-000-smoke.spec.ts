@@ -47,7 +47,7 @@ test.describe('smoke test — environnement', () => {
 	test('groupe seedé "Les potes du test" existe', async () => {
 		const rows = await db`
       SELECT name, currency FROM public.groups
-      WHERE id = '11111111-1111-1111-1111-111111111111'
+      WHERE id = '11111111-1111-1111-8111-111111111111'
     `
 		expect(rows).toHaveLength(1)
 		expect(rows[0].name).toBe('Les potes du test')

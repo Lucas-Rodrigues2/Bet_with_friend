@@ -208,7 +208,7 @@ test.describe('S-010 — Créer un groupe', () => {
 		await login(page, 'dave');
 
 		// Dave essaie d'accéder au groupe seedé dont il n'est pas membre
-		await page.goto('/app/groups/11111111-1111-1111-1111-111111111111');
+		await page.goto('/app/groups/11111111-1111-1111-8111-111111111111');
 
 		// Doit recevoir une 404
 		await expect(page.getByRole('heading', { name: '404' })).toBeVisible();
@@ -279,7 +279,7 @@ test.describe('S-010 — Créer un groupe', () => {
 	test('lien "← Mes groupes" depuis la page du groupe ramène sur /app', async ({ page }) => {
 		await login(page, 'alice');
 		// Naviguer vers le groupe seedé
-		await page.goto('/app/groups/11111111-1111-1111-1111-111111111111');
+		await page.goto('/app/groups/11111111-1111-1111-8111-111111111111');
 
 		// Utiliser le lien header (exact match sur le texte "← Mes groupes")
 		await page.getByRole('link', { name: '← Mes groupes' }).click();

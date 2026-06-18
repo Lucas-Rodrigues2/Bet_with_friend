@@ -1,7 +1,7 @@
 ---
 id: S-005
 epic: E01 — Fondations & Auth
-status: tracking
+status: done
 depends_on: [S-002]
 ---
 
