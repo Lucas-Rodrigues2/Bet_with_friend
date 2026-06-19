@@ -2,6 +2,7 @@
 	import { resolveRoute } from '$app/paths';
 	import { enhance } from '$app/forms';
 	import { Button } from '$lib/components/ui/button/index.js';
+	import { track } from '$lib/analytics/client';
 	import type { ActionData, PageData } from './$types';
 
 	let { data, form }: { data: PageData; form: ActionData } = $props();
@@ -221,7 +222,13 @@
 										type="button"
 										variant="outline"
 										size="sm"
-										onclick={() => (confirmKickUserId = member.userId)}
+										onclick={() => {
+											confirmKickUserId = member.userId;
+											track('kick_confirm_opened', {
+												group_id: data.group.id,
+												target_user_id: member.userId
+											});
+										}}
 										data-testid="kick-btn-{member.userId}"
 									>
 										Exclure
@@ -272,7 +279,10 @@
 			<Button
 				type="button"
 				variant="outline"
-				onclick={() => (confirmLeave = true)}
+				onclick={() => {
+					confirmLeave = true;
+					track('leave_confirm_opened', { group_id: data.group.id });
+				}}
 				data-testid="leave-btn"
 			>
 				Quitter le groupe
