@@ -210,6 +210,15 @@ export const actions: Actions = {
 			return fail(403, { error: outcome.error });
 		}
 
+		await captureServer({
+			distinctId: user.id,
+			event: 'invitation_revoked',
+			properties: {
+				group_id: params.id,
+				invitation_id: result.data.invitationId
+			}
+		});
+
 		return { revoked: true };
 	},
 

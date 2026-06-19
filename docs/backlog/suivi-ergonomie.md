@@ -13,6 +13,13 @@ Statuts : `à faire` · `fait` · `ignoré` (avec raison).
 
 ---
 
+## S-013 — Page groupe (dashboard) — 2026-06-19
+
+- [mineur] `à faire` — Page groupe (bouton « Nouveau pari ») : menu déroulant custom sans attributs ARIA. Le bouton n'a pas `aria-expanded`/`aria-haspopup`, le conteneur n'a pas `role="menu"`, les liens n'ont pas `role="menuitem"`. → Ajouter ces attributs ou migrer vers le composant `DropdownMenu` de shadcn-svelte (bits-ui) qui gère nativement l'accessibilité.
+- [mineur] `à faire` — Page groupe (fermeture du menu) : `svelte:window onclick` pour fermer le menu déroulant crée des timing issues en contexte headless Playwright (`stopPropagation` insuffisant). → Envisager `DropdownMenu` shadcn-svelte ou une directive `clickOutside` fiable.
+
+---
+
 ## S-010 — Créer un groupe — 2026-06-18
 
 - [mineur] `à faire` — `/app/groups/new` (Textarea description) : le composant utilise `<textarea>{value}</textarea>` sans `bind:value`. Playwright `fill()` ne soumet pas la valeur correctement (Svelte 5 SSR-hydrate la textarea différemment). → Remplacer par `<textarea bind:value={descriptionValue}>` avec un `$state` local.

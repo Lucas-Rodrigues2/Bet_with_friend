@@ -52,6 +52,8 @@
 
 	async function copyInviteLink(token: string) {
 		const url = `${window.location.origin}/invite/${token}`;
+		// Track the copy intent regardless of clipboard API success
+		track('invite_link_copied', { group_id: data.group.id });
 		try {
 			await navigator.clipboard.writeText(url);
 			copiedToken = token;
