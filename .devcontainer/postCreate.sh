@@ -19,8 +19,8 @@ npx --yes supabase --version || true
 
 echo "==> Git : identité locale (pour les commits) + credentials hôte neutralisés"
 # Le pipeline committe/merge/branch en local : il faut une identité.
-git config --global user.name "devcontainer (isolé)"
-git config --global user.email "devcontainer@local.invalid"
+git config --global user.name "Lucas-Rodrigues2"
+git config --global user.email "lucas.rodrigues05v@gmail.com"
 # Neutralise tout credential helper (une valeur vide réinitialise la liste,
 # y compris un helper défini en config system par l'IDE) → aucun push HTTPS
 # avec ton identité depuis le conteneur.

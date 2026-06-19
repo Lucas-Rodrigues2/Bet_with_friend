@@ -117,7 +117,7 @@ Sécu PASS → `git add -A && git commit -m "feat(<ID>): <titre>"`.
 
 `story-dev` (`subagent_type: story-dev`) :
 
-> Implémente la story <ID>. Fichier : docs/backlog/<ID>-*.md. Lis CLAUDE.md et
+> Implémente la story <ID>. Fichier : docs/backlog/<ID>-\*.md. Lis CLAUDE.md et
 > les docs liées. Rends ton `DEV RAPPORT` quand `npm run check` et `npm run lint`
 > passent.
 
@@ -127,8 +127,8 @@ Conserve l'ID de l'agent (corrections via SendMessage au **même** agent).
 
 Story → `testing`. `story-qa` (`subagent_type: story-qa`) :
 
-> Valide la story <ID>. Fichier : docs/backlog/<ID>-*.md. Rapport du dev
-> ci-dessous. Explore avec playwright-cli, écris e2e/<ID>-*.spec.ts, lance tes
+> Valide la story <ID>. Fichier : docs/backlog/<ID>-_.md. Rapport du dev
+> ci-dessous. Explore avec playwright-cli, écris e2e/<ID>-_.spec.ts, lance tes
 > tests PUIS la suite complète (non-régression), rends ton `QA RAPPORT`
 > (VERDICT: PASS|FAIL).
 >

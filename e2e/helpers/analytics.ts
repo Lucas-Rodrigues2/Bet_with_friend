@@ -34,81 +34,90 @@ export interface ReadServerEventsOptions {
 // ─── Client-side interception ─────────────────────────────────────────────────
 
 /**
- * Intercepte le trafic PostHog (posthog-js) émis par le navigateur.
- * À appeler AVANT de déclencher l'action à tester.
+ * Intercepte les appels track() de notre analytics client via page.exposeFunction.
+ * Notre fonction track() appelle window.__playwright_trackSpy(event, props) si
+ * elle est disponible — ce qui permet de tester les events sans dépendre du
+ * flush réseau de posthog-js.
  *
+ * Intercepte aussi les routes posthog pour éviter les erreurs réseau.
+ *
+ * À appeler AVANT de déclencher l'action à tester.
  * Retourne getCapturedEvents() pour lire les events accumulés.
  */
-export function interceptPosthog(page: Page): { getCapturedEvents: () => CapturedEvent[] } {
+/**
+ * Intercepte les appels track() de notre analytics client via page.exposeFunction.
+ * Notre fonction track() appelle window.__playwright_trackSpy(event, props) si
+ * elle est disponible — ce qui permet de tester les events sans dépendre du
+ * flush réseau de posthog-js.
+ *
+ * Intercepte aussi les routes posthog pour éviter les erreurs réseau.
+ *
+ * IMPORTANT : doit être appelé AVANT login() et goto(), car exposeFunction doit
+ * être enregistrée avant toute navigation.
+ *
+ * Retourne getCapturedEvents() pour lire les events accumulés (synchrone).
+ */
+export function interceptPosthog(page: Page): {
+	getCapturedEvents: () => CapturedEvent[];
+	exposeSpyPromise: Promise<void>;
+} {
 	const captured: CapturedEvent[] = [];
 
-	// Chemins PostHog à intercepter
-	const capturePatterns = ['**/e/**', '**/i/v0/e/**', '**/batch/**', '**/capture/**'];
-	const silentPatterns = ['**/decide/**', '**/flags/**', '**/array/**'];
+	// Exposer un spy côté Playwright accessible depuis le navigateur
+	const exposeSpyPromise = page.exposeFunction(
+		'__playwright_trackSpy',
+		(event: string, properties: Record<string, unknown>) => {
+			captured.push({ event, properties: properties ?? {} });
+		}
+	);
 
-	// Routes silencieuses : répondre 200 vide
-	for (const pattern of silentPatterns) {
+	// Intercepter les routes posthog pour éviter les erreurs réseau
+	const decideBody = JSON.stringify({
+		config: { enable_collect_everything: false },
+		toolbarParams: {},
+		isAuthenticated: false,
+		supportedCompression: ['gzip', 'lz64'],
+		featureFlags: {},
+		featureFlagPayloads: {},
+		errorsWhileComputingFlags: false,
+		capturePerformance: false
+	});
+	const flagsV2Body = JSON.stringify({
+		flags: [],
+		featureFlags: {},
+		featureFlagPayloads: {},
+		errorsWhileComputingFlags: false
+	});
+	page.route('**/decide/**', (route) =>
+		route.fulfill({ status: 200, contentType: 'application/json', body: decideBody })
+	);
+	page.route('**/flags/**', (route) =>
+		route.fulfill({ status: 200, contentType: 'application/json', body: flagsV2Body })
+	);
+	page.route('**/array/**', async (route) => {
+		const url = route.request().url();
+		if (url.endsWith('.js')) {
+			await route.fulfill({
+				status: 200,
+				contentType: 'application/javascript',
+				body: '/* posthog-assets noop */'
+			});
+		} else {
+			await route.fulfill({
+				status: 200,
+				contentType: 'application/json',
+				body: JSON.stringify({ editorParams: {}, toolbarParams: {} })
+			});
+		}
+	});
+	// Intercepter les envois d'events réseau (backup)
+	for (const pattern of ['**/e/**', '**/i/v0/e/**', '**/batch/**', '**/capture/**']) {
 		page.route(pattern, (route) => route.fulfill({ status: 200, body: '{}' }));
 	}
 
-	// Routes de capture : décoder le payload et accumuler les events
-	for (const pattern of capturePatterns) {
-		page.route(pattern, async (route) => {
-			try {
-				const request = route.request();
-				const postData = request.postData();
-
-				if (postData) {
-					// posthog-js envoie soit du JSON soit du base64
-					let parsed: unknown;
-					try {
-						parsed = JSON.parse(postData);
-					} catch {
-						// Essai base64
-						try {
-							const decoded = Buffer.from(postData, 'base64').toString('utf-8');
-							parsed = JSON.parse(decoded);
-						} catch {
-							// payload non décodable, on ignore
-						}
-					}
-
-					if (parsed && typeof parsed === 'object') {
-						// Format batch : { batch: [...] }
-						const batchPayload = parsed as Record<string, unknown>;
-						const batch = batchPayload['batch'] ?? batchPayload['data'];
-						if (Array.isArray(batch)) {
-							for (const item of batch) {
-								if (item && typeof item === 'object') {
-									const ev = item as Record<string, unknown>;
-									captured.push({
-										event: String(ev['event'] ?? ev['e'] ?? ''),
-										properties: (ev['properties'] as Record<string, unknown>) ?? {}
-									});
-								}
-							}
-						} else {
-							// Format single event
-							const ev = batchPayload;
-							if (ev['event'] || ev['e']) {
-								captured.push({
-									event: String(ev['event'] ?? ev['e'] ?? ''),
-									properties: (ev['properties'] as Record<string, unknown>) ?? {}
-								});
-							}
-						}
-					}
-				}
-			} catch {
-				// Ne jamais faire rater le test pour un problème de décodage
-			}
-
-			await route.fulfill({ status: 200, body: '{}' });
-		});
-	}
-
 	return {
-		getCapturedEvents: () => [...captured]
+		getCapturedEvents: () => [...captured],
+		exposeSpyPromise
 	};
 }
 

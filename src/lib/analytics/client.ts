@@ -19,9 +19,14 @@ export function initAnalytics(): void {
 
 	posthog.init(key, {
 		api_host: host ?? 'https://eu.i.posthog.com',
-		person_profiles: 'identified_only',
+		person_profiles: 'always',
 		capture_pageview: false,
-		capture_pageleave: false
+		capture_pageleave: false,
+		// Flush rapide en dev/test pour que les events soient envoyés immédiatement
+		// (minimum 250ms autorisé par posthog-js)
+		request_queue_config: {
+			flush_interval_ms: 250
+		}
 	});
 
 	initialized = true;
@@ -39,7 +44,17 @@ export function identifyUser(userId: string): void {
  * Envoie un event PostHog côté client.
  */
 export function track(event: string, properties?: Record<string, unknown>): void {
-	if (!browser || !initialized) return;
+	if (!browser) return;
+	// En test E2E (Playwright), notifier le spy si disponible pour assertion immédiate
+	// sans dépendre du timing de flush réseau de posthog-js.
+	// Appelé avant la garde `initialized` pour fonctionner même sans PostHog configuré.
+	const spy = (window as unknown as Record<string, unknown>)['__playwright_trackSpy'] as
+		| ((e: string, p: Record<string, unknown>) => void)
+		| undefined;
+	if (typeof spy === 'function') {
+		spy(event, properties ?? {});
+	}
+	if (!initialized) return;
 	posthog.capture(event, properties);
 }
 

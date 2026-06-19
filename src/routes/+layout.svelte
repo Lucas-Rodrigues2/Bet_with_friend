@@ -5,11 +5,20 @@
 	import { Button } from '$lib/components/ui/button/index.js';
 	import { resolveRoute } from '$app/paths';
 	import GuestBanner from '$lib/components/GuestBanner.svelte';
+	import { onMount } from 'svelte';
+	import { initAnalytics, identifyUser } from '$lib/analytics/client';
 
 	let { children, data } = $props();
 
 	const homeHref = resolveRoute('/');
 	const profileHref = resolveRoute('/app/profile');
+
+	onMount(() => {
+		initAnalytics();
+		if (data.session?.user?.id) {
+			identifyUser(data.session.user.id);
+		}
+	});
 
 	// Initiales pour l'avatar par défaut
 	const initials = $derived(

@@ -17,14 +17,16 @@ RESUME_NUDGE="Reprends l'enchaînement des stories du backlog là où tu t'es ar
 started=0
 
 while true; do
+
 	if [[ $started -eq 0 ]]; then
 		# Première tentative : on lance le skill.
-		claude --dangerously-skip-permissions --verbose -p "$PROMPT"
+		claude --dangerously-skip-permissions --verbose -p --continue "$RESUME_NUDGE"
 		started=1
 	else
 		# Reprise après coupure/quota : on continue la conversation précédente.
 		claude --dangerously-skip-permissions --verbose -p --continue "$RESUME_NUDGE"
 	fi
+
 	EXIT_CODE=$?
 
 	if [[ $EXIT_CODE -eq 0 ]]; then

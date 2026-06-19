@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { resolveRoute } from '$app/paths';
 	import { Button } from '$lib/components/ui/button/index.js';
+	import { track } from '$lib/analytics/client';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
@@ -10,11 +11,20 @@
 	let showNewBetMenu = $state(false);
 
 	function toggleNewBetMenu() {
-		showNewBetMenu = !showNewBetMenu;
+		const opening = !showNewBetMenu;
+		showNewBetMenu = opening;
+		if (opening) {
+			track('new_bet_menu_opened', { group_id: data.group.id });
+		}
 	}
 
 	function closeNewBetMenu() {
 		showNewBetMenu = false;
+	}
+
+	function selectBetType(type: 'closest' | 'yesno') {
+		track('new_bet_type_selected', { group_id: data.group.id, type });
+		closeNewBetMenu();
 	}
 </script>
 
@@ -98,7 +108,7 @@
 								'?type=closest'}
 							class="hover:bg-accent block px-4 py-2 text-sm"
 							data-testid="new-bet-closest"
-							onclick={closeNewBetMenu}
+							onclick={() => selectBetType('closest')}
 						>
 							Au plus proche
 						</a>
@@ -107,7 +117,7 @@
 								'?type=yesno'}
 							class="hover:bg-accent block px-4 py-2 text-sm"
 							data-testid="new-bet-yesno"
-							onclick={closeNewBetMenu}
+							onclick={() => selectBetType('yesno')}
 						>
 							Oui / Non
 						</a>

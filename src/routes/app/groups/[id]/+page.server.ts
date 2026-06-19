@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { db } from '$lib/server/db/index';
 import { groups, groupMembers, profiles } from '$lib/server/db/schema';
 import { and, eq, isNull } from 'drizzle-orm';
+import { captureServer } from '$lib/server/analytics';
 import type { PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ locals, params }) => {
@@ -59,6 +60,16 @@ export const load: PageServerLoad = async ({ locals, params }) => {
 		.innerJoin(profiles, eq(profiles.id, groupMembers.userId))
 		.where(and(eq(groupMembers.groupId, id), isNull(groupMembers.removedAt)))
 		.orderBy(groupMembers.joinedAt);
+
+	// Track group_viewed après vérification d'appartenance (fait réel)
+	await captureServer({
+		distinctId: user.id,
+		event: 'group_viewed',
+		properties: {
+			group_id: group.id,
+			role: group.role
+		}
+	});
 
 	return {
 		group: {
