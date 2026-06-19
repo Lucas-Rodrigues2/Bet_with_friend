@@ -9,8 +9,9 @@ primary_region = "cdg"
     PUBLIC_POSTHOG_HOST = "https://eu.i.posthog.com"
 
 [env]
-  HOST = "0.0.0.0"
   PORT = "3000"
+  ORIGIN = "https://bet-with-friend.fly.dev"
+  NODE_OPTIONS = "--trace-uncaught --trace-warnings"
 
 [http_service]
   internal_port = 3000
