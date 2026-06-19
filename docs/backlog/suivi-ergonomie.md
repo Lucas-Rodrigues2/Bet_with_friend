@@ -13,6 +13,13 @@ Statuts : `à faire` · `fait` · `ignoré` (avec raison).
 
 ---
 
+## S-011 — Liens d'invitation — 2026-06-19
+
+- [majeur] `à faire` — Page groupe / section Membres : le toggle `can_invite` (« Ne peut pas inviter » / « Peut inviter ») agit immédiatement sans confirmation ni feedback visuel (toast) après le changement. → Ajouter un toast de confirmation après toggle réussi.
+- [majeur] `à faire` — Page groupe / section Invitations : après création d'un lien, la zone « Lien créé : » (portée par les form action data) disparaît après rechargement de page ; le lien reste visible dans la liste mais le feedback initial est fugace. → Envisager de stocker le token fraîchement créé dans un `$state` client pour persistance post-action.
+
+---
+
 ## S-013 — Page groupe (dashboard) — 2026-06-19
 
 - [mineur] `à faire` — Page groupe (bouton « Nouveau pari ») : menu déroulant custom sans attributs ARIA. Le bouton n'a pas `aria-expanded`/`aria-haspopup`, le conteneur n'a pas `role="menu"`, les liens n'ont pas `role="menuitem"`. → Ajouter ces attributs ou migrer vers le composant `DropdownMenu` de shadcn-svelte (bits-ui) qui gère nativement l'accessibilité.

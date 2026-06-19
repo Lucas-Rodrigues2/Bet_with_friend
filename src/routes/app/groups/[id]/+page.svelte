@@ -13,6 +13,8 @@
 	let showInviteForm = $state(false);
 	let inviteLoading = $state(false);
 	let copiedToken = $state<string | null>(null);
+	let confirmLeave = $state(false);
+	let confirmKickUserId = $state<string | null>(null);
 
 	// Résultats du formulaire
 	const f = $derived(
@@ -21,6 +23,8 @@
 			revoked?: boolean;
 			error?: string;
 			canInviteUpdated?: boolean;
+			kicked?: boolean;
+			promoted?: boolean;
 		} | null
 	);
 

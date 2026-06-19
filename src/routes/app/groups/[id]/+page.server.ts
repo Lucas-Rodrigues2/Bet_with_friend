@@ -10,6 +10,7 @@ import {
 	revokeInvitation,
 	setMemberCanInvite
 } from '$lib/server/invitations';
+import { removeMember, promoteMember } from '$lib/server/groups';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ locals, params }) => {
@@ -253,5 +254,110 @@ export const actions: Actions = {
 		}
 
 		return { canInviteUpdated: true };
+	},
+
+	leave: async ({ locals, params }) => {
+		const { session, user } = await locals.safeGetSession();
+		if (!session || !user) return fail(401, { error: 'Non authentifié.' });
+
+		if (!z.string().uuid().safeParse(params.id).success) {
+			return fail(400, { error: 'Groupe invalide.' });
+		}
+
+		const outcome = await removeMember({
+			groupId: params.id,
+			targetUserId: user.id,
+			actorUserId: user.id
+		});
+
+		if (outcome.error) {
+			return fail(400, { error: outcome.error });
+		}
+
+		await captureServer({
+			distinctId: user.id,
+			event: 'group_left',
+			properties: { group_id: params.id }
+		});
+
+		throw redirect(303, '/app');
+	},
+
+	kick: async ({ locals, params, request }) => {
+		const { session, user } = await locals.safeGetSession();
+		if (!session || !user) return fail(401, { error: 'Non authentifié.' });
+
+		if (!z.string().uuid().safeParse(params.id).success) {
+			return fail(400, { error: 'Groupe invalide.' });
+		}
+
+		const formData = await request.formData();
+		const raw = { targetUserId: formData.get('targetUserId') };
+		const schema = z.object({
+			targetUserId: z
+				.string()
+				.regex(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/)
+		});
+		const result = schema.safeParse(raw);
+		if (!result.success) {
+			return fail(400, { error: 'Paramètres invalides.' });
+		}
+
+		const outcome = await removeMember({
+			groupId: params.id,
+			targetUserId: result.data.targetUserId,
+			actorUserId: user.id
+		});
+
+		if (outcome.error) {
+			return fail(403, { error: outcome.error });
+		}
+
+		await captureServer({
+			distinctId: user.id,
+			event: 'member_kicked',
+			properties: { group_id: params.id, target_user_id: result.data.targetUserId }
+		});
+
+		return { kicked: true };
+	},
+
+	promote: async ({ locals, params, request }) => {
+		const { session, user } = await locals.safeGetSession();
+		if (!session || !user) return fail(401, { error: 'Non authentifié.' });
+
+		if (!z.string().uuid().safeParse(params.id).success) {
+			return fail(400, { error: 'Groupe invalide.' });
+		}
+
+		const formData = await request.formData();
+		const raw = { targetUserId: formData.get('targetUserId') };
+		const schema = z.object({
+			targetUserId: z
+				.string()
+				.regex(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/)
+		});
+		const result = schema.safeParse(raw);
+		if (!result.success) {
+			return fail(400, { error: 'Paramètres invalides.' });
+		}
+
+		const outcome = await promoteMember({
+			groupId: params.id,
+			targetUserId: result.data.targetUserId,
+			adminUserId: user.id
+		});
+
+		if (outcome.error) {
+			return fail(403, { error: outcome.error });
+		}
+
+		await captureServer({
+			distinctId: user.id,
+			event: 'member_promoted',
+			properties: { group_id: params.id, target_user_id: result.data.targetUserId }
+		});
+
+		return { promoted: true };
 	}
 };
