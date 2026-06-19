@@ -1,7 +1,7 @@
 import { error, redirect } from '@sveltejs/kit';
 import { z } from 'zod';
 import { db } from '$lib/server/db/index';
-import { groups, groupMembers } from '$lib/server/db/schema';
+import { groups, groupMembers, profiles } from '$lib/server/db/schema';
 import { and, eq, isNull } from 'drizzle-orm';
 import type { PageServerLoad } from './$types';
 
@@ -23,6 +23,7 @@ export const load: PageServerLoad = async ({ locals, params }) => {
 			id: groups.id,
 			name: groups.name,
 			description: groups.description,
+			imageUrl: groups.imageUrl,
 			currency: groups.currency,
 			createdAt: groups.createdAt,
 			role: groupMembers.role
@@ -45,14 +46,36 @@ export const load: PageServerLoad = async ({ locals, params }) => {
 
 	const group = rows[0];
 
+	// Load active members of the group
+	const members = await db
+		.select({
+			userId: groupMembers.userId,
+			role: groupMembers.role,
+			pseudo: profiles.pseudo,
+			avatarUrl: profiles.avatarUrl,
+			joinedAt: groupMembers.joinedAt
+		})
+		.from(groupMembers)
+		.innerJoin(profiles, eq(profiles.id, groupMembers.userId))
+		.where(and(eq(groupMembers.groupId, id), isNull(groupMembers.removedAt)))
+		.orderBy(groupMembers.joinedAt);
+
 	return {
 		group: {
 			id: group.id,
 			name: group.name,
 			description: group.description,
+			imageUrl: group.imageUrl,
 			currency: group.currency,
 			createdAt: group.createdAt,
 			role: group.role as 'admin' | 'member'
-		}
+		},
+		members: members.map((m) => ({
+			userId: m.userId,
+			role: m.role as 'admin' | 'member',
+			pseudo: m.pseudo,
+			avatarUrl: m.avatarUrl,
+			joinedAt: m.joinedAt
+		}))
 	};
 };
