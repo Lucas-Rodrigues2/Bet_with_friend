@@ -13,8 +13,6 @@
 	let showInviteForm = $state(false);
 	let inviteLoading = $state(false);
 	let copiedToken = $state<string | null>(null);
-	let confirmLeave = $state(false);
-	let confirmKickUserId = $state<string | null>(null);
 
 	// Résultats du formulaire
 	const f = $derived(
@@ -208,16 +206,25 @@
 			<h2 class="text-foreground text-lg font-semibold">
 				Membres ({data.members.length})
 			</h2>
-			{#if canGenerateInvite()}
-				<Button
-					variant="outline"
-					size="sm"
-					data-testid="invite-btn"
-					onclick={() => (showInviteForm = !showInviteForm)}
+			<div class="flex items-center gap-2">
+				<a
+					href={resolveRoute('/app/groups/[id]/members', { id: data.group.id })}
+					class="text-muted-foreground hover:text-foreground text-sm underline-offset-4 hover:underline"
+					data-testid="members-page-link"
 				>
-					Inviter
-				</Button>
-			{/if}
+					Gérer les membres
+				</a>
+				{#if canGenerateInvite()}
+					<Button
+						variant="outline"
+						size="sm"
+						data-testid="invite-btn"
+						onclick={() => (showInviteForm = !showInviteForm)}
+					>
+						Inviter
+					</Button>
+				{/if}
+			</div>
 		</div>
 
 		<ul class="flex flex-col gap-2">

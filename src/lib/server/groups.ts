@@ -80,7 +80,11 @@ export async function getActiveMember(
 		.select({ role: groupMembers.role, canInvite: groupMembers.canInvite })
 		.from(groupMembers)
 		.where(
-			and(eq(groupMembers.groupId, groupId), eq(groupMembers.userId, userId), isNull(groupMembers.removedAt))
+			and(
+				eq(groupMembers.groupId, groupId),
+				eq(groupMembers.userId, userId),
+				isNull(groupMembers.removedAt)
+			)
 		)
 		.limit(1);
 
@@ -145,7 +149,7 @@ export async function removeMember(params: {
 			return { error: 'Membre introuvable.' };
 		}
 		if (targetRows[0].role === 'admin') {
-			return { error: 'Impossible d\'exclure un admin.' };
+			return { error: "Impossible d'exclure un admin." };
 		}
 	} else {
 		// Leaving — if admin, check there is at least one other admin
@@ -164,8 +168,7 @@ export async function removeMember(params: {
 			const otherAdmins = allAdmins.filter((r) => r.userId !== params.actorUserId);
 			if (otherAdmins.length === 0) {
 				return {
-					error:
-						'Vous êtes le dernier admin. Promouvez un autre membre avant de quitter.'
+					error: 'Vous êtes le dernier admin. Promouvez un autre membre avant de quitter.'
 				};
 			}
 		}
