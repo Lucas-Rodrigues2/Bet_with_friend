@@ -4,6 +4,7 @@ COPY package*.json ./
 RUN npm ci
 COPY . .
 
+# Variables publiques — baked into the client bundle
 ARG PUBLIC_SUPABASE_URL
 ARG PUBLIC_SUPABASE_ANON_KEY
 ARG PUBLIC_POSTHOG_KEY
@@ -12,6 +13,14 @@ ENV PUBLIC_SUPABASE_URL=$PUBLIC_SUPABASE_URL
 ENV PUBLIC_SUPABASE_ANON_KEY=$PUBLIC_SUPABASE_ANON_KEY
 ENV PUBLIC_POSTHOG_KEY=$PUBLIC_POSTHOG_KEY
 ENV PUBLIC_POSTHOG_HOST=$PUBLIC_POSTHOG_HOST
+
+# Variables privées — placeholder uniquement pour que le build ne plante pas.
+# postgres-js est lazy : aucune vraie connexion n'est établie pendant le build.
+# Les vraies valeurs sont injectées par Fly.io au démarrage du conteneur.
+ARG DATABASE_URL=postgresql://placeholder:placeholder@localhost/placeholder
+ARG SUPABASE_SERVICE_ROLE_KEY=placeholder
+ENV DATABASE_URL=$DATABASE_URL
+ENV SUPABASE_SERVICE_ROLE_KEY=$SUPABASE_SERVICE_ROLE_KEY
 
 RUN npm run build
 
