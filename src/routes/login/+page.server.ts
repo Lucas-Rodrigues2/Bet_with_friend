@@ -10,21 +10,26 @@ const loginSchema = z.object({
 
 export const load: PageServerLoad = async ({ locals, url }) => {
 	const { session } = await locals.safeGetSession();
+
+	const redirectTo = url.searchParams.get('redirectTo');
+
 	if (session) {
-		throw redirect(303, '/');
+		throw redirect(303, redirectTo ?? '/');
 	}
 
 	// Message d'erreur provenant d'un retour OAuth (ex: accès refusé)
 	const oauthError = url.searchParams.get('error');
 
 	return {
-		oauthError: oauthError ? decodeURIComponent(oauthError) : null
+		oauthError: oauthError ? decodeURIComponent(oauthError) : null,
+		redirectTo: redirectTo ?? null
 	};
 };
 
 export const actions: Actions = {
-	default: async ({ request, locals }) => {
+	default: async ({ request, locals, url }) => {
 		const formData = await request.formData();
+		const redirectTo = url.searchParams.get('redirectTo');
 		const raw = {
 			email: formData.get('email'),
 			password: formData.get('password')
@@ -59,6 +64,10 @@ export const actions: Actions = {
 			});
 		}
 
-		throw redirect(303, '/');
+		// Valider le redirectTo pour éviter les open redirects (doit commencer par /)
+		const safeRedirect =
+			redirectTo && redirectTo.startsWith('/') && !redirectTo.startsWith('//') ? redirectTo : '/';
+
+		throw redirect(303, safeRedirect);
 	}
 };

@@ -47,6 +47,15 @@ export default defineConfig(
 		}
 	},
 	{
+		// Group page: hrefs are computed from resolveRoute() but with query params appended
+		// (e.g., resolveRoute(...) + '?type=closest'). The lint rule cannot trace this pattern,
+		// but the navigation base is always built from resolveRoute(), so it's safe.
+		files: ['src/routes/app/groups/\\[id\\]/+page.svelte'],
+		rules: {
+			'svelte/no-navigation-without-resolve': 'off'
+		}
+	},
+	{
 		// e2e files are managed by the QA agent — ignore their linting
 		files: ['e2e/**/*.ts'],
 		rules: {

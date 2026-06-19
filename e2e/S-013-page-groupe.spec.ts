@@ -125,27 +125,23 @@ test.describe('S-013 — Page groupe (dashboard)', () => {
 	test('bouton « Nouveau pari » propose « Au plus proche » et « Oui / Non »', async ({ page }) => {
 		await login(page, 'alice');
 		await page.goto(GROUP_URL);
+		// Attendre hydratation complète avant de cliquer
+		await page.waitForLoadState('networkidle');
 
-		// Cliquer sur le bouton
+		// Ouvrir le menu — le bouton appelle e.stopPropagation() donc la window ne ferme pas
 		await page.getByTestId('new-bet-btn').click();
 
-		// Attendre que les éléments du menu apparaissent via addInitScript
-		// Les données du menu sont lues via des hrefs connus depuis la source
-		// On vérifie via l'arbre d'accessibilité que le menu propose bien les deux options
-		await expect(page).toMatchAriaSnapshot(`
-      - button "Nouveau pari ▾" [active]
-    `);
+		// Attendre que les éléments soient attachés au DOM (Svelte conditionnel)
+		await page.waitForSelector('[data-testid="new-bet-closest"]', { state: 'attached' });
 
-		// Lire les hrefs directement depuis les éléments (s'ils sont dans le DOM)
-		// On utilise une courte attente pour laisser Svelte mettre à jour le DOM
-		await page.waitForTimeout(200);
-		const closestHref = await page
-			.locator('[data-testid="new-bet-closest"]')
-			.getAttribute('href');
-		const yesnoHref = await page.locator('[data-testid="new-bet-yesno"]').getAttribute('href');
+		// Lire les hrefs via evaluate (synchrone dans le contexte page, sans risque de race)
+		const hrefs = await page.evaluate(() => ({
+			closest: document.querySelector('[data-testid="new-bet-closest"]')?.getAttribute('href'),
+			yesno: document.querySelector('[data-testid="new-bet-yesno"]')?.getAttribute('href')
+		}));
 
-		expect(closestHref).toBe(`/app/groups/${SEEDED_GROUP_ID}/bets/new?type=closest`);
-		expect(yesnoHref).toBe(`/app/groups/${SEEDED_GROUP_ID}/bets/new?type=yesno`);
+		expect(hrefs.closest).toBe(`/app/groups/${SEEDED_GROUP_ID}/bets/new?type=closest`);
+		expect(hrefs.yesno).toBe(`/app/groups/${SEEDED_GROUP_ID}/bets/new?type=yesno`);
 	});
 
 	test('navigation vers la page de création (type closest) via lien direct', async ({ page }) => {

@@ -74,6 +74,7 @@ export const groupMembers = pgTable(
 			.notNull()
 			.references(() => profiles.id, { onDelete: 'cascade' }),
 		role: memberRoleEnum('role').notNull().default('member'),
+		canInvite: boolean('can_invite').notNull().default(false),
 		joinedAt: timestamp('joined_at', { withTimezone: true }).notNull().defaultNow(),
 		// Soft-delete: removed members keep history but lose access to group content.
 		// They can still see the group's ledger (ardoise).
@@ -96,6 +97,7 @@ export const groupInvitations = pgTable('group_invitations', {
 	expiresAt: timestamp('expires_at', { withTimezone: true }),
 	maxUses: integer('max_uses'),
 	usesCount: integer('uses_count').notNull().default(0),
+	revokedAt: timestamp('revoked_at', { withTimezone: true }),
 	createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
 });
 

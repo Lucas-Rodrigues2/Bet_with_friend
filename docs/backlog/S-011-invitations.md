@@ -1,7 +1,7 @@
 ---
 id: S-011
 epic: E02 — Groupes & invitations
-status: todo
+status: testing
 depends_on: [S-010]
 ---
 
