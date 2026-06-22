@@ -3,6 +3,7 @@
 	import { resolveRoute } from '$app/paths';
 	import { untrack } from 'svelte';
 	import { Button } from '$lib/components/ui/button/index.js';
+	import { track } from '$lib/analytics/client';
 	import type { ActionData, PageData } from './$types';
 
 	let { data, form }: { data: PageData; form: ActionData } = $props();
@@ -49,6 +50,12 @@
 	const targetSide = $derived(creatorSide === 'a' ? 'B' : 'A');
 	const targetSideChoice = $derived(creatorSide === 'a' ? choiceBValue : choiceAValue);
 	const creatorSideChoice = $derived(creatorSide === 'a' ? choiceAValue : choiceBValue);
+
+	// Track duel form opened — read group_id reactively so Svelte doesn't optimize away
+	$effect(() => {
+		const groupId = data.groupId;
+		track('duel_form_opened', { group_id: groupId });
+	});
 </script>
 
 <div class="container mx-auto max-w-2xl px-4 py-10">

@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { resolveRoute } from '$app/paths';
 	import { Button } from '$lib/components/ui/button/index.js';
+	import { track } from '$lib/analytics/client';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
@@ -94,6 +95,18 @@
 	const isCurrentUserTarget = $derived(
 		proposition ? proposition.targetId === data.currentUserId : false
 	);
+
+	// Track bet viewed — read bet properties reactively so Svelte doesn't optimize away
+	$effect(() => {
+		const betId = data.bet.id;
+		const betType = data.bet.type;
+		const groupId = data.bet.groupId;
+		track('bet_viewed', {
+			bet_id: betId,
+			bet_type: betType,
+			group_id: groupId
+		});
+	});
 </script>
 
 <div class="container mx-auto max-w-2xl px-4 py-10">
