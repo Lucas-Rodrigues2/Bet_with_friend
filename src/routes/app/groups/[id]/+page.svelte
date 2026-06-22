@@ -46,7 +46,12 @@
 		closeNewBetMenu();
 	}
 
-	const newBetBase = $derived(resolveRoute('/app/groups/[id]/bets/new', { id: data.group.id }));
+	const newClosestHref = $derived(
+		resolveRoute('/app/groups/[id]/bets/new/closest', { id: data.group.id })
+	);
+	const newYesnoHref = $derived(
+		resolveRoute('/app/groups/[id]/bets/new/yesno', { id: data.group.id })
+	);
 
 	function canGenerateInvite() {
 		return data.group.role === 'admin' || data.group.canInvite;
@@ -166,12 +171,13 @@
 
 				{#if showNewBetMenu}
 					<!-- svelte-ignore a11y_no_static_element_interactions -->
+					<!-- svelte-ignore a11y_click_events_have_key_events -->
 					<div
 						class="bg-popover border-border absolute right-0 top-full z-10 mt-1 w-44 rounded-md border shadow-md"
 						onclick={(e: MouseEvent) => e.stopPropagation()}
 					>
 						<a
-							href={`${newBetBase}?type=closest`}
+							href={newClosestHref}
 							class="hover:bg-accent block px-4 py-2 text-sm"
 							data-testid="new-bet-closest"
 							onclick={() => selectBetType('closest')}
@@ -179,7 +185,7 @@
 							Au plus proche
 						</a>
 						<a
-							href={`${newBetBase}?type=yesno`}
+							href={newYesnoHref}
 							class="hover:bg-accent block px-4 py-2 text-sm"
 							data-testid="new-bet-yesno"
 							onclick={() => selectBetType('yesno')}
@@ -191,13 +197,66 @@
 			</div>
 		</div>
 
-		<!-- État vide paris -->
-		<div
-			class="border-border rounded-lg border border-dashed p-10 text-center"
-			data-testid="empty-bets"
-		>
-			<p class="text-muted-foreground text-sm">Aucun pari — crée le premier !</p>
-		</div>
+		<!-- Liste des paris -->
+		{#if data.bets && data.bets.length > 0}
+			<ul class="flex flex-col gap-2" data-testid="bets-list">
+				{#each data.bets as bet (bet.id)}
+					{@const isPropositionReceived =
+						bet.type === 'yesno' &&
+						bet.propositionStatus === 'negotiating' &&
+						bet.propositionTargetId === data.group.currentUserId}
+					<li data-testid="bet-item">
+						<a
+							href={resolveRoute('/app/groups/[id]/bets/[betId]', {
+								id: data.group.id,
+								betId: bet.id
+							})}
+							class="border-border bg-card hover:bg-accent/30 flex items-center justify-between gap-3 rounded-lg border p-3 transition-colors"
+						>
+							<div class="min-w-0 flex-1">
+								<div class="flex flex-wrap items-center gap-2">
+									<p class="text-foreground text-sm font-medium" data-testid="bet-title">
+										{bet.title}
+									</p>
+									{#if isPropositionReceived}
+										<span
+											class="bg-primary text-primary-foreground rounded-full px-2 py-0.5 text-xs font-medium"
+											data-testid="proposition-received-badge"
+										>
+											Proposition reçue
+										</span>
+									{/if}
+								</div>
+								<p class="text-muted-foreground text-xs">
+									{#if bet.type === 'yesno'}
+										Duel Oui/Non
+									{:else if bet.stakeType === 'points'}
+										{bet.stakeAmount} pts
+									{:else}
+										Gage : {bet.forfeitDescription}
+									{/if}
+								</p>
+							</div>
+							<span
+								class="shrink-0 rounded-full px-2 py-0.5 text-xs font-medium {bet.status === 'open'
+									? 'bg-green-100 text-green-700'
+									: 'bg-muted text-muted-foreground'}"
+							>
+								{bet.status === 'open' ? 'Ouvert' : bet.status}
+							</span>
+						</a>
+					</li>
+				{/each}
+			</ul>
+		{:else}
+			<!-- État vide paris -->
+			<div
+				class="border-border rounded-lg border border-dashed p-10 text-center"
+				data-testid="empty-bets"
+			>
+				<p class="text-muted-foreground text-sm">Aucun pari — crée le premier !</p>
+			</div>
+		{/if}
 	</section>
 
 	<!-- Section Membres -->

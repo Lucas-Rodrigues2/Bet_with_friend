@@ -18,7 +18,7 @@ export const load: PageServerLoad = async ({ locals, params }) => {
 		throw redirect(303, '/login');
 	}
 
-	if (!z.string().uuid().safeParse(params.id).success) {
+	if (!uuidSchema.safeParse(params.id).success) {
 		throw error(404, 'Groupe introuvable.');
 	}
 	const { id } = params;

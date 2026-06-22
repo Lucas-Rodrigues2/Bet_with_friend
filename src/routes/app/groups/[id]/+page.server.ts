@@ -1,6 +1,9 @@
 import { error, fail, redirect } from '@sveltejs/kit';
 import { z } from 'zod';
 import { db } from '$lib/server/db/index';
+
+// UUID regex that accepts any 8-4-4-4-12 hex format (not restricted to RFC 4122 version/variant bits)
+const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 import { groups, groupMembers, profiles } from '$lib/server/db/schema';
 import { and, eq, isNull } from 'drizzle-orm';
 import { captureServer } from '$lib/server/analytics';
@@ -11,6 +14,7 @@ import {
 	setMemberCanInvite
 } from '$lib/server/invitations';
 import { removeMember, promoteMember } from '$lib/server/groups';
+import { getGroupBetsForUser } from '$lib/server/bets';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ locals, params }) => {
@@ -20,7 +24,7 @@ export const load: PageServerLoad = async ({ locals, params }) => {
 		throw redirect(303, '/login');
 	}
 
-	if (!z.string().uuid().safeParse(params.id).success) {
+	if (!uuidRegex.test(params.id)) {
 		throw error(404, 'Groupe introuvable.');
 	}
 	const { id } = params;
@@ -75,6 +79,9 @@ export const load: PageServerLoad = async ({ locals, params }) => {
 	const canSeeInvitations = isAdmin || group.canInvite;
 	const invitations = canSeeInvitations ? await getGroupInvitations(id) : [];
 
+	// Charger les paris visibles par cet utilisateur
+	const bets = await getGroupBetsForUser(id, user.id);
+
 	// Track group_viewed après vérification d'appartenance (fait réel)
 	await captureServer({
 		distinctId: user.id,
@@ -94,7 +101,8 @@ export const load: PageServerLoad = async ({ locals, params }) => {
 			currency: group.currency,
 			createdAt: group.createdAt,
 			role: group.role as 'admin' | 'member',
-			canInvite: group.canInvite
+			canInvite: group.canInvite,
+			currentUserId: user.id
 		},
 		members: members.map((m) => ({
 			userId: m.userId,
@@ -112,6 +120,18 @@ export const load: PageServerLoad = async ({ locals, params }) => {
 			usesCount: inv.usesCount,
 			revokedAt: inv.revokedAt,
 			createdAt: inv.createdAt
+		})),
+		bets: bets.map((b) => ({
+			id: b.id,
+			type: b.type,
+			title: b.title,
+			stakeType: b.stakeType,
+			stakeAmount: b.stakeAmount,
+			forfeitDescription: b.forfeitDescription,
+			status: b.status,
+			createdAt: b.createdAt,
+			propositionStatus: b.propositionStatus,
+			propositionTargetId: b.propositionTargetId
 		}))
 	};
 };
@@ -127,7 +147,7 @@ const toggleCanInviteSchema = z.object({
 });
 
 const revokeSchema = z.object({
-	invitationId: z.string().uuid()
+	invitationId: z.string().regex(uuidRegex)
 });
 
 export const actions: Actions = {
@@ -135,7 +155,7 @@ export const actions: Actions = {
 		const { session, user } = await locals.safeGetSession();
 		if (!session || !user) return fail(401, { error: 'Non authentifié.' });
 
-		if (!z.string().uuid().safeParse(params.id).success) {
+		if (!uuidRegex.test(params.id)) {
 			return fail(400, { error: 'Groupe invalide.' });
 		}
 
@@ -189,7 +209,7 @@ export const actions: Actions = {
 		const { session, user } = await locals.safeGetSession();
 		if (!session || !user) return fail(401, { error: 'Non authentifié.' });
 
-		if (!z.string().uuid().safeParse(params.id).success) {
+		if (!uuidRegex.test(params.id)) {
 			return fail(400, { error: 'Groupe invalide.' });
 		}
 
@@ -227,7 +247,7 @@ export const actions: Actions = {
 		const { session, user } = await locals.safeGetSession();
 		if (!session || !user) return fail(401, { error: 'Non authentifié.' });
 
-		if (!z.string().uuid().safeParse(params.id).success) {
+		if (!uuidRegex.test(params.id)) {
 			return fail(400, { error: 'Groupe invalide.' });
 		}
 
@@ -260,7 +280,7 @@ export const actions: Actions = {
 		const { session, user } = await locals.safeGetSession();
 		if (!session || !user) return fail(401, { error: 'Non authentifié.' });
 
-		if (!z.string().uuid().safeParse(params.id).success) {
+		if (!uuidRegex.test(params.id)) {
 			return fail(400, { error: 'Groupe invalide.' });
 		}
 
@@ -287,7 +307,7 @@ export const actions: Actions = {
 		const { session, user } = await locals.safeGetSession();
 		if (!session || !user) return fail(401, { error: 'Non authentifié.' });
 
-		if (!z.string().uuid().safeParse(params.id).success) {
+		if (!uuidRegex.test(params.id)) {
 			return fail(400, { error: 'Groupe invalide.' });
 		}
 
@@ -326,7 +346,7 @@ export const actions: Actions = {
 		const { session, user } = await locals.safeGetSession();
 		if (!session || !user) return fail(401, { error: 'Non authentifié.' });
 
-		if (!z.string().uuid().safeParse(params.id).success) {
+		if (!uuidRegex.test(params.id)) {
 			return fail(400, { error: 'Groupe invalide.' });
 		}
 

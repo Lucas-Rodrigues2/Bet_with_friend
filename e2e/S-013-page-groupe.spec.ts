@@ -32,8 +32,8 @@ test.describe('S-013 — Page groupe (dashboard)', () => {
 		await expect(page).toHaveURL(/\/login/);
 	});
 
-	test('accès /bets/new sans session → redirection /login', async ({ page }) => {
-		await page.goto(`${GROUP_URL}/bets/new?type=closest`);
+	test('accès /bets/new/closest sans session → redirection /login', async ({ page }) => {
+		await page.goto(`${GROUP_URL}/bets/new/closest`);
 		await expect(page).toHaveURL(/\/login/);
 	});
 
@@ -140,34 +140,29 @@ test.describe('S-013 — Page groupe (dashboard)', () => {
 			yesno: document.querySelector('[data-testid="new-bet-yesno"]')?.getAttribute('href')
 		}));
 
-		expect(hrefs.closest).toBe(`/app/groups/${SEEDED_GROUP_ID}/bets/new?type=closest`);
-		expect(hrefs.yesno).toBe(`/app/groups/${SEEDED_GROUP_ID}/bets/new?type=yesno`);
+		expect(hrefs.closest).toBe(`/app/groups/${SEEDED_GROUP_ID}/bets/new/closest`);
+		expect(hrefs.yesno).toBe(`/app/groups/${SEEDED_GROUP_ID}/bets/new/yesno`);
 	});
 
 	test('navigation vers la page de création (type closest) via lien direct', async ({ page }) => {
-		// Teste que l'URL /bets/new?type=closest est accessible et affiche le placeholder
 		await login(page, 'alice');
-		await page.goto(`${GROUP_URL}/bets/new?type=closest`);
+		await page.goto(`${GROUP_URL}/bets/new/closest`);
 
-		await expect(page).toHaveURL(`${GROUP_URL}/bets/new?type=closest`);
-		await expect(page.getByRole('heading', { name: 'Nouveau pari' })).toBeVisible();
-		await expect(
-			page.getByText('La création de paris sera disponible prochainement.')
-		).toBeVisible();
+		await expect(page).toHaveURL(`${GROUP_URL}/bets/new/closest`);
+		await expect(page.getByRole('heading', { name: /Nouveau pari/ })).toBeVisible();
 	});
 
 	test('navigation vers la page de création (type yesno) via lien direct', async ({ page }) => {
-		// Teste que l'URL /bets/new?type=yesno est accessible et affiche le placeholder
 		await login(page, 'alice');
-		await page.goto(`${GROUP_URL}/bets/new?type=yesno`);
+		await page.goto(`${GROUP_URL}/bets/new/yesno`);
 
-		await expect(page).toHaveURL(`${GROUP_URL}/bets/new?type=yesno`);
-		await expect(page.getByRole('heading', { name: 'Nouveau pari' })).toBeVisible();
+		await expect(page).toHaveURL(`${GROUP_URL}/bets/new/yesno`);
+		await expect(page.getByRole('heading', { name: /Nouveau duel/ })).toBeVisible();
 	});
 
-	test('page /bets/new a un lien de retour vers le groupe', async ({ page }) => {
+	test('page /bets/new/closest a un lien de retour vers le groupe', async ({ page }) => {
 		await login(page, 'alice');
-		await page.goto(`${GROUP_URL}/bets/new?type=closest`);
+		await page.goto(`${GROUP_URL}/bets/new/closest`);
 
 		// Lien de retour vers le groupe
 		await expect(page.getByRole('link', { name: '← Retour au groupe' })).toBeVisible();
@@ -197,9 +192,9 @@ test.describe('S-013 — Page groupe (dashboard)', () => {
 		await expect(page.getByRole('heading', { name: '404' })).toBeVisible();
 	});
 
-	test('Dave (non membre) accède à /bets/new → 404', async ({ page }) => {
+	test('Dave (non membre) accède à /bets/new/closest → 404', async ({ page }) => {
 		await login(page, 'dave');
-		await page.goto(`${GROUP_URL}/bets/new?type=closest`);
+		await page.goto(`${GROUP_URL}/bets/new/closest`);
 
 		// Doit recevoir une 404
 		await expect(page.getByRole('heading', { name: '404' })).toBeVisible();

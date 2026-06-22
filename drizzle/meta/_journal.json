@@ -8,6 +8,20 @@
       "when": 1781341980215,
       "tag": "0000_initial_schema",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1782022894156,
+      "tag": "0001_add_forfeit_scope",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1782108000000,
+      "tag": "0002_yesno_duel_forfeits",
+      "breakpoints": true
     }
   ]
 }

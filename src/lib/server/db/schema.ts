@@ -22,6 +22,7 @@ export const yesnoModeEnum = pgEnum('yesno_mode', ['duel', 'open']);
 export const juryModeEnum = pgEnum('jury_mode', ['unanimous', 'majority']);
 export const memberRoleEnum = pgEnum('member_role', ['admin', 'member']);
 export const betStatusEnum = pgEnum('bet_status', ['draft', 'open', 'closed', 'cancelled']);
+export const forfeitScopeEnum = pgEnum('forfeit_scope', ['all_losers', 'last_one']);
 export const matchStatusEnum = pgEnum('match_status', [
 	'open',
 	'closed',
@@ -121,6 +122,7 @@ export const bets = pgTable(
 		stakeType: stakeTypeEnum('stake_type').notNull(),
 		stakeAmount: numeric('stake_amount', { precision: 12, scale: 2 }),
 		forfeitDescription: text('forfeit_description'),
+		forfeitScope: forfeitScopeEnum('forfeit_scope'), // nullable; required if stake_type='forfeit' and type='closest'
 		hideAnswers: boolean('hide_answers').notNull().default(false),
 		participationDeadline: timestamp('participation_deadline', { withTimezone: true }),
 		juryMode: juryModeEnum('jury_mode').notNull(),
@@ -181,7 +183,8 @@ export const propositions = pgTable(
 			.references(() => profiles.id),
 		stakeCreator: numeric('stake_creator', { precision: 12, scale: 2 }),
 		stakeTarget: numeric('stake_target', { precision: 12, scale: 2 }),
-		forfeitDescription: text('forfeit_description'),
+		forfeitCreator: text('forfeit_creator'), // gage du créateur si stake_type='forfeit'
+		forfeitTarget: text('forfeit_target'), // gage de la cible si stake_type='forfeit'
 		lastProposerId: uuid('last_proposer_id')
 			.notNull()
 			.references(() => profiles.id),
@@ -204,7 +207,8 @@ export const propositionOffers = pgTable('proposition_offers', {
 		.references(() => profiles.id),
 	stakeCreator: numeric('stake_creator', { precision: 12, scale: 2 }),
 	stakeTarget: numeric('stake_target', { precision: 12, scale: 2 }),
-	forfeitDescription: text('forfeit_description'),
+	forfeitCreator: text('forfeit_creator'), // gage du créateur si stake_type='forfeit'
+	forfeitTarget: text('forfeit_target'), // gage de la cible si stake_type='forfeit'
 	createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
 });
 

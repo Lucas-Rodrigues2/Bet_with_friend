@@ -1,9 +1,11 @@
 import { error, redirect } from '@sveltejs/kit';
-import { z } from 'zod';
 import { db } from '$lib/server/db/index';
 import { groups, groupMembers } from '$lib/server/db/schema';
 import { and, eq, isNull } from 'drizzle-orm';
 import type { PageServerLoad } from './$types';
+
+// UUID regex that accepts any 8-4-4-4-12 hex format (not restricted to RFC 4122 version/variant bits)
+const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export const load: PageServerLoad = async ({ locals, params }) => {
 	const { session, user } = await locals.safeGetSession();
@@ -12,7 +14,7 @@ export const load: PageServerLoad = async ({ locals, params }) => {
 		throw redirect(303, '/login');
 	}
 
-	if (!z.string().uuid().safeParse(params.id).success) {
+	if (!uuidRegex.test(params.id)) {
 		throw error(404, 'Groupe introuvable.');
 	}
 	const { id } = params;
