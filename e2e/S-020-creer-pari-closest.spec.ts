@@ -262,9 +262,8 @@ test('page détail montre le jury (Carol) et la mise (10 points)', async ({ page
 	await expect(page.getByTestId('bet-stake')).toBeVisible();
 	await expect(page.getByTestId('stake-amount')).toContainText('10');
 
-	// Bouton participer (placeholder)
+	// Bouton participer (implémenté en S-021)
 	await expect(page.getByTestId('participate-btn')).toBeVisible();
-	await expect(page.getByTestId('participate-btn')).toBeDisabled();
 });
 
 test('page détail montre la visibilité (liste figée)', async ({ page }) => {

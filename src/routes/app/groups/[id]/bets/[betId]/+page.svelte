@@ -1,10 +1,11 @@
 <script lang="ts">
 	import { resolveRoute } from '$app/paths';
+	import { enhance } from '$app/forms';
 	import { Button } from '$lib/components/ui/button/index.js';
 	import { track } from '$lib/analytics/client';
-	import type { PageData } from './$types';
+	import type { PageData, ActionData } from './$types';
 
-	let { data }: { data: PageData } = $props();
+	let { data, form }: { data: PageData; form: ActionData } = $props();
 
 	const groupHref = $derived(resolveRoute('/app/groups/[id]', { id: data.bet.groupId }));
 
@@ -95,6 +96,29 @@
 	const isCurrentUserTarget = $derived(
 		proposition ? proposition.targetId === data.currentUserId : false
 	);
+
+	// Closest bet participation logic
+	const isClosest = $derived(data.bet.type === 'closest');
+	const myParticipation = $derived(data.bet.myParticipation ?? null);
+	const hasParticipated = $derived(myParticipation !== null);
+
+	// Deadline check: is participation still open?
+	const deadlinePassed = $derived(
+		data.bet.participationDeadline ? new Date() > new Date(data.bet.participationDeadline) : false
+	);
+
+	const canParticipate = $derived(isClosest && data.bet.matchStatus === 'open' && !deadlinePassed);
+
+	// Stake label for participate button
+	const stakeLabel = $derived(
+		data.bet.stakeType === 'points'
+			? `Miser ${data.bet.stakeAmount} points`
+			: `Parier (gage : ${data.bet.forfeitDescription})`
+	);
+
+	// Participation form answer state — writable derived so it tracks data changes
+	// but also allows the user to edit the field before submission
+	let answerValue = $derived.by(() => data.bet.myParticipation?.answer ?? '');
 
 	// Track bet viewed — read bet properties reactively so Svelte doesn't optimize away
 	$effect(() => {
@@ -388,6 +412,53 @@
 					</ul>
 				{/if}
 			</div>
+
+			<!-- Participants (closest) -->
+			<div class="border-border bg-card rounded-lg border p-4" data-testid="bet-participants">
+				<h2 class="text-foreground mb-2 text-sm font-semibold">
+					Participants ({data.bet.participants.length})
+				</h2>
+				{#if data.bet.participants.length === 0}
+					<p class="text-muted-foreground text-sm">Personne n'a encore participé.</p>
+				{:else}
+					<ul class="flex flex-col gap-2" data-testid="participants-list">
+						{#each data.bet.participants as participant (participant.userId)}
+							<li class="flex items-center justify-between gap-2" data-testid="participant-item">
+								<div class="flex items-center gap-2">
+									{#if participant.avatarUrl}
+										<img
+											src={participant.avatarUrl}
+											alt={participant.pseudo}
+											class="h-6 w-6 rounded-full object-cover"
+										/>
+									{:else}
+										<div
+											class="bg-muted text-muted-foreground flex h-6 w-6 items-center justify-center rounded-full text-xs font-medium"
+										>
+											{participant.pseudo.charAt(0).toUpperCase()}
+										</div>
+									{/if}
+									<span class="text-foreground text-sm">
+										{participant.pseudo}{participant.userId === data.currentUserId ? ' (moi)' : ''}
+									</span>
+								</div>
+								{#if participant.answer !== null}
+									<span
+										class="text-foreground text-sm font-medium"
+										data-testid="participant-answer"
+									>
+										{participant.answer}
+									</span>
+								{:else}
+									<span class="text-muted-foreground text-xs italic" data-testid="answer-hidden">
+										Réponse cachée
+									</span>
+								{/if}
+							</li>
+						{/each}
+					</ul>
+				{/if}
+			</div>
 		{/if}
 
 		<!-- Qui peut voir (always shown) -->
@@ -435,11 +506,82 @@
 			<div class="mt-2" data-testid="proposition-actions">
 				<Button disabled data-testid="accept-btn">Accepter (disponible en S-031)</Button>
 			</div>
-		{:else if !isYesno}
-			<!-- Bouton Participer closest (placeholder S-021) -->
-			<div class="mt-2" data-testid="participate-section">
-				<Button disabled data-testid="participate-btn">Participer (bientôt disponible)</Button>
-			</div>
+		{:else if isClosest}
+			<!-- Participation closest -->
+			{#if canParticipate}
+				<div
+					class="border-border bg-card rounded-lg border p-4 mt-2"
+					data-testid="participate-section"
+				>
+					<h2 class="text-foreground mb-3 text-sm font-semibold">
+						{hasParticipated ? 'Modifier mon estimation' : 'Mon estimation'}
+					</h2>
+
+					{#if form?.participateError}
+						<p class="text-destructive mb-3 text-sm" data-testid="participate-error">
+							{form.participateError}
+						</p>
+					{/if}
+
+					<form method="POST" action="?/participate" use:enhance class="flex flex-col gap-3">
+						<div>
+							<label for="answer" class="text-foreground mb-1 block text-sm font-medium">
+								Mon estimation
+							</label>
+							<input
+								id="answer"
+								name="answer"
+								type="text"
+								class="border-input bg-background text-foreground placeholder:text-muted-foreground focus-visible:ring-ring w-full rounded-md border px-3 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1"
+								placeholder="Votre estimation..."
+								value={answerValue}
+								data-testid="answer-input"
+								required
+							/>
+						</div>
+						<Button type="submit" data-testid="participate-btn">
+							{hasParticipated ? 'Modifier' : stakeLabel}
+						</Button>
+					</form>
+				</div>
+			{:else if deadlinePassed && !hasParticipated}
+				<!-- Spectator banner: deadline passed without participating -->
+				<div
+					class="bg-muted text-muted-foreground rounded-lg border p-4 mt-2"
+					data-testid="spectator-banner"
+				>
+					<p class="text-sm">Tu n'as pas participé — spectateur</p>
+				</div>
+			{:else if hasParticipated && deadlinePassed}
+				<!-- Participated, deadline passed — can only view -->
+				<div
+					class="border-border bg-card rounded-lg border p-4 mt-2"
+					data-testid="participate-section"
+				>
+					<h2 class="text-foreground mb-1 text-sm font-semibold">Mon estimation</h2>
+					<p class="text-foreground text-sm font-medium" data-testid="my-answer">
+						{myParticipation?.answer}
+					</p>
+					<p class="text-muted-foreground mt-1 text-xs">
+						La date limite est dépassée, ton estimation est figée.
+					</p>
+				</div>
+			{:else if data.bet.matchStatus !== 'open'}
+				<!-- Match closed or non-open -->
+				<div
+					class="border-border bg-card rounded-lg border p-4 mt-2"
+					data-testid="participate-section"
+				>
+					{#if hasParticipated}
+						<h2 class="text-foreground mb-1 text-sm font-semibold">Mon estimation</h2>
+						<p class="text-foreground text-sm font-medium" data-testid="my-answer">
+							{myParticipation?.answer}
+						</p>
+					{:else}
+						<Button disabled data-testid="participate-btn">Participer (pari clôturé)</Button>
+					{/if}
+				</div>
+			{/if}
 		{/if}
 	</div>
 </div>

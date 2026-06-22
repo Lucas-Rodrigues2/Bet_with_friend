@@ -4,6 +4,7 @@ import {
 	betVisibility,
 	matches,
 	matchJurors,
+	matchParticipants,
 	groupMembers,
 	profiles,
 	yesnoBets,
@@ -344,6 +345,15 @@ export interface BetDetail {
 	matchStatus: string | null;
 	visibility: { userId: string; pseudo: string; avatarUrl: string | null }[];
 	jurors: { userId: string; pseudo: string; avatarUrl: string | null }[];
+	// closest: participants list
+	participants: {
+		userId: string;
+		pseudo: string;
+		avatarUrl: string | null;
+		answer: string | null; // null if hide_answers and not the viewer
+	}[];
+	// closest: current user's own participation (null if not yet participated)
+	myParticipation: { answer: string; stake: string | null } | null;
 	// yesno-specific (null for closest bets)
 	yesno: {
 		choiceA: string;
@@ -446,6 +456,40 @@ export async function getBetDetailForUser(
 		jurors = jurorRows as typeof jurors;
 	}
 
+	// Fetch match participants (closest bets)
+	const participants: BetDetail['participants'] = [];
+	let myParticipation: BetDetail['myParticipation'] = null;
+
+	if (matchId && bet.type === 'closest') {
+		const participantRows = await db
+			.select({
+				userId: matchParticipants.userId,
+				pseudo: profiles.pseudo,
+				avatarUrl: profiles.avatarUrl,
+				answer: matchParticipants.answer,
+				stake: matchParticipants.stake
+			})
+			.from(matchParticipants)
+			.innerJoin(profiles, eq(profiles.id, matchParticipants.userId))
+			.where(eq(matchParticipants.matchId, matchId));
+
+		for (const p of participantRows) {
+			if (p.userId === userId) {
+				myParticipation = { answer: p.answer ?? '', stake: p.stake };
+			}
+			// hide_answers: mask other users' answers while match is open
+			const isOpen = matchStatus === 'open';
+			const isOwn = p.userId === userId;
+			const showAnswer = !bet.hideAnswers || !isOpen || isOwn;
+			participants.push({
+				userId: p.userId,
+				pseudo: p.pseudo,
+				avatarUrl: p.avatarUrl,
+				answer: showAnswer ? (p.answer ?? null) : null
+			});
+		}
+	}
+
 	// Fetch yesno-specific data
 	let yesnoData: BetDetail['yesno'] = null;
 	let propositionData: BetDetail['proposition'] = null;
@@ -537,9 +581,80 @@ export async function getBetDetailForUser(
 		matchStatus,
 		visibility: visRows as BetDetail['visibility'],
 		jurors,
+		participants,
+		myParticipation,
 		yesno: yesnoData,
 		proposition: propositionData
 	};
+}
+
+// ─── Participate in a closest bet ────────────────────────────────────────────
+
+export interface ParticipateInClosestBetParams {
+	matchId: string;
+	userId: string;
+	answer: string;
+	stake: string | null; // numeric string if points, null if forfeit
+}
+
+/**
+ * Upsert a participant's answer in a closest match.
+ * Allowed only if match.status = 'open' and (no deadline or deadline not passed).
+ * Throws if not allowed.
+ */
+export async function participateInClosestBet(
+	params: ParticipateInClosestBetParams
+): Promise<void> {
+	// Fetch the match to check status and deadline
+	const matchRows = await db
+		.select({
+			status: matches.status,
+			betId: matches.betId
+		})
+		.from(matches)
+		.where(eq(matches.id, params.matchId))
+		.limit(1);
+
+	if (matchRows.length === 0) {
+		throw new Error('Match introuvable.');
+	}
+
+	const match = matchRows[0];
+
+	if (match.status !== 'open') {
+		throw new Error('Ce pari est clôturé, tu ne peux plus participer.');
+	}
+
+	// Check deadline on the bet
+	const betRows = await db
+		.select({ participationDeadline: bets.participationDeadline })
+		.from(bets)
+		.where(eq(bets.id, match.betId))
+		.limit(1);
+
+	if (betRows.length > 0 && betRows[0].participationDeadline) {
+		const deadline = betRows[0].participationDeadline;
+		if (new Date() > deadline) {
+			throw new Error('La date limite de participation est dépassée.');
+		}
+	}
+
+	// Upsert (insert or update on conflict)
+	await db
+		.insert(matchParticipants)
+		.values({
+			matchId: params.matchId,
+			userId: params.userId,
+			answer: params.answer,
+			stake: params.stake
+		})
+		.onConflictDoUpdate({
+			target: [matchParticipants.matchId, matchParticipants.userId],
+			set: {
+				answer: params.answer,
+				stake: params.stake
+			}
+		});
 }
 
 /**
