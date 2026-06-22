@@ -2,7 +2,9 @@
 	import { enhance } from '$app/forms';
 	import { resolveRoute } from '$app/paths';
 	import { untrack } from 'svelte';
+	import { onMount } from 'svelte';
 	import { Button } from '$lib/components/ui/button/index.js';
+	import { track } from '$lib/analytics/client';
 	import type { ActionData, PageData } from './$types';
 
 	let { data, form }: { data: PageData; form: ActionData } = $props();
@@ -62,6 +64,11 @@
 	function memberLabel(m: (typeof data.members)[0]) {
 		return m.userId === data.currentUserId ? `${m.pseudo} (moi)` : m.pseudo;
 	}
+
+	// Track closest form opened — émis une seule fois au montage côté client
+	onMount(() => {
+		track('closest_form_opened', { group_id: data.groupId });
+	});
 </script>
 
 <div class="container mx-auto max-w-2xl px-4 py-10">
