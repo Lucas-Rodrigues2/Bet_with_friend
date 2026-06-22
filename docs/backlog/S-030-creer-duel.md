@@ -1,7 +1,7 @@
 ---
 id: S-030
 epic: E04 — Pari Oui/Non
-status: todo
+status: done
 depends_on: [S-013]
 ---
 

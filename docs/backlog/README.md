@@ -21,18 +21,18 @@ chaque fichier story ; ce tableau doit rester synchronisé.
 
 ## E02 — Groupes & invitations
 
-| Story                          | Titre                                  | Statut   | Dépend de |
-| ------------------------------ | -------------------------------------- | -------- | --------- |
-| [S-010](S-010-creer-groupe.md) | Créer un groupe                        | done     | S-002     |
-| [S-011](S-011-invitations.md)  | Liens d'invitation + droit délégable   | done     | S-010     |
-| [S-012](S-012-membres.md)      | Gestion des membres (rôles, exclusion) | in-progress | S-011     |
-| [S-013](S-013-page-groupe.md)  | Page groupe (dashboard)                | done     | S-010     |
+| Story                          | Titre                                  | Statut | Dépend de |
+| ------------------------------ | -------------------------------------- | ------ | --------- |
+| [S-010](S-010-creer-groupe.md) | Créer un groupe                        | done   | S-002     |
+| [S-011](S-011-invitations.md)  | Liens d'invitation + droit délégable   | done   | S-010     |
+| [S-012](S-012-membres.md)      | Gestion des membres (rôles, exclusion) | done   | S-011     |
+| [S-013](S-013-page-groupe.md)  | Page groupe (dashboard)                | done   | S-010     |
 
 ## E03 — Pari « au plus proche »
 
 | Story                                  | Titre                                       | Statut | Dépend de |
 | -------------------------------------- | ------------------------------------------- | ------ | --------- |
-| [S-020](S-020-creer-pari-closest.md)   | Créer un pari closest                       | todo   | S-013     |
+| [S-020](S-020-creer-pari-closest.md)   | Créer un pari closest                       | done   | S-013     |
 | [S-021](S-021-participer-closest.md)   | Participer (estimation cachée)              | todo   | S-020     |
 | [S-022](S-022-cycle-de-vie-closest.md) | Cycle de vie : clôture & soumission au jury | todo   | S-021     |
 
@@ -40,7 +40,7 @@ chaque fichier story ; ce tableau doit rester synchronisé.
 
 | Story                         | Titre                                   | Statut | Dépend de |
 | ----------------------------- | --------------------------------------- | ------ | --------- |
-| [S-030](S-030-creer-duel.md)  | Créer un duel (cible, camps, mise)      | todo   | S-013     |
+| [S-030](S-030-creer-duel.md)  | Créer un duel (cible, camps, mise)      | done   | S-013     |
 | [S-031](S-031-negociation.md) | Négociation (contre-offres, gages, 48h) | todo   | S-030     |
 | [S-032](S-032-defi-ouvert.md) | Défi ouvert (max_opponents)             | todo   | S-030     |
 

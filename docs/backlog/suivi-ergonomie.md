@@ -13,6 +13,21 @@ Statuts : `à faire` · `fait` · `ignoré` (avec raison).
 
 ---
 
+## S-030 — Créer un duel Oui/Non — 2026-06-22
+
+- [mineur] `à faire` — Page duel `/bets/[betId]` (labels de camps) : le créateur voit "Alice (moi)" dans les champs `camp-a-player`/`camp-b-player`, mais il faut vérifier que la cible (Bob) voit "Alice" (sans "(moi)") — non testé dans cette story (S-031 implémente la vue cible). → Vérifier à S-031 que la logique `currentUserId` distingue bien le point de vue créateur vs cible dans l'affichage des camps.
+- [mineur] `à faire` — Formulaire `/bets/new/yesno` (bouton "Proposer le duel") : aucun état de chargement visible pendant la soumission (`loading` en `$state` mais non utilisé pour désactiver le bouton ou afficher un spinner). → Ajouter `disabled={loading}` et un texte "Envoi en cours…" pour prévenir les double-soumissions.
+
+---
+
+## S-012 — Gestion des membres — 2026-06-19
+
+- [mineur] `à faire` — Page membres (bouton "Quitter le groupe") : le bouton est `disabled` quand l'utilisateur est le dernier admin, mais sans `title` ou `aria-describedby` reliant le bouton au message explicatif (`last-admin-warning`). → Ajouter `title="Vous êtes le dernier admin — promouvez un autre membre d'abord"` ou `aria-describedby="last-admin-warning"` pour l'accessibilité clavier.
+- [mineur] `à faire` — Page membres (mobile 390px) : les boutons "Promouvoir admin" et "Exclure" sont sur la même ligne que les infos du membre. Le `flex-wrap` évite le débordement, mais les cibles tactiles deviennent compactes (< 44px). → Placer les boutons d'action sur une ligne séparée en mobile (`sm:flex-row`, `flex-col` par défaut).
+- [mineur] `à faire` — Confirmation d'exclusion inline : compact mais peu visible sur mobile. → Envisager une dialog modale pour cette action irréversible (meilleure visibilité et focus management).
+
+---
+
 ## S-011 — Liens d'invitation — 2026-06-19
 
 - [majeur] `à faire` — Page groupe / section Membres : le toggle `can_invite` (« Ne peut pas inviter » / « Peut inviter ») agit immédiatement sans confirmation ni feedback visuel (toast) après le changement. → Ajouter un toast de confirmation après toggle réussi.

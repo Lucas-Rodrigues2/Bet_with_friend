@@ -1,7 +1,7 @@
 ---
 id: S-012
 epic: E02 — Groupes & invitations
-status: in-progress
+status: done
 depends_on: [S-011]
 ---
 
