@@ -151,8 +151,28 @@ export const yesnoBets = pgTable('yesno_bets', {
 	creatorSide: text('creator_side').notNull(), // 'a' or 'b'
 	mode: yesnoModeEnum('mode').notNull(),
 	maxOpponents: integer('max_opponents'), // open mode only
-	acceptedCount: integer('accepted_count').notNull().default(0)
+	acceptedCount: integer('accepted_count').notNull().default(0),
+	// open mode: fixed terms for each participant (no negotiation)
+	openStakeCreator: numeric('open_stake_creator', { precision: 12, scale: 2 }), // points for creator side
+	openStakeOpponent: numeric('open_stake_opponent', { precision: 12, scale: 2 }), // points for opponent side
+	openForfeitCreator: text('open_forfeit_creator'), // forfeit description for creator (if stake_type=forfeit)
+	openForfeitOpponent: text('open_forfeit_opponent') // forfeit description for opponent (if stake_type=forfeit)
 });
+
+// Jurors at bet level (used for open-mode yesno bets where jury is fixed at creation,
+// before any match is created). Copied to match_jurors upon each acceptance.
+export const betJurors = pgTable(
+	'bet_jurors',
+	{
+		betId: uuid('bet_id')
+			.notNull()
+			.references(() => bets.id, { onDelete: 'cascade' }),
+		userId: uuid('user_id')
+			.notNull()
+			.references(() => profiles.id, { onDelete: 'cascade' })
+	},
+	(t) => [primaryKey({ columns: [t.betId, t.userId] })]
+);
 
 export const betVisibility = pgTable(
 	'bet_visibility',

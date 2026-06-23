@@ -6,7 +6,8 @@ import { and, eq, isNull } from 'drizzle-orm';
 import {
 	getBetDetailForUser,
 	isActiveMemberOfBetGroup,
-	participateInClosestBet
+	participateInClosestBet,
+	acceptOpenChallenge
 } from '$lib/server/bets';
 import { submitMatchToJury } from '$lib/server/matches';
 import {
@@ -79,6 +80,8 @@ export const load: PageServerLoad = async ({ locals, params }) => {
 			participants: bet.participants,
 			myParticipation: bet.myParticipation,
 			yesno: bet.yesno,
+			openMatches: bet.openMatches,
+			betJurorsList: bet.betJurorsList,
 			proposition: bet.proposition
 		},
 		currentUserId: user.id,
@@ -410,6 +413,43 @@ export const actions: Actions = {
 			const message =
 				err instanceof Error ? err.message : "Erreur lors de l'annulation de la proposition.";
 			return fail(400, { negotiateError: message });
+		}
+
+		throw redirect(303, `/app/groups/${params.id}/bets/${params.betId}`);
+	},
+
+	accept_open_challenge: async ({ locals, params }) => {
+		const { session, user } = await locals.safeGetSession();
+		if (!session || !user) return fail(401, { challengeError: 'Non authentifié.' });
+
+		if (!uuidRegex.test(params.id) || !uuidRegex.test(params.betId)) {
+			return fail(400, { challengeError: 'Paramètres invalides.' });
+		}
+
+		// Verify group membership
+		const isMember = await isActiveMemberOfBetGroup(params.betId, params.id, user.id);
+		if (!isMember) {
+			return fail(403, { challengeError: 'Accès refusé.' });
+		}
+
+		try {
+			const { matchId } = await acceptOpenChallenge({
+				betId: params.betId,
+				acceptorId: user.id
+			});
+
+			await captureServer({
+				distinctId: user.id,
+				event: 'open_challenge_accepted',
+				properties: {
+					bet_id: params.betId,
+					match_id: matchId,
+					group_id: params.id
+				}
+			});
+		} catch (err) {
+			const message = err instanceof Error ? err.message : "Erreur lors de l'acceptation du défi.";
+			return fail(400, { challengeError: message });
 		}
 
 		throw redirect(303, `/app/groups/${params.id}/bets/${params.betId}`);

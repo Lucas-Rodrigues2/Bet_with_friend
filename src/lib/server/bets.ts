@@ -2,6 +2,7 @@ import { db } from '$lib/server/db/index';
 import {
 	bets,
 	betVisibility,
+	betJurors,
 	matches,
 	matchJurors,
 	matchParticipants,
@@ -12,7 +13,7 @@ import {
 	propositionOffers,
 	propositionJurors
 } from '$lib/server/db/schema';
-import { and, eq, inArray, isNull, asc } from 'drizzle-orm';
+import { and, eq, inArray, isNull, asc, sql } from 'drizzle-orm';
 import { resolveMatchStatus } from '$lib/server/matches';
 import { resolvePropositionStatus } from '$lib/server/propositions';
 
@@ -259,6 +260,301 @@ export async function createYesnoDuel(
 	return result;
 }
 
+export interface CreateOpenChallengeParams {
+	groupId: string;
+	creatorId: string;
+	title: string;
+	description: string | null;
+	choiceA: string;
+	choiceB: string;
+	creatorSide: 'a' | 'b';
+	stakeType: 'points' | 'forfeit';
+	stakeCreator: number | null; // required if stakeType='points'
+	stakeOpponent: number | null; // required if stakeType='points'
+	forfeitCreator: string | null; // required if stakeType='forfeit'
+	forfeitOpponent: string | null; // required if stakeType='forfeit'
+	maxOpponents: number; // must be >= 1
+	juryMode: 'unanimous' | 'majority';
+	juryUserIds: string[];
+	visibilityUserIds: string[]; // includes creator; defines who can accept
+}
+
+export interface CreateOpenChallengeResult {
+	betId: string;
+}
+
+/**
+ * Creates a yesno open-challenge bet with all related records in a single transaction:
+ * - bets row (type=yesno, status=open)
+ * - yesno_bets row (mode=open, maxOpponents, openStake* or openForfeit*)
+ * - bet_visibility rows (frozen at creation)
+ * - bet_jurors rows (jury fixed at creation, copied to each match on acceptance)
+ *
+ * No match is created yet — each match is created when a visible member accepts (S-032).
+ * Returns { betId } or throws on error.
+ */
+export async function createOpenChallenge(
+	params: CreateOpenChallengeParams
+): Promise<CreateOpenChallengeResult> {
+	let result: CreateOpenChallengeResult | undefined;
+
+	await db.transaction(async (tx) => {
+		// Insert the bet
+		// For open mode, we use bets.stakeAmount / bets.forfeitDescription as sentinels for the check constraints.
+		const [newBet] = await tx
+			.insert(bets)
+			.values({
+				groupId: params.groupId,
+				creatorId: params.creatorId,
+				type: 'yesno',
+				title: params.title,
+				description: params.description,
+				stakeType: params.stakeType,
+				stakeAmount:
+					params.stakeType === 'points' && params.stakeCreator !== null
+						? params.stakeCreator.toString()
+						: null,
+				// For yesno open forfeits, actual descriptions live on yesno_bets.
+				// The bets.stake_forfeit_has_desc constraint requires a non-null forfeit_description if stake_type='forfeit'.
+				forfeitDescription: params.stakeType === 'forfeit' ? (params.forfeitCreator ?? null) : null,
+				forfeitScope: null,
+				hideAnswers: false,
+				participationDeadline: null,
+				juryMode: params.juryMode,
+				status: 'open'
+			})
+			.returning({ id: bets.id });
+
+		const betId = newBet.id;
+
+		// Insert yesno_bets extension (mode=open)
+		await tx.insert(yesnoBets).values({
+			betId,
+			choiceA: params.choiceA,
+			choiceB: params.choiceB,
+			creatorSide: params.creatorSide,
+			mode: 'open',
+			maxOpponents: params.maxOpponents,
+			acceptedCount: 0,
+			openStakeCreator:
+				params.stakeType === 'points' && params.stakeCreator !== null
+					? params.stakeCreator.toString()
+					: null,
+			openStakeOpponent:
+				params.stakeType === 'points' && params.stakeOpponent !== null
+					? params.stakeOpponent.toString()
+					: null,
+			openForfeitCreator: params.stakeType === 'forfeit' ? (params.forfeitCreator ?? null) : null,
+			openForfeitOpponent: params.stakeType === 'forfeit' ? (params.forfeitOpponent ?? null) : null
+		});
+
+		// Insert bet_visibility (creator always included — enforced by caller)
+		const visibilityUserIds = Array.from(new Set(params.visibilityUserIds));
+		await tx.insert(betVisibility).values(
+			visibilityUserIds.map((userId) => ({
+				betId,
+				userId
+			}))
+		);
+
+		// Insert bet_jurors (jury fixed at creation)
+		if (params.juryUserIds.length > 0) {
+			await tx.insert(betJurors).values(
+				params.juryUserIds.map((userId) => ({
+					betId,
+					userId
+				}))
+			);
+		}
+
+		result = { betId };
+	});
+
+	if (!result) throw new Error('Erreur lors de la création du défi ouvert.');
+	return result;
+}
+
+/**
+ * Accepts an open challenge: creates a match (1v1) between the bet creator and the acceptor.
+ * Guards:
+ *   - bet must be mode=open, status=open
+ *   - acceptorId must be in bet_visibility (not creator)
+ *   - acceptedCount < maxOpponents (atomic guard)
+ * If accepted_count reaches max_opponents after this acceptance, closes the bet.
+ *
+ * Returns { matchId } or throws on error.
+ */
+export async function acceptOpenChallenge(params: {
+	betId: string;
+	acceptorId: string;
+}): Promise<{ matchId: string }> {
+	let matchId: string | undefined;
+
+	await db.transaction(async (tx) => {
+		// Serialize concurrent accepts for the same bet: exclusive row lock on yesno_bets.
+		// Without this, two simultaneous POSTs from the same user both pass the dedup SELECT
+		// (each sees no committed match_participants yet) and both create a match (TOCTOU).
+		// Under READ COMMITTED, SELECT...FOR UPDATE on this row makes concurrent accepts wait
+		// until the first transaction commits, after which the dedup check fires correctly.
+		await tx.execute(sql`SELECT 1 FROM yesno_bets WHERE bet_id = ${params.betId} FOR UPDATE`);
+
+		// Fetch bet + yesno_bets in the same transaction
+		const betRows = await tx
+			.select({
+				id: bets.id,
+				creatorId: bets.creatorId,
+				stakeType: bets.stakeType,
+				groupId: bets.groupId,
+				juryMode: bets.juryMode,
+				status: bets.status
+			})
+			.from(bets)
+			.where(eq(bets.id, params.betId))
+			.limit(1);
+
+		if (betRows.length === 0) {
+			throw new Error('Pari introuvable.');
+		}
+
+		const bet = betRows[0];
+
+		if (bet.status !== 'open') {
+			throw new Error('Ce défi est clôturé, il ne peut plus être accepté.');
+		}
+
+		if (params.acceptorId === bet.creatorId) {
+			throw new Error('Le créateur ne peut pas accepter son propre défi.');
+		}
+
+		const yesnoRows = await tx
+			.select({
+				mode: yesnoBets.mode,
+				creatorSide: yesnoBets.creatorSide,
+				maxOpponents: yesnoBets.maxOpponents,
+				acceptedCount: yesnoBets.acceptedCount,
+				openStakeCreator: yesnoBets.openStakeCreator,
+				openStakeOpponent: yesnoBets.openStakeOpponent,
+				openForfeitCreator: yesnoBets.openForfeitCreator,
+				openForfeitOpponent: yesnoBets.openForfeitOpponent
+			})
+			.from(yesnoBets)
+			.where(eq(yesnoBets.betId, params.betId))
+			.limit(1);
+
+		if (yesnoRows.length === 0) {
+			throw new Error('Données yesno introuvables.');
+		}
+
+		const yesno = yesnoRows[0];
+
+		if (yesno.mode !== 'open') {
+			throw new Error("Ce pari n'est pas un défi ouvert.");
+		}
+
+		// Verify acceptor is in bet_visibility
+		const visCheck = await tx
+			.select({ betId: betVisibility.betId })
+			.from(betVisibility)
+			.where(
+				and(eq(betVisibility.betId, params.betId), eq(betVisibility.userId, params.acceptorId))
+			)
+			.limit(1);
+
+		if (visCheck.length === 0) {
+			throw new Error("Vous n'êtes pas autorisé à accepter ce défi.");
+		}
+
+		// Guard: one acceptance per member — check if acceptor already has a match for this bet
+		const existingAcceptance = await tx
+			.select({ matchId: matchParticipants.matchId })
+			.from(matchParticipants)
+			.innerJoin(matches, eq(matches.id, matchParticipants.matchId))
+			.where(
+				and(eq(matches.betId, params.betId), eq(matchParticipants.userId, params.acceptorId))
+			)
+			.limit(1);
+
+		if (existingAcceptance.length > 0) {
+			throw new Error('Vous avez déjà accepté ce défi.');
+		}
+
+		// Atomic guard: increment accepted_count only if < max_opponents
+		const updated = await tx
+			.update(yesnoBets)
+			.set({ acceptedCount: sql`${yesnoBets.acceptedCount} + 1` })
+			.where(
+				and(
+					eq(yesnoBets.betId, params.betId),
+					yesno.maxOpponents !== null
+						? sql`${yesnoBets.acceptedCount} < ${yesno.maxOpponents}`
+						: sql`true`
+				)
+			)
+			.returning({ acceptedCount: yesnoBets.acceptedCount });
+
+		if (updated.length === 0) {
+			throw new Error("Ce défi est complet, le nombre maximum d'adversaires est atteint.");
+		}
+
+		const newAcceptedCount = updated[0].acceptedCount;
+
+		// Create match (1v1)
+		const [newMatch] = await tx
+			.insert(matches)
+			.values({
+				betId: params.betId,
+				propositionId: null,
+				status: 'open'
+			})
+			.returning({ id: matches.id });
+
+		matchId = newMatch.id;
+
+		// Determine sides
+		const creatorSide = yesno.creatorSide as 'a' | 'b';
+		const opponentSide: 'a' | 'b' = creatorSide === 'a' ? 'b' : 'a';
+
+		// Insert match_participants
+		await tx.insert(matchParticipants).values([
+			{
+				matchId: newMatch.id,
+				userId: bet.creatorId,
+				side: creatorSide,
+				stake: yesno.openStakeCreator
+			},
+			{
+				matchId: newMatch.id,
+				userId: params.acceptorId,
+				side: opponentSide,
+				stake: yesno.openStakeOpponent
+			}
+		]);
+
+		// Copy bet_jurors to match_jurors
+		const jurorRows = await tx
+			.select({ userId: betJurors.userId })
+			.from(betJurors)
+			.where(eq(betJurors.betId, params.betId));
+
+		if (jurorRows.length > 0) {
+			await tx.insert(matchJurors).values(
+				jurorRows.map((j) => ({
+					matchId: newMatch.id,
+					userId: j.userId
+				}))
+			);
+		}
+
+		// If accepted_count reaches max_opponents, close the bet
+		if (yesno.maxOpponents !== null && newAcceptedCount >= yesno.maxOpponents) {
+			await tx.update(bets).set({ status: 'closed' }).where(eq(bets.id, params.betId));
+		}
+	});
+
+	if (!matchId) throw new Error('Erreur lors de la création du match.');
+	return { matchId };
+}
+
 export interface BetSummary {
 	id: string;
 	type: 'closest' | 'yesno';
@@ -419,7 +715,23 @@ export interface BetDetail {
 		choiceB: string;
 		creatorSide: string;
 		mode: string;
+		maxOpponents: number | null;
+		acceptedCount: number;
+		openStakeCreator: string | null;
+		openStakeOpponent: string | null;
+		openForfeitCreator: string | null;
+		openForfeitOpponent: string | null;
 	} | null;
+	// open challenge matches (for yesno open bets) — one per acceptor
+	openMatches: {
+		matchId: string;
+		matchStatus: string;
+		acceptorId: string;
+		acceptorPseudo: string;
+		acceptorAvatarUrl: string | null;
+	}[];
+	// bet-level jurors (for yesno open bets)
+	betJurorsList: { userId: string; pseudo: string; avatarUrl: string | null }[];
 	// proposition (for yesno duel bets)
 	proposition: {
 		id: string;
@@ -599,7 +911,13 @@ export async function getBetDetailForUser(
 				choiceA: yesnoBets.choiceA,
 				choiceB: yesnoBets.choiceB,
 				creatorSide: yesnoBets.creatorSide,
-				mode: yesnoBets.mode
+				mode: yesnoBets.mode,
+				maxOpponents: yesnoBets.maxOpponents,
+				acceptedCount: yesnoBets.acceptedCount,
+				openStakeCreator: yesnoBets.openStakeCreator,
+				openStakeOpponent: yesnoBets.openStakeOpponent,
+				openForfeitCreator: yesnoBets.openForfeitCreator,
+				openForfeitOpponent: yesnoBets.openForfeitOpponent
 			})
 			.from(yesnoBets)
 			.where(eq(yesnoBets.betId, betId))
@@ -607,6 +925,79 @@ export async function getBetDetailForUser(
 
 		if (yesnoRows.length > 0) {
 			yesnoData = yesnoRows[0];
+		}
+
+		// For open mode: fetch all matches created by acceptors + bet_jurors
+		if (yesnoData?.mode === 'open') {
+			// Fetch all matches for this bet (each acceptance creates one)
+			// We need the "opponent" participant (not the creator) from each match
+			const allMatchRows = await db
+				.select({
+					matchId: matches.id,
+					matchStatus: matches.status,
+					participantId: matchParticipants.userId,
+					participantPseudo: profiles.pseudo,
+					participantAvatarUrl: profiles.avatarUrl
+				})
+				.from(matches)
+				.innerJoin(matchParticipants, eq(matchParticipants.matchId, matches.id))
+				.innerJoin(profiles, eq(profiles.id, matchParticipants.userId))
+				.where(eq(matches.betId, betId))
+				.orderBy(asc(matches.createdAt));
+
+			// Group by match, keep only the opponent row (not creator)
+			const matchMap = new Map<string, BetDetail['openMatches'][number]>();
+			for (const row of allMatchRows) {
+				if (row.participantId !== bet.creatorId) {
+					matchMap.set(row.matchId, {
+						matchId: row.matchId,
+						matchStatus: row.matchStatus,
+						acceptorId: row.participantId,
+						acceptorPseudo: row.participantPseudo,
+						acceptorAvatarUrl: row.participantAvatarUrl
+					});
+				}
+			}
+			const openMatchData: BetDetail['openMatches'] = Array.from(matchMap.values());
+
+			// Fetch bet_jurors for this bet
+			const betJurorRows = await db
+				.select({
+					userId: betJurors.userId,
+					pseudo: profiles.pseudo,
+					avatarUrl: profiles.avatarUrl
+				})
+				.from(betJurors)
+				.innerJoin(profiles, eq(profiles.id, betJurors.userId))
+				.where(eq(betJurors.betId, betId));
+
+			return {
+				id: bet.id,
+				groupId: bet.groupId,
+				creatorId: bet.creatorId,
+				type: bet.type as 'closest' | 'yesno',
+				title: bet.title,
+				description: bet.description,
+				stakeType: bet.stakeType as 'points' | 'forfeit',
+				stakeAmount: bet.stakeAmount,
+				forfeitDescription: bet.forfeitDescription,
+				forfeitScope: bet.forfeitScope as 'all_losers' | 'last_one' | null,
+				hideAnswers: bet.hideAnswers,
+				participationDeadline: bet.participationDeadline,
+				juryMode: bet.juryMode as 'unanimous' | 'majority',
+				status: bet.status,
+				createdAt: bet.createdAt,
+				matchId: null,
+				matchStatus: null,
+				visibility: visRows as BetDetail['visibility'],
+				jurors,
+				participants,
+				myParticipation,
+				yesno: yesnoData,
+				openMatches: openMatchData,
+				betJurorsList: betJurorRows as BetDetail['betJurorsList'],
+				proposition: null
+			};
 		}
 
 		// Fetch proposition (duel mode has exactly one)
@@ -705,6 +1096,8 @@ export async function getBetDetailForUser(
 		participants,
 		myParticipation,
 		yesno: yesnoData,
+		openMatches: [],
+		betJurorsList: [],
 		proposition: propositionData
 	};
 }

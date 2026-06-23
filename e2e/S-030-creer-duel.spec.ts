@@ -118,9 +118,12 @@ async function fillDuelForm(
 		await page.getByTestId('input-stake-target').fill(opts.stakeTarget);
 	}
 
-	// 5. Sélection de la cible EN TOUT DERNIER pour éviter la race condition Svelte 5 :
-	// fill() sur les inputs (choix A/B, mises) → re-render Svelte → targetIdValue reset à ''
-	// On place ce selectOption après tous les fills pour qu'il soit le dernier re-render.
+	// 5. Sélection de la cible EN TOUT DERNIER pour éviter la race condition Svelte 5.
+	// S-032 a placé le select dans un {#if mode === 'duel'}, ce qui ajoute `mode`
+	// dans les dépendances réactives du sous-arbre. Les fills précédents planifient
+	// des micro-tasks Svelte qui peuvent tourner APRÈS selectOption et réinitialiser
+	// select.value. La pause laisse ces micro-tasks se stabiliser avant la sélection.
+	await page.waitForTimeout(100);
 	await page.getByTestId('select-target').selectOption({ value: targetId });
 }
 
@@ -158,7 +161,7 @@ test('formulaire de création yesno affiché pour Alice', async ({ page }) => {
 	await page.goto(NEW_YESNO_URL);
 
 	// Titre de la page
-	await expect(page.getByRole('heading', { name: 'Nouveau duel Oui / Non' })).toBeVisible();
+	await expect(page.getByRole('heading', { name: 'Nouveau pari Oui / Non' })).toBeVisible();
 
 	// Champ titre
 	await expect(page.getByTestId('input-title')).toBeVisible();

@@ -63,6 +63,28 @@
 	const yesno = $derived(data.bet.yesno ?? null);
 	const proposition = $derived(data.bet.proposition ?? null);
 
+	const isCurrentUserCreator = $derived(data.bet.creatorId === data.currentUserId);
+
+	// Is this an open challenge?
+	const isOpenChallenge = $derived(isYesno && yesno?.mode === 'open');
+
+	// Open challenge state
+	const openMatches = $derived(data.bet.openMatches ?? []);
+	const betJurorsList = $derived(data.bet.betJurorsList ?? []);
+	const openAcceptedCount = $derived(yesno?.acceptedCount ?? 0);
+	const openMaxOpponents = $derived(yesno?.maxOpponents ?? null);
+	const openIsFull = $derived(openMaxOpponents !== null && openAcceptedCount >= openMaxOpponents);
+	// Has the current user already accepted this challenge?
+	const hasAlreadyAccepted = $derived(openMatches.some((m) => m.acceptorId === data.currentUserId));
+	// Can the current user accept? Not creator, not already accepted, not full, bet is open
+	const canAcceptOpen = $derived(
+		isOpenChallenge &&
+			!isCurrentUserCreator &&
+			!hasAlreadyAccepted &&
+			!openIsFull &&
+			data.bet.status === 'open'
+	);
+
 	// For yesno: determine who is A and who is B
 	const creatorIsA = $derived(yesno?.creatorSide === 'a');
 	const creatorInfo = $derived(
@@ -96,8 +118,6 @@
 	const isCurrentUserTarget = $derived(
 		proposition ? proposition.targetId === data.currentUserId : false
 	);
-
-	const isCurrentUserCreator = $derived(data.bet.creatorId === data.currentUserId);
 
 	// Negotiation state
 	const propIsNegotiating = $derived(proposition?.status === 'negotiating');
@@ -209,7 +229,14 @@
 	<div class="mb-6 flex items-start justify-between gap-4">
 		<div>
 			<div class="mb-1 flex flex-wrap items-center gap-2">
-				{#if isYesno}
+				{#if isYesno && isOpenChallenge}
+					<span
+						class="bg-purple-100 text-purple-700 rounded-full px-2 py-0.5 text-xs font-medium"
+						data-testid="bet-type-badge"
+					>
+						Défi ouvert
+					</span>
+				{:else if isYesno}
 					<span
 						class="bg-blue-100 text-blue-700 rounded-full px-2 py-0.5 text-xs font-medium"
 						data-testid="bet-type-badge"
@@ -225,7 +252,25 @@
 					</span>
 				{/if}
 
-				{#if isYesno && proposition}
+				<!-- Open challenge: status badge -->
+				{#if isOpenChallenge}
+					<span
+						class="rounded-full px-2 py-0.5 text-xs font-medium {data.bet.status === 'open'
+							? 'bg-green-100 text-green-700'
+							: data.bet.status === 'closed'
+								? 'bg-muted text-muted-foreground'
+								: 'bg-muted text-muted-foreground'}"
+						data-testid="bet-status-badge"
+					>
+						{data.bet.status === 'open'
+							? openIsFull
+								? 'Complet'
+								: 'Ouvert'
+							: data.bet.status === 'closed'
+								? 'Complet'
+								: (statusLabels[data.bet.status] ?? data.bet.status)}
+					</span>
+				{:else if isYesno && proposition}
 					<span
 						class="rounded-full px-2 py-0.5 text-xs font-medium {proposition.status ===
 						'negotiating'
@@ -341,7 +386,185 @@
 				</div>
 			</div>
 
-			<!-- Mise / Gages (yesno) — termes courants de la proposition -->
+			<!-- ── OPEN CHALLENGE SECTION ──────────────────────────────────── -->
+			{#if isOpenChallenge}
+				<!-- Mises en jeu (open mode — termes fixes) -->
+				<div class="border-border bg-card rounded-lg border p-4" data-testid="open-stakes">
+					<h2 class="text-foreground mb-2 text-sm font-semibold">Mises en jeu (termes fixes)</h2>
+					{#if data.bet.stakeType === 'points'}
+						<div class="grid grid-cols-2 gap-3">
+							<div>
+								<p class="text-muted-foreground text-xs">
+									{creatorInfo?.pseudo ?? 'Créateur'} (camp {yesno?.creatorSide?.toUpperCase()})
+								</p>
+								<p class="text-foreground text-lg font-bold" data-testid="open-stake-creator">
+									{yesno?.openStakeCreator ?? '—'} pts
+								</p>
+							</div>
+							<div>
+								<p class="text-muted-foreground text-xs">
+									Adversaire (camp {yesno?.creatorSide === 'a' ? 'B' : 'A'})
+								</p>
+								<p class="text-foreground text-lg font-bold" data-testid="open-stake-opponent">
+									{yesno?.openStakeOpponent ?? '—'} pts
+								</p>
+							</div>
+						</div>
+					{:else}
+						<div class="flex flex-col gap-2">
+							<div>
+								<p class="text-muted-foreground text-xs">
+									Gage de {creatorInfo?.pseudo ?? 'Créateur'} (si perd)
+								</p>
+								<p class="text-foreground text-sm" data-testid="open-forfeit-creator">
+									{yesno?.openForfeitCreator ?? '—'}
+								</p>
+							</div>
+							<div>
+								<p class="text-muted-foreground text-xs">Gage de chaque adversaire (si perd)</p>
+								<p class="text-foreground text-sm" data-testid="open-forfeit-opponent">
+									{yesno?.openForfeitOpponent ?? '—'}
+								</p>
+							</div>
+						</div>
+					{/if}
+				</div>
+
+				<!-- Jury du défi ouvert -->
+				{#if betJurorsList.length > 0}
+					<div class="border-border bg-card rounded-lg border p-4" data-testid="open-jury">
+						<h2 class="text-foreground mb-2 text-sm font-semibold">Jury — {juryModeLabel}</h2>
+						<ul class="flex flex-col gap-1" data-testid="open-jury-members">
+							{#each betJurorsList as juror (juror.userId)}
+								<li class="flex items-center gap-2" data-testid="jury-member">
+									{#if juror.avatarUrl}
+										<img
+											src={juror.avatarUrl}
+											alt={juror.pseudo}
+											class="h-6 w-6 rounded-full object-cover"
+										/>
+									{:else}
+										<div
+											class="bg-muted text-muted-foreground flex h-6 w-6 items-center justify-center rounded-full text-xs font-medium"
+										>
+											{juror.pseudo.charAt(0).toUpperCase()}
+										</div>
+									{/if}
+									<span class="text-foreground text-sm">
+										{juror.pseudo}{juror.userId === data.currentUserId ? ' (moi)' : ''}
+									</span>
+								</li>
+							{/each}
+						</ul>
+					</div>
+				{/if}
+
+				<!-- Progression du défi ouvert -->
+				<div
+					class="border-border bg-card rounded-lg border p-4"
+					data-testid="open-challenge-progress"
+				>
+					<h2 class="text-foreground mb-2 text-sm font-semibold">
+						Progression ({openAcceptedCount} / {openMaxOpponents ?? '∞'})
+					</h2>
+					{#if openIsFull}
+						<p
+							class="text-muted-foreground mb-3 text-sm font-medium"
+							data-testid="open-challenge-full-msg"
+						>
+							Ce défi est complet — tous les adversaires ont rejoint.
+						</p>
+					{:else if data.bet.status === 'open'}
+						<p class="text-muted-foreground mb-3 text-sm" data-testid="open-challenge-open-msg">
+							{openAcceptedCount} adversaire{openAcceptedCount > 1 ? 's' : ''} ont accepté sur {openMaxOpponents ??
+								'∞'} maximum.
+						</p>
+					{/if}
+
+					<!-- Bouton Accepter -->
+					{#if canAcceptOpen}
+						<div data-testid="accept-open-section">
+							{#if (form as { challengeError?: string } | null)?.challengeError}
+								<p class="text-destructive mb-2 text-sm" data-testid="challenge-error">
+									{(form as { challengeError?: string }).challengeError}
+								</p>
+							{/if}
+							<form method="POST" action="?/accept_open_challenge" use:enhance>
+								<Button
+									type="submit"
+									class="bg-green-600 hover:bg-green-700"
+									data-testid="accept-open-btn"
+								>
+									Accepter le défi
+								</Button>
+							</form>
+						</div>
+					{:else if hasAlreadyAccepted}
+						<p class="text-green-700 text-sm font-medium" data-testid="already-accepted-msg">
+							Vous avez déjà accepté ce défi.
+						</p>
+					{:else if isCurrentUserCreator}
+						<p class="text-muted-foreground text-sm" data-testid="creator-cannot-accept-msg">
+							Vous êtes le créateur de ce défi.
+						</p>
+					{:else if openIsFull}
+						<p class="text-muted-foreground text-sm" data-testid="open-challenge-full-static">
+							Défi complet — vous ne pouvez plus accepter.
+						</p>
+					{/if}
+				</div>
+
+				<!-- Liste des duels créés -->
+				{#if openMatches.length > 0}
+					<div class="border-border bg-card rounded-lg border p-4" data-testid="open-matches-list">
+						<h2 class="text-foreground mb-2 text-sm font-semibold">
+							Duels créés ({openMatches.length})
+						</h2>
+						<ul class="flex flex-col gap-2">
+							{#each openMatches as match (match.matchId)}
+								<li
+									class="flex items-center justify-between gap-2 rounded-md border p-2"
+									data-testid="open-match-item"
+								>
+									<div class="flex items-center gap-2">
+										{#if match.acceptorAvatarUrl}
+											<img
+												src={match.acceptorAvatarUrl}
+												alt={match.acceptorPseudo}
+												class="h-6 w-6 rounded-full object-cover"
+											/>
+										{:else}
+											<div
+												class="bg-muted text-muted-foreground flex h-6 w-6 items-center justify-center rounded-full text-xs font-medium"
+											>
+												{match.acceptorPseudo.charAt(0).toUpperCase()}
+											</div>
+										{/if}
+										<span class="text-foreground text-sm" data-testid="match-acceptor">
+											{match.acceptorPseudo}{match.acceptorId === data.currentUserId
+												? ' (moi)'
+												: ''}
+										</span>
+									</div>
+									<span
+										class="rounded-full px-2 py-0.5 text-xs font-medium {match.matchStatus ===
+										'open'
+											? 'bg-green-100 text-green-700'
+											: match.matchStatus === 'judging'
+												? 'bg-amber-100 text-amber-700'
+												: 'bg-muted text-muted-foreground'}"
+										data-testid="match-status"
+									>
+										{statusLabels[match.matchStatus] ?? match.matchStatus}
+									</span>
+								</li>
+							{/each}
+						</ul>
+					</div>
+				{/if}
+			{/if}
+
+			<!-- Mise / Gages (yesno duel) — termes courants de la proposition -->
 			{#if proposition}
 				<div class="border-border bg-card rounded-lg border p-4" data-testid="yesno-stakes">
 					<h2 class="text-foreground mb-2 text-sm font-semibold">Mises en jeu</h2>

@@ -157,7 +157,7 @@ test.describe('S-013 — Page groupe (dashboard)', () => {
 		await page.goto(`${GROUP_URL}/bets/new/yesno`);
 
 		await expect(page).toHaveURL(`${GROUP_URL}/bets/new/yesno`);
-		await expect(page.getByRole('heading', { name: /Nouveau duel/ })).toBeVisible();
+		await expect(page.getByRole('heading', { name: /Nouveau pari Oui/ })).toBeVisible();
 	});
 
 	test('page /bets/new/closest a un lien de retour vers le groupe', async ({ page }) => {
