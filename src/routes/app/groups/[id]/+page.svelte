@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { resolveRoute } from '$app/paths';
 	import { enhance } from '$app/forms';
+	import { onMount } from 'svelte';
 	import { Button } from '$lib/components/ui/button/index.js';
 	import { track } from '$lib/analytics/client';
 	import type { ActionData, PageData } from './$types';
@@ -75,6 +76,16 @@
 	function inviteLink(token: string) {
 		return `${baseUrl}/invite/${token}`;
 	}
+
+	// Track judging section viewed when juror has bets to judge
+	onMount(() => {
+		if (data.betsToJudge && data.betsToJudge.length > 0) {
+			track('judging_section_viewed', {
+				group_id: data.group.id,
+				bets_count: data.betsToJudge.length
+			});
+		}
+	});
 
 	function formatExpiry(expiresAt: Date | string | null): string {
 		if (!expiresAt) return 'Jamais';
