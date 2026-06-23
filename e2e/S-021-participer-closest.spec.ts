@@ -287,9 +287,9 @@ test('Deadline passée — Alice (participante) voit son estimation en lecture s
 	// Son estimation est affichée
 	await expect(page.getByTestId('my-answer')).toHaveText('50');
 
-	// Message informant que la deadline est passée
+	// S-022 : deadline passée → judging direct, message mis à jour
 	await expect(page.getByTestId('participate-section')).toContainText(
-		'La date limite est dépassée'
+		'en jugement'
 	);
 
 	// Pas de formulaire de saisie
@@ -311,12 +311,11 @@ test('Deadline passée — Bob (non-participant) devient spectateur', async ({ b
 	await login(bobPage, 'bob');
 	await bobPage.goto(`${GROUP_URL}/bets/${betId}`);
 
-	// Bandeau spectateur visible
-	await expect(bobPage.getByTestId('spectator-banner')).toBeVisible();
-	await expect(bobPage.getByTestId('spectator-banner')).toContainText('spectateur');
-
-	// Pas de formulaire de participation
+	// S-022 : deadline passée → judging direct, pas de formulaire de participation
 	await expect(bobPage.getByTestId('answer-input')).not.toBeVisible();
+
+	// Badge "En jugement" visible (S-022 transition lazy)
+	await expect(bobPage.getByTestId('bet-status-badge')).toContainText('En jugement');
 
 	await bobContext.close();
 });

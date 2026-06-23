@@ -259,6 +259,39 @@
 		{/if}
 	</section>
 
+	<!-- Section À juger (jurés uniquement, hors liste de visibilité) -->
+	{#if data.betsToJudge && data.betsToJudge.length > 0}
+		<section class="mb-8" data-testid="bets-to-judge-section">
+			<h2 class="text-foreground mb-4 text-lg font-semibold">À juger</h2>
+			<ul class="flex flex-col gap-2" data-testid="bets-to-judge-list">
+				{#each data.betsToJudge as bet (bet.id)}
+					<li data-testid="bet-to-judge-item">
+						<a
+							href={resolveRoute('/app/groups/[id]/bets/[betId]', {
+								id: data.group.id,
+								betId: bet.id
+							})}
+							class="border-amber-200 bg-amber-50 hover:bg-amber-100 flex items-center justify-between gap-3 rounded-lg border p-3 transition-colors"
+						>
+							<div class="min-w-0 flex-1">
+								<p class="text-foreground text-sm font-medium" data-testid="bet-to-judge-title">
+									{bet.title}
+								</p>
+								<p class="text-muted-foreground text-xs">Vous êtes juré de ce pari</p>
+							</div>
+							<span
+								class="shrink-0 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700"
+								data-testid="bet-to-judge-status"
+							>
+								En jugement
+							</span>
+						</a>
+					</li>
+				{/each}
+			</ul>
+		</section>
+	{/if}
+
 	<!-- Section Membres -->
 	<section class="mb-8" data-testid="members-section">
 		<div class="mb-4 flex items-center justify-between">

@@ -14,7 +14,7 @@ import {
 	setMemberCanInvite
 } from '$lib/server/invitations';
 import { removeMember, promoteMember } from '$lib/server/groups';
-import { getGroupBetsForUser } from '$lib/server/bets';
+import { getGroupBetsForUser, getJudgingBetsForJuror } from '$lib/server/bets';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ locals, params }) => {
@@ -82,6 +82,9 @@ export const load: PageServerLoad = async ({ locals, params }) => {
 	// Charger les paris visibles par cet utilisateur
 	const bets = await getGroupBetsForUser(id, user.id);
 
+	// Charger les paris en jugement où l'utilisateur est juré mais pas dans la liste de visibilité
+	const betsToJudge = await getJudgingBetsForJuror(id, user.id);
+
 	// Track group_viewed après vérification d'appartenance (fait réel)
 	await captureServer({
 		distinctId: user.id,
@@ -132,6 +135,14 @@ export const load: PageServerLoad = async ({ locals, params }) => {
 			createdAt: b.createdAt,
 			propositionStatus: b.propositionStatus,
 			propositionTargetId: b.propositionTargetId
+		})),
+		betsToJudge: betsToJudge.map((b) => ({
+			id: b.id,
+			type: b.type,
+			title: b.title,
+			matchId: b.matchId,
+			matchStatus: b.matchStatus,
+			createdAt: b.createdAt
 		}))
 	};
 };

@@ -13,6 +13,7 @@ import {
 	propositionJurors
 } from '$lib/server/db/schema';
 import { and, eq, inArray, isNull } from 'drizzle-orm';
+import { resolveMatchStatus } from '$lib/server/matches';
 
 export interface CreateClosestBetParams {
 	groupId: string;
@@ -325,6 +326,63 @@ export async function getGroupBetsForUser(groupId: string, userId: string): Prom
 	}));
 }
 
+export interface BetToJudge {
+	id: string;
+	type: 'closest' | 'yesno';
+	title: string;
+	matchId: string;
+	matchStatus: string;
+	createdAt: Date;
+}
+
+/**
+ * Returns bets in 'judging' status where the current user is a juror
+ * but NOT in the bet_visibility list (i.e. they are only accessible as a juror).
+ * These are displayed in the "À juger" section of the group page.
+ */
+export async function getJudgingBetsForJuror(
+	groupId: string,
+	userId: string
+): Promise<BetToJudge[]> {
+	// Find matches in judging status for this group where user is a juror
+	// but NOT in the bet_visibility list
+	const rows = await db
+		.select({
+			betId: bets.id,
+			betType: bets.type,
+			betTitle: bets.title,
+			betCreatedAt: bets.createdAt,
+			matchId: matches.id,
+			matchStatus: matches.status
+		})
+		.from(matchJurors)
+		.innerJoin(matches, eq(matches.id, matchJurors.matchId))
+		.innerJoin(bets, and(eq(bets.id, matches.betId), eq(bets.groupId, groupId)))
+		.where(and(eq(matchJurors.userId, userId), inArray(matches.status, ['judging', 'resolved'])));
+
+	if (rows.length === 0) return [];
+
+	// Filter out bets where the user is already in bet_visibility
+	const betIds = rows.map((r) => r.betId);
+	const visibleBetIds = await db
+		.select({ betId: betVisibility.betId })
+		.from(betVisibility)
+		.where(and(eq(betVisibility.userId, userId), inArray(betVisibility.betId, betIds)));
+
+	const visibleSet = new Set(visibleBetIds.map((r) => r.betId));
+
+	return rows
+		.filter((r) => !visibleSet.has(r.betId))
+		.map((r) => ({
+			id: r.betId,
+			type: r.betType as 'closest' | 'yesno',
+			title: r.betTitle,
+			matchId: r.matchId,
+			matchStatus: r.matchStatus,
+			createdAt: r.betCreatedAt
+		}));
+}
+
 export interface BetDetail {
 	id: string;
 	groupId: string;
@@ -378,21 +436,38 @@ export interface BetDetail {
 }
 
 /**
- * Returns full bet details for a user who is in the bet's visibility list.
+ * Returns full bet details for a user who is in the bet's visibility list,
+ * OR who is a juror of a match in 'judging'/'resolved' status for this bet.
  * Returns null if the bet is not found or the user cannot see it.
  */
 export async function getBetDetailForUser(
 	betId: string,
 	userId: string
 ): Promise<BetDetail | null> {
-	// Check visibility
+	// Check regular visibility
 	const visCheck = await db
 		.select({ betId: betVisibility.betId })
 		.from(betVisibility)
 		.where(and(eq(betVisibility.betId, betId), eq(betVisibility.userId, userId)))
 		.limit(1);
 
-	if (visCheck.length === 0) return null;
+	// If not in visibility list, check if user is a juror of a judging/resolved match
+	if (visCheck.length === 0) {
+		const jurorCheck = await db
+			.select({ matchId: matchJurors.matchId })
+			.from(matchJurors)
+			.innerJoin(matches, eq(matches.id, matchJurors.matchId))
+			.where(
+				and(
+					eq(matchJurors.userId, userId),
+					eq(matches.betId, betId),
+					inArray(matches.status, ['judging', 'resolved'])
+				)
+			)
+			.limit(1);
+
+		if (jurorCheck.length === 0) return null;
+	}
 
 	// Fetch bet
 	const betRows = await db
@@ -427,8 +502,18 @@ export async function getBetDetailForUser(
 		.where(eq(matches.betId, betId))
 		.limit(1);
 
-	const matchId = matchRows.length > 0 ? matchRows[0].id : null;
-	const matchStatus = matchRows.length > 0 ? matchRows[0].status : null;
+	let matchId: string | null = null;
+	let matchStatus: string | null = null;
+
+	if (matchRows.length > 0) {
+		matchId = matchRows[0].id;
+		// Lazily resolve deadline → judging transition
+		matchStatus = await resolveMatchStatus({
+			id: matchRows[0].id,
+			betId,
+			status: matchRows[0].status
+		});
+	}
 
 	// Fetch visibility list with profiles
 	const visRows = await db
@@ -477,7 +562,8 @@ export async function getBetDetailForUser(
 			if (p.userId === userId) {
 				myParticipation = { answer: p.answer ?? '', stake: p.stake };
 			}
-			// hide_answers: mask other users' answers while match is open
+			// hide_answers: mask other users' answers while match is open.
+			// Once match is 'judging' or beyond, always reveal all answers.
 			const isOpen = matchStatus === 'open';
 			const isOwn = p.userId === userId;
 			const showAnswer = !bet.hideAnswers || !isOpen || isOwn;

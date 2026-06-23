@@ -31,7 +31,7 @@
 	const statusLabels: Record<string, string> = {
 		open: 'Ouvert',
 		closed: 'Clôturé',
-		judging: 'En jury',
+		judging: 'En jugement',
 		resolved: 'Résolu',
 		contested: 'Contesté',
 		cancelled: 'Annulé'
@@ -108,6 +108,14 @@
 	);
 
 	const canParticipate = $derived(isClosest && data.bet.matchStatus === 'open' && !deadlinePassed);
+
+	// Can submit to jury: must be closest, match open, and user is a participant
+	const canSubmitToJury = $derived(
+		isClosest && data.bet.matchStatus === 'open' && data.isParticipant
+	);
+
+	// Is judging
+	const isJudging = $derived(data.bet.matchStatus === 'judging');
 
 	// Stake label for participate button
 	const stakeLabel = $derived(
@@ -188,7 +196,9 @@
 					<span
 						class="rounded-full px-2 py-0.5 text-xs font-medium {data.bet.matchStatus === 'open'
 							? 'bg-green-100 text-green-700'
-							: 'bg-muted text-muted-foreground'}"
+							: data.bet.matchStatus === 'judging'
+								? 'bg-amber-100 text-amber-700'
+								: 'bg-muted text-muted-foreground'}"
 						data-testid="bet-status-badge"
 					>
 						{matchStatusLabel}
@@ -376,7 +386,9 @@
 			<div class="border-border bg-card rounded-lg border p-4" data-testid="bet-hide-answers">
 				<h2 class="text-foreground mb-1 text-sm font-semibold">Réponses</h2>
 				<p class="text-foreground text-sm">
-					{data.bet.hideAnswers ? "Cachées jusqu'à la clôture" : 'Visibles par tous'}
+					{data.bet.hideAnswers && !isJudging
+						? "Cachées jusqu'à la soumission au jury"
+						: 'Visibles par tous'}
 				</p>
 			</div>
 
@@ -507,6 +519,51 @@
 				<Button disabled data-testid="accept-btn">Accepter (disponible en S-031)</Button>
 			</div>
 		{:else if isClosest}
+			<!-- Bouton Soumettre au jury (uniquement pour les participants, match open) -->
+			{#if canSubmitToJury}
+				<div
+					class="border-border bg-card mt-2 rounded-lg border p-4"
+					data-testid="submit-to-jury-section"
+				>
+					<h2 class="text-foreground mb-1 text-sm font-semibold">Soumettre au jury</h2>
+					<p class="text-muted-foreground mb-3 text-xs">
+						Soumettre le pari au jury clôt les participations et révèle toutes les estimations.
+					</p>
+					{#if form?.submitError}
+						<p class="text-destructive mb-3 text-sm" data-testid="submit-error">
+							{form.submitError}
+						</p>
+					{/if}
+					<form method="POST" action="?/submit_to_jury" use:enhance>
+						<Button type="submit" variant="outline" data-testid="submit-to-jury-btn">
+							Soumettre au jury
+						</Button>
+					</form>
+				</div>
+			{/if}
+
+			<!-- Phase de jugement : placeholder vote jury (S-040) -->
+			{#if isJudging && data.isJuror}
+				<div
+					class="border-amber-200 bg-amber-50 mt-2 rounded-lg border p-4"
+					data-testid="jury-vote-section"
+				>
+					<h2 class="text-amber-800 mb-1 text-sm font-semibold">Vote du jury</h2>
+					<p class="text-amber-700 text-sm" data-testid="jury-vote-placeholder">
+						Le vote du jury sera disponible prochainement (S-040).
+					</p>
+				</div>
+			{:else if isJudging}
+				<div
+					class="border-border bg-card mt-2 rounded-lg border p-4"
+					data-testid="judging-info-section"
+				>
+					<p class="text-muted-foreground text-sm">
+						Ce pari est en cours de jugement. En attente du verdict du jury.
+					</p>
+				</div>
+			{/if}
+
 			<!-- Participation closest -->
 			{#if canParticipate}
 				<div
@@ -544,7 +601,7 @@
 						</Button>
 					</form>
 				</div>
-			{:else if deadlinePassed && !hasParticipated}
+			{:else if deadlinePassed && !hasParticipated && !isJudging}
 				<!-- Spectator banner: deadline passed without participating -->
 				<div
 					class="bg-muted text-muted-foreground rounded-lg border p-4 mt-2"
@@ -552,7 +609,7 @@
 				>
 					<p class="text-sm">Tu n'as pas participé — spectateur</p>
 				</div>
-			{:else if hasParticipated && deadlinePassed}
+			{:else if hasParticipated && deadlinePassed && !isJudging}
 				<!-- Participated, deadline passed — can only view -->
 				<div
 					class="border-border bg-card rounded-lg border p-4 mt-2"
@@ -566,8 +623,8 @@
 						La date limite est dépassée, ton estimation est figée.
 					</p>
 				</div>
-			{:else if data.bet.matchStatus !== 'open'}
-				<!-- Match closed or non-open -->
+			{:else if data.bet.matchStatus !== 'open' && !isJudging}
+				<!-- Match closed or non-open (not judging) -->
 				<div
 					class="border-border bg-card rounded-lg border p-4 mt-2"
 					data-testid="participate-section"
@@ -580,6 +637,20 @@
 					{:else}
 						<Button disabled data-testid="participate-btn">Participer (pari clôturé)</Button>
 					{/if}
+				</div>
+			{:else if isJudging && hasParticipated}
+				<!-- In judging: show my answer (read-only) -->
+				<div
+					class="border-border bg-card rounded-lg border p-4 mt-2"
+					data-testid="participate-section"
+				>
+					<h2 class="text-foreground mb-1 text-sm font-semibold">Mon estimation</h2>
+					<p class="text-foreground text-sm font-medium" data-testid="my-answer">
+						{myParticipation?.answer}
+					</p>
+					<p class="text-muted-foreground mt-1 text-xs">
+						Le pari est en jugement, ton estimation est figée.
+					</p>
 				</div>
 			{/if}
 		{/if}

@@ -5,6 +5,7 @@ import {
 	isActiveMemberOfBetGroup,
 	participateInClosestBet
 } from '$lib/server/bets';
+import { submitMatchToJury } from '$lib/server/matches';
 import { captureServer } from '$lib/server/analytics';
 import type { Actions, PageServerLoad } from './$types';
 
@@ -22,17 +23,30 @@ export const load: PageServerLoad = async ({ locals, params }) => {
 		throw error(404, 'Pari introuvable.');
 	}
 
-	// Check user is active member of the group that owns this bet
+	// Check user is active member of the group
 	const isMember = await isActiveMemberOfBetGroup(params.betId, params.id, user.id);
-	if (!isMember) {
+
+	// Fetch bet detail (checks visibility, including juror visibility for judging bets)
+	const bet = await getBetDetailForUser(params.betId, user.id);
+
+	if (!bet) {
+		// Not in visibility list and not a juror of a judging match
 		throw error(404, 'Pari introuvable ou accès refusé.');
 	}
 
-	// Fetch bet detail (checks visibility)
-	const bet = await getBetDetailForUser(params.betId, user.id);
-	if (!bet) {
-		// User is group member but not in the visibility list
-		throw error(404, 'Pari introuvable ou accès refusé.');
+	// A juror who is not in the visibility list can access the bet only if the match is judging.
+	// getBetDetailForUser already handles this check.
+
+	// Determine if current user is a participant of the match
+	let isParticipant = false;
+	let isJuror = false;
+
+	if (bet.matchId) {
+		// Check participant
+		isParticipant = bet.participants.some((p) => p.userId === user.id);
+
+		// Check juror
+		isJuror = bet.jurors.some((j) => j.userId === user.id);
 	}
 
 	return {
@@ -61,7 +75,10 @@ export const load: PageServerLoad = async ({ locals, params }) => {
 			yesno: bet.yesno,
 			proposition: bet.proposition
 		},
-		currentUserId: user.id
+		currentUserId: user.id,
+		isParticipant,
+		isJuror,
+		isMember
 	};
 };
 
@@ -139,6 +156,62 @@ export const actions: Actions = {
 		} catch (err) {
 			const message = err instanceof Error ? err.message : 'Erreur lors de la participation.';
 			return fail(400, { participateError: message, participateValues: raw });
+		}
+
+		// Redirect to reload the page with fresh data
+		throw redirect(303, `/app/groups/${params.id}/bets/${params.betId}`);
+	},
+
+	submit_to_jury: async ({ locals, params }) => {
+		const { session, user } = await locals.safeGetSession();
+		if (!session || !user) return fail(401, { submitError: 'Non authentifie.' });
+
+		if (!uuidRegex.test(params.id) || !uuidRegex.test(params.betId)) {
+			return fail(400, { submitError: 'Parametres invalides.' });
+		}
+
+		// Verify user is active member of the group
+		const isMember = await isActiveMemberOfBetGroup(params.betId, params.id, user.id);
+		if (!isMember) {
+			return fail(403, { submitError: 'Acces refuse.' });
+		}
+
+		// Fetch bet to verify access and get matchId
+		const bet = await getBetDetailForUser(params.betId, user.id);
+		if (!bet) {
+			return fail(404, { submitError: 'Pari introuvable.' });
+		}
+
+		if (bet.type !== 'closest') {
+			return fail(400, { submitError: 'Ce pari nest pas un pari au plus proche.' });
+		}
+
+		if (!bet.matchId) {
+			return fail(400, { submitError: 'Aucun match associe a ce pari.' });
+		}
+
+		// Verify caller is a participant
+		const isParticipant = bet.participants.some((p) => p.userId === user.id);
+		if (!isParticipant) {
+			return fail(403, { submitError: 'Seuls les participants peuvent soumettre au jury.' });
+		}
+
+		try {
+			await submitMatchToJury(bet.matchId);
+
+			await captureServer({
+				distinctId: user.id,
+				event: 'bet_submitted_to_jury',
+				properties: {
+					bet_id: params.betId,
+					match_id: bet.matchId,
+					group_id: params.id,
+					bet_type: 'closest'
+				}
+			});
+		} catch (err) {
+			const message = err instanceof Error ? err.message : 'Erreur lors de la soumission au jury.';
+			return fail(400, { submitError: message });
 		}
 
 		// Redirect to reload the page with fresh data
