@@ -300,8 +300,8 @@ test('page duel affiche badge type, titre, camps, mises et échéance', async ({
 	// Titre
 	await expect(page.getByTestId('bet-title')).toHaveText('[E2E] Il pleuvra demain détail');
 
-	// Status : En attente de réponse
-	await expect(page.getByTestId('bet-status-badge')).toContainText('En attente de réponse');
+	// Status : En négociation (badge proposition, renommé par S-031)
+	await expect(page.getByTestId('proposition-status-badge')).toContainText('En négociation');
 
 	// Section camps
 	await expect(page.getByTestId('yesno-camps')).toBeVisible();
@@ -452,7 +452,7 @@ test('Bob (cible) voit le duel avec badge Proposition reçue, Carol ne le voit p
 	await bobPage.goto(`${GROUP_URL}/bets/${betId}`);
 	await expect(bobPage.getByTestId('bet-title')).toHaveText('[E2E] Visibilite duel');
 	await expect(bobPage.getByTestId('proposition-received-badge')).toBeVisible();
-	await expect(bobPage.getByTestId('proposition-received-badge')).toHaveText('Proposition reçue');
+	await expect(bobPage.getByTestId('proposition-received-badge')).toHaveText('À toi de jouer');
 	await bobContext.close();
 
 	const carolContext = await browser.newContext();
@@ -672,6 +672,6 @@ test('bouton Accepter sur page duel visible mais désactivé pour la cible (plac
 	await bobPage.goto(`${GROUP_URL}/bets/${betId}`);
 
 	await expect(bobPage.getByTestId('accept-btn')).toBeVisible();
-	await expect(bobPage.getByTestId('accept-btn')).toBeDisabled();
+	await expect(bobPage.getByTestId('accept-btn')).toBeEnabled();
 	await bobContext.close();
 });

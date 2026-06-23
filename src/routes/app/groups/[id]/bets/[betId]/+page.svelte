@@ -38,7 +38,7 @@
 	};
 
 	const propositionStatusLabels: Record<string, string> = {
-		negotiating: 'En attente de réponse',
+		negotiating: 'En négociation',
 		accepted: 'Acceptée',
 		refused: 'Refusée',
 		cancelled: 'Annulée',
@@ -97,6 +97,60 @@
 		proposition ? proposition.targetId === data.currentUserId : false
 	);
 
+	const isCurrentUserCreator = $derived(data.bet.creatorId === data.currentUserId);
+
+	// Negotiation state
+	const propIsNegotiating = $derived(proposition?.status === 'negotiating');
+	const propIsAccepted = $derived(proposition?.status === 'accepted');
+
+	// Who made the last offer
+	const lastProposerId = $derived(proposition?.lastProposerId ?? null);
+	const currentUserIsLastProposer = $derived(
+		lastProposerId !== null && lastProposerId === data.currentUserId
+	);
+
+	// Can current user accept/refuse/counter-propose?
+	// Only if propIsNegotiating AND they did NOT make the last offer AND they are creator or target
+	const canNegotiate = $derived(
+		propIsNegotiating && !currentUserIsLastProposer && (isCurrentUserCreator || isCurrentUserTarget)
+	);
+
+	// Can current user cancel? Only if creator, negotiating, and they ARE the last proposer
+	// (i.e. they made the last offer and must wait — they can cancel instead)
+	// Actually: creator can cancel at any time while negotiating (regardless of last proposer)
+	const canCancel = $derived(propIsNegotiating && isCurrentUserCreator);
+
+	// Counter-propose form state
+	let showCounterForm = $state(false);
+	let changeJury = $state(false);
+
+	// Pre-fill counter-propose form with current terms
+	let counterStakeCreator = $state('');
+	let counterStakeTarget = $state('');
+	let counterForfeitCreator = $state('');
+	let counterForfeitTarget = $state('');
+
+	// Selected jury IDs in counter form
+	let counterJuryIds = $state<string[]>([]);
+
+	$effect(() => {
+		if (proposition && showCounterForm) {
+			counterStakeCreator = proposition.stakeCreator ?? '';
+			counterStakeTarget = proposition.stakeTarget ?? '';
+			counterForfeitCreator = proposition.forfeitCreator ?? '';
+			counterForfeitTarget = proposition.forfeitTarget ?? '';
+			counterJuryIds = proposition.jurors.map((j) => j.userId);
+		}
+	});
+
+	function toggleCounterJury(userId: string) {
+		if (counterJuryIds.includes(userId)) {
+			counterJuryIds = counterJuryIds.filter((id) => id !== userId);
+		} else {
+			counterJuryIds = [...counterJuryIds, userId];
+		}
+	}
+
 	// Closest bet participation logic
 	const isClosest = $derived(data.bet.type === 'closest');
 	const myParticipation = $derived(data.bet.myParticipation ?? null);
@@ -124,11 +178,10 @@
 			: `Parier (gage : ${data.bet.forfeitDescription})`
 	);
 
-	// Participation form answer state — writable derived so it tracks data changes
-	// but also allows the user to edit the field before submission
+	// Participation form answer state
 	let answerValue = $derived.by(() => data.bet.myParticipation?.answer ?? '');
 
-	// Track bet viewed — read bet properties reactively so Svelte doesn't optimize away
+	// Track bet viewed
 	$effect(() => {
 		const betId = data.bet.id;
 		const betType = data.bet.type;
@@ -180,18 +233,36 @@
 							: proposition.status === 'accepted'
 								? 'bg-green-100 text-green-700'
 								: 'bg-muted text-muted-foreground'}"
-						data-testid="bet-status-badge"
+						data-testid="proposition-status-badge"
 					>
 						{propStatusLabel}
 					</span>
-					{#if isCurrentUserTarget && proposition.status === 'negotiating'}
+					{#if propIsNegotiating && !currentUserIsLastProposer && (isCurrentUserCreator || isCurrentUserTarget)}
 						<span
 							class="bg-primary text-primary-foreground rounded-full px-2 py-0.5 text-xs font-medium"
 							data-testid="proposition-received-badge"
 						>
-							Proposition reçue
+							À toi de jouer
+						</span>
+					{:else if propIsNegotiating && currentUserIsLastProposer}
+						<span
+							class="bg-amber-100 text-amber-700 rounded-full px-2 py-0.5 text-xs font-medium"
+							data-testid="proposition-waiting-badge"
+						>
+							En attente de réponse
 						</span>
 					{/if}
+				{:else if isYesno && propIsAccepted && data.bet.matchStatus}
+					<span
+						class="rounded-full px-2 py-0.5 text-xs font-medium {data.bet.matchStatus === 'open'
+							? 'bg-green-100 text-green-700'
+							: data.bet.matchStatus === 'judging'
+								? 'bg-amber-100 text-amber-700'
+								: 'bg-muted text-muted-foreground'}"
+						data-testid="bet-status-badge"
+					>
+						{matchStatusLabel}
+					</span>
 				{:else if matchStatusLabel}
 					<span
 						class="rounded-full px-2 py-0.5 text-xs font-medium {data.bet.matchStatus === 'open'
@@ -270,10 +341,10 @@
 				</div>
 			</div>
 
-			<!-- Mise / Gages (yesno) -->
+			<!-- Mise / Gages (yesno) — termes courants de la proposition -->
 			{#if proposition}
 				<div class="border-border bg-card rounded-lg border p-4" data-testid="yesno-stakes">
-					<h2 class="text-foreground mb-2 text-sm font-semibold">Mises</h2>
+					<h2 class="text-foreground mb-2 text-sm font-semibold">Mises en jeu</h2>
 					{#if data.bet.stakeType === 'points'}
 						<div class="grid grid-cols-2 gap-3">
 							<div>
@@ -315,19 +386,21 @@
 					{/if}
 				</div>
 
-				<!-- Échéance de la proposition -->
-				<div class="border-border bg-card rounded-lg border p-4" data-testid="proposition-expiry">
-					<h2 class="text-foreground mb-1 text-sm font-semibold">Échéance de la proposition</h2>
-					<p class="text-foreground text-sm" data-testid="expiry-value">
-						{formatDatetime(proposition.expiresAt)}
-					</p>
-				</div>
+				<!-- Échéance de la proposition (only when negotiating) -->
+				{#if propIsNegotiating}
+					<div class="border-border bg-card rounded-lg border p-4" data-testid="proposition-expiry">
+						<h2 class="text-foreground mb-1 text-sm font-semibold">Échéance de la proposition</h2>
+						<p class="text-foreground text-sm" data-testid="expiry-value">
+							{formatDatetime(proposition.expiresAt)}
+						</p>
+					</div>
+				{/if}
 
-				<!-- Jury proposé -->
+				<!-- Jury proposé / final -->
 				{#if proposition.jurors.length > 0}
 					<div class="border-border bg-card rounded-lg border p-4" data-testid="bet-jury">
 						<h2 class="text-foreground mb-2 text-sm font-semibold">
-							Jury proposé — {juryModeLabel}
+							{propIsAccepted ? 'Jury' : 'Jury proposé'} — {juryModeLabel}
 						</h2>
 						<ul class="flex flex-col gap-1" data-testid="jury-members-list">
 							{#each proposition.jurors as juror (juror.userId)}
@@ -351,6 +424,313 @@
 								</li>
 							{/each}
 						</ul>
+					</div>
+				{/if}
+
+				<!-- Historique des offres -->
+				{#if proposition.offers.length > 0}
+					<div class="border-border bg-card rounded-lg border p-4" data-testid="offers-history">
+						<h2 class="text-foreground mb-3 text-sm font-semibold">
+							Historique des offres ({proposition.offers.length})
+						</h2>
+						<ol class="flex flex-col gap-3">
+							{#each proposition.offers as offer, i (offer.id)}
+								<li
+									class="relative flex flex-col gap-1 rounded-md border p-3 {offer.authorId ===
+									data.currentUserId
+										? 'border-primary/40 bg-primary/5'
+										: 'border-border'}"
+									data-testid="offer-item"
+								>
+									<div class="flex items-center justify-between gap-2">
+										<div class="flex items-center gap-2">
+											{#if offer.authorAvatarUrl}
+												<img
+													src={offer.authorAvatarUrl}
+													alt={offer.authorPseudo}
+													class="h-5 w-5 rounded-full object-cover"
+												/>
+											{:else}
+												<div
+													class="bg-muted text-muted-foreground flex h-5 w-5 items-center justify-center rounded-full text-xs font-medium"
+												>
+													{offer.authorPseudo.charAt(0).toUpperCase()}
+												</div>
+											{/if}
+											<span class="text-foreground text-sm font-medium" data-testid="offer-author">
+												{offer.authorPseudo}{offer.authorId === data.currentUserId ? ' (moi)' : ''}
+											</span>
+											{#if i === 0}
+												<span
+													class="text-muted-foreground rounded-full bg-gray-100 px-1.5 py-0.5 text-xs"
+													>Offre initiale</span
+												>
+											{/if}
+										</div>
+										<span class="text-muted-foreground text-xs" data-testid="offer-date">
+											{formatDatetime(offer.createdAt)}
+										</span>
+									</div>
+									<div class="mt-1" data-testid="offer-terms">
+										{#if data.bet.stakeType === 'points'}
+											<span class="text-foreground text-sm">
+												{creatorInfo?.pseudo ?? 'Créateur'} :
+												<strong data-testid="offer-stake-creator">{offer.stakeCreator} pts</strong>
+												—
+												{targetInfo?.pseudo ?? 'Cible'} :
+												<strong data-testid="offer-stake-target">{offer.stakeTarget} pts</strong>
+											</span>
+										{:else}
+											<div class="flex flex-col gap-0.5">
+												<span class="text-foreground text-sm">
+													Gage {creatorInfo?.pseudo ?? 'Créateur'} :
+													<span data-testid="offer-forfeit-creator">{offer.forfeitCreator}</span>
+												</span>
+												<span class="text-foreground text-sm">
+													Gage {targetInfo?.pseudo ?? 'Cible'} :
+													<span data-testid="offer-forfeit-target">{offer.forfeitTarget}</span>
+												</span>
+											</div>
+										{/if}
+									</div>
+								</li>
+							{/each}
+						</ol>
+					</div>
+				{/if}
+
+				<!-- Message d'erreur négociation -->
+				{#if form?.negotiateError}
+					<div
+						class="border-destructive/30 bg-destructive/10 rounded-lg border p-3"
+						data-testid="negotiate-error"
+					>
+						<p class="text-destructive text-sm">{form.negotiateError}</p>
+					</div>
+				{/if}
+
+				<!-- Actions de négociation -->
+				{#if propIsNegotiating}
+					<div
+						class="border-border bg-card rounded-lg border p-4"
+						data-testid="negotiation-actions"
+					>
+						<h2 class="text-foreground mb-3 text-sm font-semibold">Actions</h2>
+
+						{#if canNegotiate}
+							<!-- Accepter -->
+							<div class="flex flex-wrap gap-2">
+								<form method="POST" action="?/accept_proposition" use:enhance>
+									<input type="hidden" name="propositionId" value={proposition.id} />
+									<Button
+										type="submit"
+										variant="default"
+										class="bg-green-600 hover:bg-green-700"
+										data-testid="accept-btn"
+									>
+										Accepter
+									</Button>
+								</form>
+
+								<!-- Refuser -->
+								<form method="POST" action="?/refuse_proposition" use:enhance>
+									<input type="hidden" name="propositionId" value={proposition.id} />
+									<Button type="submit" variant="outline" data-testid="refuse-btn">Refuser</Button>
+								</form>
+
+								<!-- Contre-proposer -->
+								<Button
+									variant="outline"
+									onclick={() => (showCounterForm = !showCounterForm)}
+									data-testid="counter-propose-btn"
+								>
+									{showCounterForm ? 'Annuler la contre-offre' : 'Contre-proposer'}
+								</Button>
+							</div>
+
+							<!-- Formulaire de contre-proposition -->
+							{#if showCounterForm}
+								<form
+									method="POST"
+									action="?/counter_propose"
+									use:enhance
+									class="mt-4 flex flex-col gap-3 border-t pt-4"
+									data-testid="counter-propose-form"
+								>
+									<input type="hidden" name="propositionId" value={proposition.id} />
+									<input type="hidden" name="stakeType" value={data.bet.stakeType} />
+									<input type="hidden" name="changeJury" value={changeJury.toString()} />
+
+									{#if data.bet.stakeType === 'points'}
+										<div class="grid grid-cols-2 gap-3">
+											<div>
+												<label
+													for="counterStakeCreator"
+													class="text-foreground mb-1 block text-sm font-medium"
+												>
+													Mise de {creatorInfo?.pseudo ?? 'Créateur'} (pts)
+												</label>
+												<input
+													id="counterStakeCreator"
+													name="stakeCreator"
+													type="number"
+													min="0.01"
+													step="0.01"
+													class="border-input bg-background text-foreground focus-visible:ring-ring w-full rounded-md border px-3 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1"
+													bind:value={counterStakeCreator}
+													data-testid="counter-stake-creator"
+													required
+												/>
+											</div>
+											<div>
+												<label
+													for="counterStakeTarget"
+													class="text-foreground mb-1 block text-sm font-medium"
+												>
+													Mise de {targetInfo?.pseudo ?? 'Cible'} (pts)
+												</label>
+												<input
+													id="counterStakeTarget"
+													name="stakeTarget"
+													type="number"
+													min="0.01"
+													step="0.01"
+													class="border-input bg-background text-foreground focus-visible:ring-ring w-full rounded-md border px-3 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1"
+													bind:value={counterStakeTarget}
+													data-testid="counter-stake-target"
+													required
+												/>
+											</div>
+										</div>
+									{:else}
+										<div>
+											<label
+												for="counterForfeitCreator"
+												class="text-foreground mb-1 block text-sm font-medium"
+											>
+												Gage de {creatorInfo?.pseudo ?? 'Créateur'} (si perd)
+											</label>
+											<input
+												id="counterForfeitCreator"
+												name="forfeitCreator"
+												type="text"
+												class="border-input bg-background text-foreground focus-visible:ring-ring w-full rounded-md border px-3 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1"
+												bind:value={counterForfeitCreator}
+												data-testid="counter-forfeit-creator"
+												required
+											/>
+										</div>
+										<div>
+											<label
+												for="counterForfeitTarget"
+												class="text-foreground mb-1 block text-sm font-medium"
+											>
+												Gage de {targetInfo?.pseudo ?? 'Cible'} (si perd)
+											</label>
+											<input
+												id="counterForfeitTarget"
+												name="forfeitTarget"
+												type="text"
+												class="border-input bg-background text-foreground focus-visible:ring-ring w-full rounded-md border px-3 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1"
+												bind:value={counterForfeitTarget}
+												data-testid="counter-forfeit-target"
+												required
+											/>
+										</div>
+									{/if}
+
+									<!-- Option de modifier le jury -->
+									<div>
+										<label class="flex cursor-pointer items-center gap-2">
+											<input
+												type="checkbox"
+												class="rounded"
+												bind:checked={changeJury}
+												data-testid="change-jury-checkbox"
+											/>
+											<span class="text-foreground text-sm">Modifier le jury</span>
+										</label>
+									</div>
+
+									{#if changeJury}
+										<div data-testid="counter-jury-section">
+											<p class="text-foreground mb-2 text-sm font-medium">Nouveaux jurés</p>
+											<div class="flex flex-col gap-1">
+												{#each data.bet.visibility as member (member.userId)}
+													<label
+														class="flex cursor-pointer items-center gap-2 rounded-md p-1 hover:bg-gray-50"
+													>
+														<input
+															type="checkbox"
+															name="juryUserIds"
+															value={member.userId}
+															checked={counterJuryIds.includes(member.userId)}
+															onchange={() => toggleCounterJury(member.userId)}
+															class="rounded"
+														/>
+														<span class="text-foreground text-sm">
+															{member.pseudo}{member.userId === data.currentUserId ? ' (moi)' : ''}
+														</span>
+													</label>
+												{/each}
+											</div>
+										</div>
+									{/if}
+
+									<Button type="submit" data-testid="counter-submit-btn">
+										Envoyer la contre-offre
+									</Button>
+								</form>
+							{/if}
+						{:else if currentUserIsLastProposer && (isCurrentUserCreator || isCurrentUserTarget)}
+							<!-- Waiting for the other party -->
+							<p class="text-muted-foreground text-sm" data-testid="waiting-message">
+								Vous avez fait la dernière offre. En attente de réponse de votre adversaire.
+							</p>
+						{:else}
+							<p class="text-muted-foreground text-sm">Vous ne participez pas à ce duel.</p>
+						{/if}
+
+						<!-- Annuler (créateur uniquement, toujours possible pendant la négociation) -->
+						{#if canCancel}
+							<div class="mt-3 border-t pt-3">
+								<form method="POST" action="?/cancel_proposition" use:enhance>
+									<input type="hidden" name="propositionId" value={proposition.id} />
+									<Button
+										type="submit"
+										variant="ghost"
+										class="text-destructive hover:text-destructive text-sm"
+										data-testid="cancel-proposition-btn"
+									>
+										Annuler le duel
+									</Button>
+								</form>
+							</div>
+						{/if}
+					</div>
+				{:else if propIsAccepted}
+					<!-- Match accepted -->
+					<div
+						class="border-green-200 bg-green-50 rounded-lg border p-4"
+						data-testid="accepted-section"
+					>
+						<h2 class="text-green-800 mb-1 text-sm font-semibold">Duel accepté !</h2>
+						<p class="text-green-700 text-sm">
+							Les termes sont figés. Le match est en cours (statut : {matchStatusLabel ?? '—'}).
+						</p>
+					</div>
+				{:else}
+					<!-- Proposition terminée (refusée / annulée / expirée) -->
+					<div class="border-border bg-card rounded-lg border p-4" data-testid="terminal-section">
+						<p class="text-muted-foreground text-sm">
+							{#if proposition.status === 'refused'}
+								Ce duel a été refusé.
+							{:else if proposition.status === 'cancelled'}
+								Ce duel a été annulé par le créateur.
+							{:else if proposition.status === 'expired'}
+								Ce duel a expiré sans réponse.
+							{/if}
+						</p>
 					</div>
 				{/if}
 			{/if}
@@ -512,13 +892,8 @@
 			Créé le {formatDate(data.bet.createdAt)}
 		</p>
 
-		<!-- Actions -->
-		{#if isYesno && proposition && proposition.status === 'negotiating' && isCurrentUserTarget}
-			<!-- La cible peut accepter/refuser (S-031) -->
-			<div class="mt-2" data-testid="proposition-actions">
-				<Button disabled data-testid="accept-btn">Accepter (disponible en S-031)</Button>
-			</div>
-		{:else if isClosest}
+		<!-- Actions closest -->
+		{#if isClosest}
 			<!-- Bouton Soumettre au jury (uniquement pour les participants, match open) -->
 			{#if canSubmitToJury}
 				<div

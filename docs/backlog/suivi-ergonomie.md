@@ -13,6 +13,13 @@ Statuts : `à faire` · `fait` · `ignoré` (avec raison).
 
 ---
 
+## S-022 — Cycle de vie closest — 2026-06-23
+
+- [mineur] `à faire` — Page pari en judging (placeholder vote jury) : le texte "Le vote du jury sera disponible prochainement (S-040)" contient la référence technique "S-040" qui ne doit pas apparaître aux utilisateurs finaux. → Reformuler en "Le vote du jury sera disponible prochainement." sans la référence à la story.
+- [mineur] `à faire` — Section « À juger » (page groupe, vue juré) : la section n'a pas de titre `<h2>` ou label visible distinct ; seule la couleur amber/orange la distingue visuellement. → Ajouter un titre explicite "Paris à juger" ou un heading pour l'accessibilité (screen readers).
+
+---
+
 ## S-030 — Créer un duel Oui/Non — 2026-06-22
 
 - [mineur] `à faire` — Page duel `/bets/[betId]` (labels de camps) : le créateur voit "Alice (moi)" dans les champs `camp-a-player`/`camp-b-player`, mais il faut vérifier que la cible (Bob) voit "Alice" (sans "(moi)") — non testé dans cette story (S-031 implémente la vue cible). → Vérifier à S-031 que la logique `currentUserId` distingue bien le point de vue créateur vs cible dans l'affichage des camps.

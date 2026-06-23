@@ -1,11 +1,20 @@
 import { error, fail, redirect } from '@sveltejs/kit';
 import { z } from 'zod';
+import { db } from '$lib/server/db/index';
+import { groupMembers } from '$lib/server/db/schema';
+import { and, eq, isNull } from 'drizzle-orm';
 import {
 	getBetDetailForUser,
 	isActiveMemberOfBetGroup,
 	participateInClosestBet
 } from '$lib/server/bets';
 import { submitMatchToJury } from '$lib/server/matches';
+import {
+	acceptProposition,
+	refuseProposition,
+	cancelProposition,
+	counterPropose
+} from '$lib/server/propositions';
 import { captureServer } from '$lib/server/analytics';
 import type { Actions, PageServerLoad } from './$types';
 
@@ -33,9 +42,6 @@ export const load: PageServerLoad = async ({ locals, params }) => {
 		// Not in visibility list and not a juror of a judging match
 		throw error(404, 'Pari introuvable ou accès refusé.');
 	}
-
-	// A juror who is not in the visibility list can access the bet only if the match is judging.
-	// getBetDetailForUser already handles this check.
 
 	// Determine if current user is a participant of the match
 	let isParticipant = false;
@@ -86,6 +92,59 @@ export const load: PageServerLoad = async ({ locals, params }) => {
 const participateSchema = z.object({
 	answer: z.string().min(1, "L'estimation est obligatoire.").max(500, 'Estimation trop longue.')
 });
+
+// Zod schema for counter-propose form
+const counterProposeSchema = z
+	.object({
+		propositionId: z.string().regex(uuidRegex, 'Proposition invalide.'),
+		stakeType: z.enum(['points', 'forfeit']),
+		stakeCreator: z.string().optional(),
+		stakeTarget: z.string().optional(),
+		forfeitCreator: z.string().optional(),
+		forfeitTarget: z.string().optional(),
+		juryUserIds: z
+			.union([
+				z.string().regex(uuidRegex, 'UUID juré invalide.'),
+				z.array(z.string().regex(uuidRegex, 'UUID juré invalide.'))
+			])
+			.optional()
+	})
+	.superRefine((data, ctx) => {
+		if (data.stakeType === 'points') {
+			const sc = parseFloat(data.stakeCreator ?? '');
+			if (!data.stakeCreator || isNaN(sc) || sc <= 0) {
+				ctx.addIssue({
+					code: z.ZodIssueCode.custom,
+					path: ['stakeCreator'],
+					message: 'La mise du créateur doit être supérieure à 0.'
+				});
+			}
+			const st = parseFloat(data.stakeTarget ?? '');
+			if (!data.stakeTarget || isNaN(st) || st <= 0) {
+				ctx.addIssue({
+					code: z.ZodIssueCode.custom,
+					path: ['stakeTarget'],
+					message: 'La mise de la cible doit être supérieure à 0.'
+				});
+			}
+		}
+		if (data.stakeType === 'forfeit') {
+			if (!data.forfeitCreator || data.forfeitCreator.trim().length === 0) {
+				ctx.addIssue({
+					code: z.ZodIssueCode.custom,
+					path: ['forfeitCreator'],
+					message: 'Le gage du créateur est obligatoire.'
+				});
+			}
+			if (!data.forfeitTarget || data.forfeitTarget.trim().length === 0) {
+				ctx.addIssue({
+					code: z.ZodIssueCode.custom,
+					path: ['forfeitTarget'],
+					message: 'Le gage de la cible est obligatoire.'
+				});
+			}
+		}
+	});
 
 export const actions: Actions = {
 	participate: async ({ locals, params, request }) => {
@@ -215,6 +274,239 @@ export const actions: Actions = {
 		}
 
 		// Redirect to reload the page with fresh data
+		throw redirect(303, `/app/groups/${params.id}/bets/${params.betId}`);
+	},
+
+	// ─── Négociation yesno ────────────────────────────────────────────────────
+
+	accept_proposition: async ({ locals, params, request }) => {
+		const { session, user } = await locals.safeGetSession();
+		if (!session || !user) return fail(401, { negotiateError: 'Non authentifié.' });
+
+		if (!uuidRegex.test(params.id) || !uuidRegex.test(params.betId)) {
+			return fail(400, { negotiateError: 'Paramètres invalides.' });
+		}
+
+		const formData = await request.formData();
+		const propositionId = formData.get('propositionId') as string;
+
+		if (!propositionId || !uuidRegex.test(propositionId)) {
+			return fail(400, { negotiateError: 'Proposition invalide.' });
+		}
+
+		// Verify group membership
+		const isMember = await isActiveMemberOfBetGroup(params.betId, params.id, user.id);
+		if (!isMember) {
+			return fail(403, { negotiateError: 'Accès refusé.' });
+		}
+
+		try {
+			const { matchId } = await acceptProposition({
+				propositionId,
+				userId: user.id
+			});
+
+			await captureServer({
+				distinctId: user.id,
+				event: 'proposition_accepted',
+				properties: {
+					bet_id: params.betId,
+					proposition_id: propositionId,
+					match_id: matchId,
+					group_id: params.id
+				}
+			});
+		} catch (err) {
+			const message =
+				err instanceof Error ? err.message : "Erreur lors de l'acceptation de la proposition.";
+			return fail(400, { negotiateError: message });
+		}
+
+		throw redirect(303, `/app/groups/${params.id}/bets/${params.betId}`);
+	},
+
+	refuse_proposition: async ({ locals, params, request }) => {
+		const { session, user } = await locals.safeGetSession();
+		if (!session || !user) return fail(401, { negotiateError: 'Non authentifié.' });
+
+		if (!uuidRegex.test(params.id) || !uuidRegex.test(params.betId)) {
+			return fail(400, { negotiateError: 'Paramètres invalides.' });
+		}
+
+		const formData = await request.formData();
+		const propositionId = formData.get('propositionId') as string;
+
+		if (!propositionId || !uuidRegex.test(propositionId)) {
+			return fail(400, { negotiateError: 'Proposition invalide.' });
+		}
+
+		// Verify group membership
+		const isMember = await isActiveMemberOfBetGroup(params.betId, params.id, user.id);
+		if (!isMember) {
+			return fail(403, { negotiateError: 'Accès refusé.' });
+		}
+
+		try {
+			await refuseProposition({
+				propositionId,
+				userId: user.id
+			});
+
+			await captureServer({
+				distinctId: user.id,
+				event: 'proposition_refused',
+				properties: {
+					bet_id: params.betId,
+					proposition_id: propositionId,
+					group_id: params.id
+				}
+			});
+		} catch (err) {
+			const message =
+				err instanceof Error ? err.message : 'Erreur lors du refus de la proposition.';
+			return fail(400, { negotiateError: message });
+		}
+
+		throw redirect(303, `/app/groups/${params.id}/bets/${params.betId}`);
+	},
+
+	cancel_proposition: async ({ locals, params, request }) => {
+		const { session, user } = await locals.safeGetSession();
+		if (!session || !user) return fail(401, { negotiateError: 'Non authentifié.' });
+
+		if (!uuidRegex.test(params.id) || !uuidRegex.test(params.betId)) {
+			return fail(400, { negotiateError: 'Paramètres invalides.' });
+		}
+
+		const formData = await request.formData();
+		const propositionId = formData.get('propositionId') as string;
+
+		if (!propositionId || !uuidRegex.test(propositionId)) {
+			return fail(400, { negotiateError: 'Proposition invalide.' });
+		}
+
+		// Verify group membership
+		const isMember = await isActiveMemberOfBetGroup(params.betId, params.id, user.id);
+		if (!isMember) {
+			return fail(403, { negotiateError: 'Accès refusé.' });
+		}
+
+		try {
+			await cancelProposition({
+				propositionId,
+				userId: user.id
+			});
+
+			await captureServer({
+				distinctId: user.id,
+				event: 'proposition_cancelled',
+				properties: {
+					bet_id: params.betId,
+					proposition_id: propositionId,
+					group_id: params.id
+				}
+			});
+		} catch (err) {
+			const message =
+				err instanceof Error ? err.message : "Erreur lors de l'annulation de la proposition.";
+			return fail(400, { negotiateError: message });
+		}
+
+		throw redirect(303, `/app/groups/${params.id}/bets/${params.betId}`);
+	},
+
+	counter_propose: async ({ locals, params, request }) => {
+		const { session, user } = await locals.safeGetSession();
+		if (!session || !user) return fail(401, { negotiateError: 'Non authentifié.' });
+
+		if (!uuidRegex.test(params.id) || !uuidRegex.test(params.betId)) {
+			return fail(400, { negotiateError: 'Paramètres invalides.' });
+		}
+
+		// Verify group membership
+		const isMember = await isActiveMemberOfBetGroup(params.betId, params.id, user.id);
+		if (!isMember) {
+			return fail(403, { negotiateError: 'Accès refusé.' });
+		}
+
+		const formData = await request.formData();
+		const rawJury = formData.getAll('juryUserIds') as string[];
+		const changeJury = formData.get('changeJury') === 'true';
+
+		const raw = {
+			propositionId: formData.get('propositionId') as string,
+			stakeType: formData.get('stakeType') as string,
+			stakeCreator: (formData.get('stakeCreator') as string | null) ?? undefined,
+			stakeTarget: (formData.get('stakeTarget') as string | null) ?? undefined,
+			forfeitCreator: (formData.get('forfeitCreator') as string | null) ?? undefined,
+			forfeitTarget: (formData.get('forfeitTarget') as string | null) ?? undefined,
+			juryUserIds: rawJury
+		};
+
+		const result = counterProposeSchema.safeParse(raw);
+		if (!result.success) {
+			const fieldErrors = result.error.flatten().fieldErrors;
+			const firstError = Object.values(fieldErrors).flat()[0] ?? 'Données invalides.';
+			return fail(400, { negotiateError: firstError, counterFieldErrors: fieldErrors });
+		}
+
+		const data = result.data;
+
+		// Normalize jury — null means "keep existing jurors"
+		let juryUserIds: string[] | null = null;
+		if (changeJury) {
+			juryUserIds = Array.isArray(data.juryUserIds)
+				? data.juryUserIds
+				: data.juryUserIds
+					? [data.juryUserIds]
+					: [];
+		}
+
+		// Validate jury members belong to the group (only when a new jury is provided)
+		if (juryUserIds !== null) {
+			if (juryUserIds.length === 0) {
+				return fail(400, { negotiateError: 'Le jury doit avoir au moins un membre.' });
+			}
+
+			const activeMembers = await db
+				.select({ userId: groupMembers.userId })
+				.from(groupMembers)
+				.where(and(eq(groupMembers.groupId, params.id), isNull(groupMembers.removedAt)));
+
+			const activeMemberIds = new Set(activeMembers.map((m) => m.userId));
+
+			const invalidJury = juryUserIds.filter((id) => !activeMemberIds.has(id));
+			if (invalidJury.length > 0) {
+				return fail(400, { negotiateError: 'Un ou plusieurs jurés sont invalides.' });
+			}
+		}
+
+		try {
+			await counterPropose({
+				propositionId: data.propositionId,
+				authorId: user.id,
+				stakeCreator: data.stakeType === 'points' ? parseFloat(data.stakeCreator!) : null,
+				stakeTarget: data.stakeType === 'points' ? parseFloat(data.stakeTarget!) : null,
+				forfeitCreator: data.stakeType === 'forfeit' ? (data.forfeitCreator?.trim() ?? null) : null,
+				forfeitTarget: data.stakeType === 'forfeit' ? (data.forfeitTarget?.trim() ?? null) : null,
+				juryUserIds
+			});
+
+			await captureServer({
+				distinctId: user.id,
+				event: 'proposition_counter_proposed',
+				properties: {
+					bet_id: params.betId,
+					proposition_id: data.propositionId,
+					group_id: params.id,
+					stake_type: data.stakeType
+				}
+			});
+		} catch (err) {
+			const message = err instanceof Error ? err.message : 'Erreur lors de la contre-proposition.';
+			return fail(400, { negotiateError: message });
+		}
+
 		throw redirect(303, `/app/groups/${params.id}/bets/${params.betId}`);
 	}
 };

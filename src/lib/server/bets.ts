@@ -12,8 +12,9 @@ import {
 	propositionOffers,
 	propositionJurors
 } from '$lib/server/db/schema';
-import { and, eq, inArray, isNull } from 'drizzle-orm';
+import { and, eq, inArray, isNull, asc } from 'drizzle-orm';
 import { resolveMatchStatus } from '$lib/server/matches';
+import { resolvePropositionStatus } from '$lib/server/propositions';
 
 export interface CreateClosestBetParams {
 	groupId: string;
@@ -429,9 +430,21 @@ export interface BetDetail {
 		stakeTarget: string | null;
 		forfeitCreator: string | null;
 		forfeitTarget: string | null;
+		lastProposerId: string;
 		status: string;
 		expiresAt: Date | null;
 		jurors: { userId: string; pseudo: string; avatarUrl: string | null }[];
+		offers: {
+			id: string;
+			authorId: string;
+			authorPseudo: string;
+			authorAvatarUrl: string | null;
+			stakeCreator: string | null;
+			stakeTarget: string | null;
+			forfeitCreator: string | null;
+			forfeitTarget: string | null;
+			createdAt: Date;
+		}[];
 	} | null;
 }
 
@@ -605,6 +618,7 @@ export async function getBetDetailForUser(
 				stakeTarget: propositions.stakeTarget,
 				forfeitCreator: propositions.forfeitCreator,
 				forfeitTarget: propositions.forfeitTarget,
+				lastProposerId: propositions.lastProposerId,
 				status: propositions.status,
 				expiresAt: propositions.expiresAt,
 				targetPseudo: profiles.pseudo,
@@ -618,6 +632,9 @@ export async function getBetDetailForUser(
 		if (propRows.length > 0) {
 			const prop = propRows[0];
 
+			// Lazily resolve expiry
+			const resolvedStatus = await resolvePropositionStatus(prop.id);
+
 			// Fetch proposition jurors
 			const propJurorRows = await db
 				.select({
@@ -629,6 +646,24 @@ export async function getBetDetailForUser(
 				.innerJoin(profiles, eq(profiles.id, propositionJurors.userId))
 				.where(eq(propositionJurors.propositionId, prop.id));
 
+			// Fetch offer history (chronological)
+			const offerRows = await db
+				.select({
+					id: propositionOffers.id,
+					authorId: propositionOffers.authorId,
+					authorPseudo: profiles.pseudo,
+					authorAvatarUrl: profiles.avatarUrl,
+					stakeCreator: propositionOffers.stakeCreator,
+					stakeTarget: propositionOffers.stakeTarget,
+					forfeitCreator: propositionOffers.forfeitCreator,
+					forfeitTarget: propositionOffers.forfeitTarget,
+					createdAt: propositionOffers.createdAt
+				})
+				.from(propositionOffers)
+				.innerJoin(profiles, eq(profiles.id, propositionOffers.authorId))
+				.where(eq(propositionOffers.propositionId, prop.id))
+				.orderBy(asc(propositionOffers.createdAt));
+
 			propositionData = {
 				id: prop.id,
 				targetId: prop.targetId,
@@ -638,11 +673,11 @@ export async function getBetDetailForUser(
 				stakeTarget: prop.stakeTarget,
 				forfeitCreator: prop.forfeitCreator,
 				forfeitTarget: prop.forfeitTarget,
-				status: prop.status,
+				lastProposerId: prop.lastProposerId,
+				status: resolvedStatus,
 				expiresAt: prop.expiresAt,
-				jurors: propJurorRows as BetDetail['proposition'] extends null
-					? never
-					: NonNullable<BetDetail['proposition']>['jurors']
+				jurors: propJurorRows as NonNullable<BetDetail['proposition']>['jurors'],
+				offers: offerRows as NonNullable<BetDetail['proposition']>['offers']
 			};
 		}
 	}
