@@ -33,16 +33,16 @@ chaque fichier story ; ce tableau doit rester synchronisé.
 | Story                                  | Titre                                       | Statut | Dépend de |
 | -------------------------------------- | ------------------------------------------- | ------ | --------- |
 | [S-020](S-020-creer-pari-closest.md)   | Créer un pari closest                       | done   | S-013     |
-| [S-021](S-021-participer-closest.md)   | Participer (estimation cachée)              | todo   | S-020     |
-| [S-022](S-022-cycle-de-vie-closest.md) | Cycle de vie : clôture & soumission au jury | todo   | S-021     |
+| [S-021](S-021-participer-closest.md)   | Participer (estimation cachée)              | done   | S-020     |
+| [S-022](S-022-cycle-de-vie-closest.md) | Cycle de vie : clôture & soumission au jury | done   | S-021     |
 
 ## E04 — Pari Oui/Non
 
-| Story                         | Titre                                   | Statut | Dépend de |
-| ----------------------------- | --------------------------------------- | ------ | --------- |
-| [S-030](S-030-creer-duel.md)  | Créer un duel (cible, camps, mise)      | done   | S-013     |
-| [S-031](S-031-negociation.md) | Négociation (contre-offres, gages, 48h) | todo   | S-030     |
-| [S-032](S-032-defi-ouvert.md) | Défi ouvert (max_opponents)             | todo   | S-030     |
+| Story                         | Titre                                   | Statut   | Dépend de |
+| ----------------------------- | --------------------------------------- | -------- | --------- |
+| [S-030](S-030-creer-duel.md)  | Créer un duel (cible, camps, mise)      | done     | S-013     |
+| [S-031](S-031-negociation.md) | Négociation (contre-offres, gages, 48h) | done     | S-030     |
+| [S-032](S-032-defi-ouvert.md) | Défi ouvert (max_opponents)             | tracking | S-030     |
 
 ## E05 — Jury & résolution
 

@@ -469,9 +469,7 @@ export async function acceptOpenChallenge(params: {
 			.select({ matchId: matchParticipants.matchId })
 			.from(matchParticipants)
 			.innerJoin(matches, eq(matches.id, matchParticipants.matchId))
-			.where(
-				and(eq(matches.betId, params.betId), eq(matchParticipants.userId, params.acceptorId))
-			)
+			.where(and(eq(matches.betId, params.betId), eq(matchParticipants.userId, params.acceptorId)))
 			.limit(1);
 
 		if (existingAcceptance.length > 0) {
