@@ -42,7 +42,7 @@ chaque fichier story ; ce tableau doit rester synchronisé.
 | ----------------------------- | --------------------------------------- | -------- | --------- |
 | [S-030](S-030-creer-duel.md)  | Créer un duel (cible, camps, mise)      | done     | S-013     |
 | [S-031](S-031-negociation.md) | Négociation (contre-offres, gages, 48h) | done     | S-030     |
-| [S-032](S-032-defi-ouvert.md) | Défi ouvert (max_opponents)             | tracking | S-030     |
+| [S-032](S-032-defi-ouvert.md) | Défi ouvert (max_opponents)             | done     | S-030     |
 
 ## E05 — Jury & résolution
 

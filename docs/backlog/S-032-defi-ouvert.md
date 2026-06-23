@@ -1,7 +1,7 @@
 ---
 id: S-032
 epic: E04 — Pari Oui/Non
-status: tracking
+status: done
 depends_on: [S-030]
 ---
 
