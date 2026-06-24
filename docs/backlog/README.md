@@ -46,12 +46,12 @@ chaque fichier story ; ce tableau doit rester synchronisé.
 
 ## E05 — Jury & résolution
 
-| Story                                | Titre                              | Statut      | Dépend de    |
-| ------------------------------------ | ---------------------------------- | ----------- | ------------ |
-| [S-040](S-040-vote-jury.md)          | Vote du jury                       | testing     | S-022, S-031 |
-| [S-041](S-041-resolution-gains.md)   | Résolution & attribution des gains | todo        | S-040        |
-| [S-042](S-042-annulation-unanime.md) | Annulation unanime                 | todo        | S-022, S-031 |
-| [S-043](S-043-litige-admin.md)       | Litige → admin du groupe           | todo        | S-040        |
+| Story                                | Titre                              | Statut   | Dépend de    |
+| ------------------------------------ | ---------------------------------- | -------- | ------------ |
+| [S-040](S-040-vote-jury.md)          | Vote du jury                       | tracking | S-022, S-031 |
+| [S-041](S-041-resolution-gains.md)   | Résolution & attribution des gains | todo     | S-040        |
+| [S-042](S-042-annulation-unanime.md) | Annulation unanime                 | todo     | S-022, S-031 |
+| [S-043](S-043-litige-admin.md)       | Litige → admin du groupe           | todo     | S-040        |
 
 ## E06 — Ardoise & gages
 

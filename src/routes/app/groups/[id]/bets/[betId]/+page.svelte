@@ -248,6 +248,17 @@
 			group_id: groupId
 		});
 	});
+
+	// Track jury section viewed (quand le panneau jury-vote-section devient visible)
+	$effect(() => {
+		if (isJudging && data.isJuror) {
+			track('jury_section_viewed', {
+				bet_id: data.bet.id,
+				match_id: data.bet.matchId,
+				bet_type: data.bet.type
+			});
+		}
+	});
 </script>
 
 <div class="container mx-auto max-w-2xl px-4 py-10">

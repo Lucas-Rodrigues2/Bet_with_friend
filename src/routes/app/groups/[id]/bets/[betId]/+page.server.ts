@@ -329,6 +329,16 @@ export const actions: Actions = {
 					bet_type: 'yesno'
 				}
 			});
+
+			await captureServer({
+				distinctId: user.id,
+				event: 'match_submitted_to_jury',
+				properties: {
+					bet_id: params.betId,
+					match_id: bet.matchId,
+					bet_type: 'yesno'
+				}
+			});
 		} catch (err) {
 			const message = err instanceof Error ? err.message : 'Erreur lors de la soumission au jury.';
 			return fail(400, { submitError: message });
@@ -407,9 +417,9 @@ export const actions: Actions = {
 				properties: {
 					bet_id: params.betId,
 					match_id: bet.matchId,
-					group_id: params.id,
-					bet_type: bet.type,
-					verdict
+					verdict,
+					winner_count: verdict === 'winners_selected' ? winnerUserIds.length : 0,
+					has_loser: loserUserId !== null
 				}
 			});
 		} catch (err) {
