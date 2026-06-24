@@ -13,6 +13,13 @@ Statuts : `à faire` · `fait` · `ignoré` (avec raison).
 
 ---
 
+## S-041 — Résolution & attribution des gains — 2026-06-24
+
+- [majeur] `à faire` — Page pari yesno résolu (badge de statut) : quand `matchStatus === 'resolved'` et `proposition.status === 'accepted'`, le badge affiche "Acceptée" (vert) au lieu de "Résolu" (bleu). La condition dans `+page.svelte` est `propIsAccepted && data.bet.matchStatus === 'judging'` — ne couvre pas le cas `resolved`. Aussi : la card "Duel accepté !" affiche "Le match est en cours (statut : Résolu)" — message contradictoire. → Étendre la condition à `judging || resolved` pour afficher `bet-status-badge` avec `matchStatusLabel`, et changer le texte de la card accepted en cas résolu (ex : "Duel terminé — résolu par le jury.").
+- [mineur] `à faire` — Pseudo utilisateur absent dans le header mobile : seule l'initiale est visible, sans le nom complet. Comportement existant, hors périmètre S-041. → À traiter dans un ticket UI global.
+
+---
+
 ## S-022 — Cycle de vie closest — 2026-06-23
 
 - [mineur] `à faire` — Page pari en judging (placeholder vote jury) : le texte "Le vote du jury sera disponible prochainement (S-040)" contient la référence technique "S-040" qui ne doit pas apparaître aux utilisateurs finaux. → Reformuler en "Le vote du jury sera disponible prochainement." sans la référence à la story.
