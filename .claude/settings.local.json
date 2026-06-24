@@ -28,7 +28,25 @@
       "Bash(sudo rm -rf /workspaces/Project_bet_with_friend/node_modules/lightningcss-win32-x64-msvc)",
       "Bash(npm install *)",
       "Bash(echo \"EXIT:$?\")",
-      "Bash(wait *)"
+      "Bash(wait *)",
+      "mcp__claude_ai_PostHog__exec",
+      "PowerShell(npx playwright-cli snapshot)",
+      "PowerShell(npx playwright-cli click e11)",
+      "PowerShell(npx playwright-cli fill e37 \"lucasluke.rey@gmail.com\")",
+      "PowerShell(npx playwright-cli fill e40 \"Lucas\")",
+      "PowerShell(npx playwright-cli fill e43 \"Betting2026!\")",
+      "PowerShell(npx playwright-cli click e45)",
+      "PowerShell(npx playwright-cli goto https://bet-with-friend.fly.dev/login)",
+      "PowerShell(npx playwright-cli eval \"typeof window.posthog !== 'undefined' ? 'PostHog present: ' + \\(window.posthog.__loaded ? 'LOADED' : 'NOT LOADED'\\) : 'PostHog ABSENT'\")",
+      "PowerShell(npx playwright-cli console)",
+      "PowerShell(npx playwright-cli requests)",
+      "PowerShell(npx playwright-cli eval \"document.querySelectorAll\\('script[src]'\\).length + ' scripts charg�s: ' + Array.from\\(document.querySelectorAll\\('script[src]'\\)\\).map\\(s => s.src\\).join\\(', '\\)\")",
+      "PowerShell(npx playwright-cli tracing-start)",
+      "PowerShell(npx playwright-cli goto https://bet-with-friend.fly.dev/app/groups/new)",
+      "PowerShell(npx playwright-cli goto https://bet-with-friend.fly.dev/app/profile)",
+      "PowerShell(npx playwright-cli requests --static)",
+      "PowerShell(npx playwright-cli tracing-stop)",
+      "PowerShell(npx playwright-cli close)"
     ]
   }
 }
