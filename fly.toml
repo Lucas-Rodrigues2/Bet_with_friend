@@ -5,13 +5,12 @@ primary_region = "cdg"
   [build.args]
     PUBLIC_SUPABASE_URL = "https://itmugtkbubowzgcwisgx.supabase.co"
     PUBLIC_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Iml0bXVndGtidWJvd3pnY3dpc2d4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEyNjQwNjMsImV4cCI6MjA5Njg0MDA2M30.0V8V9YFvkfij34Wcu0urXMJiHpGXnxBsyQeCOxJGR8A"
-    PUBLIC_POSTHOG_KEY = "phc_test_dummy"
+    PUBLIC_POSTHOG_KEY = "phc_oT5Nwn9CLgYxRc5JE8ehfUq6TxyWCYRHEb95YkpsNGXG"
     PUBLIC_POSTHOG_HOST = "https://eu.i.posthog.com"
 
 [env]
   PORT = "3000"
   ORIGIN = "https://bet-with-friend.fly.dev"
-  NODE_OPTIONS = "--trace-uncaught --trace-warnings"
 
 [http_service]
   internal_port = 3000
