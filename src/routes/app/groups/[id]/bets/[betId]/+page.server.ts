@@ -84,7 +84,8 @@ export const load: PageServerLoad = async ({ locals, params }) => {
 			openMatches: bet.openMatches,
 			betJurorsList: bet.betJurorsList,
 			proposition: bet.proposition,
-			juryVotes: bet.juryVotes
+			juryVotes: bet.juryVotes,
+			resolution: bet.resolution
 		},
 		currentUserId: user.id,
 		isParticipant,

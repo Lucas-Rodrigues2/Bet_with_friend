@@ -196,6 +196,12 @@
 	// Is judging
 	const isJudging = $derived(data.bet.matchStatus === 'judging');
 
+	// Is resolved
+	const isResolved = $derived(data.bet.matchStatus === 'resolved');
+
+	// Resolution data
+	const resolution = $derived(data.bet.resolution ?? null);
+
 	// Jury votes
 	const juryVotes = $derived(data.bet.juryVotes ?? []);
 
@@ -358,7 +364,9 @@
 							? 'bg-green-100 text-green-700'
 							: data.bet.matchStatus === 'judging'
 								? 'bg-amber-100 text-amber-700'
-								: 'bg-muted text-muted-foreground'}"
+								: data.bet.matchStatus === 'resolved'
+									? 'bg-blue-100 text-blue-700'
+									: 'bg-muted text-muted-foreground'}"
 						data-testid="bet-status-badge"
 					>
 						{matchStatusLabel}
@@ -1415,6 +1423,158 @@
 					<p class="text-muted-foreground text-sm">
 						Ce pari est en cours de jugement. En attente du verdict du jury.
 					</p>
+				</div>
+			{/if}
+		{/if}
+
+		<!-- Panneau résolution — visible quand le match est résolu -->
+		{#if isResolved && resolution}
+			<div
+				class="border-blue-200 bg-blue-50 mt-2 rounded-lg border p-4"
+				data-testid="resolution-section"
+			>
+				<h2 class="text-blue-800 mb-3 text-sm font-semibold">Verdict du jury — Résolu</h2>
+
+				<!-- Gagnants -->
+				{#if resolution.winners.length > 0}
+					<div class="mb-3" data-testid="resolution-winners">
+						<p class="text-blue-700 mb-2 text-xs font-medium uppercase tracking-wide">
+							Gagnant{resolution.winners.length > 1 ? 's' : ''}
+						</p>
+						<ul class="flex flex-wrap gap-2">
+							{#each resolution.winners as winner (winner.userId)}
+								<li
+									class="flex items-center gap-2 rounded-md border border-blue-200 bg-white px-3 py-2"
+									data-testid="resolution-winner"
+								>
+									<div
+										class="bg-blue-100 text-blue-700 flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold"
+									>
+										{winner.pseudo.charAt(0).toUpperCase()}
+									</div>
+									<span class="text-foreground text-sm font-medium">
+										{winner.pseudo}{winner.userId === data.currentUserId ? ' (moi)' : ''}
+									</span>
+									{#if winner.share !== null}
+										<span class="text-blue-600 text-xs font-medium" data-testid="winner-share">
+											+{winner.share} pts
+										</span>
+									{/if}
+								</li>
+							{/each}
+						</ul>
+					</div>
+				{/if}
+
+				<!-- Ardoise (points) -->
+				{#if resolution.ledgerEntries.length > 0}
+					<div class="mb-3" data-testid="resolution-ledger">
+						<p class="text-blue-700 mb-2 text-xs font-medium uppercase tracking-wide">Ardoise</p>
+						<ul class="flex flex-col gap-1">
+							{#each resolution.ledgerEntries as entry (entry.id)}
+								<li
+									class="text-foreground rounded-md bg-white px-3 py-2 text-sm"
+									data-testid="ledger-entry"
+								>
+									<span class="font-medium" data-testid="ledger-debtor">{entry.debtorPseudo}</span>
+									doit
+									<span class="font-bold text-blue-700" data-testid="ledger-amount"
+										>{entry.amount} pts</span
+									>
+									à
+									<span class="font-medium" data-testid="ledger-creditor"
+										>{entry.creditorPseudo}</span
+									>
+								</li>
+							{/each}
+						</ul>
+					</div>
+				{/if}
+
+				<!-- Gages en attente -->
+				{#if resolution.pendingForfeits.length > 0}
+					<div data-testid="resolution-forfeits">
+						<p class="text-blue-700 mb-2 text-xs font-medium uppercase tracking-wide">
+							Gage{resolution.pendingForfeits.length > 1 ? 's' : ''} en attente
+						</p>
+						<ul class="flex flex-col gap-1">
+							{#each resolution.pendingForfeits as f (f.id)}
+								<li
+									class="text-foreground rounded-md bg-white px-3 py-2 text-sm"
+									data-testid="forfeit-entry"
+								>
+									<span class="font-medium" data-testid="forfeit-debtor">{f.debtorPseudo}</span>
+									doit exécuter le gage
+									{#if data.bet.forfeitDescription}
+										: <span class="italic">{data.bet.forfeitDescription}</span>
+									{/if}
+								</li>
+							{/each}
+						</ul>
+					</div>
+				{/if}
+			</div>
+
+			<!-- Votes du jury (résumé) — visible quand résolu -->
+			{#if juryVotes.length > 0}
+				<div
+					class="border-border bg-card mt-2 rounded-lg border p-4"
+					data-testid="jury-votes-display"
+				>
+					<h2 class="text-foreground mb-3 text-sm font-semibold">
+						Votes du jury ({juryVotes.length})
+					</h2>
+					<ul class="flex flex-col gap-3">
+						{#each juryVotes as vote (vote.id)}
+							<li
+								class="flex flex-col gap-1 rounded-md border p-3 {vote.jurorId ===
+								data.currentUserId
+									? 'border-primary/40 bg-primary/5'
+									: 'border-border'}"
+								data-testid="jury-vote-item"
+							>
+								<div class="flex items-center gap-2">
+									{#if vote.jurorAvatarUrl}
+										<img
+											src={vote.jurorAvatarUrl}
+											alt={vote.jurorPseudo}
+											class="h-5 w-5 rounded-full object-cover"
+										/>
+									{:else}
+										<div
+											class="bg-muted text-muted-foreground flex h-5 w-5 items-center justify-center rounded-full text-xs font-medium"
+										>
+											{vote.jurorPseudo.charAt(0).toUpperCase()}
+										</div>
+									{/if}
+									<span class="text-foreground text-sm font-medium" data-testid="jury-vote-juror">
+										{vote.jurorPseudo}{vote.jurorId === data.currentUserId ? ' (moi)' : ''}
+									</span>
+								</div>
+								{#if vote.verdict === 'not_resolved'}
+									<p class="text-muted-foreground text-sm" data-testid="jury-vote-verdict">
+										Pas encore résolu
+									</p>
+								{:else}
+									<div data-testid="jury-vote-verdict">
+										<p class="text-foreground text-sm font-medium">
+											Gagnant{vote.winners.length > 1 ? 's' : ''} :
+										</p>
+										<ul class="mt-1 flex flex-wrap gap-1">
+											{#each vote.winners as winner (winner.userId)}
+												<li
+													class="bg-green-100 text-green-800 rounded-full px-2 py-0.5 text-xs font-medium"
+													data-testid="jury-vote-winner"
+												>
+													{winner.pseudo}
+												</li>
+											{/each}
+										</ul>
+									</div>
+								{/if}
+							</li>
+						{/each}
+					</ul>
 				</div>
 			{/if}
 		{/if}

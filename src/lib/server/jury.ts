@@ -9,6 +9,7 @@ import {
 	profiles
 } from '$lib/server/db/schema';
 import { and, eq, inArray } from 'drizzle-orm';
+import { evaluateVerdict } from '$lib/server/resolution';
 
 export interface CastJuryVoteParams {
 	matchId: string;
@@ -154,6 +155,9 @@ export async function castJuryVote(params: CastJuryVoteParams): Promise<{ voteId
 				loserUserId: params.loserUserId
 			});
 		}
+
+		// Evaluate verdict after recording the vote (same transaction)
+		await evaluateVerdict(params.matchId, tx);
 	});
 
 	if (!voteId) throw new Error('Erreur lors de lenregistrement du vote.');

@@ -6,6 +6,9 @@ import {
 	matches,
 	matchJurors,
 	matchParticipants,
+	matchWinners,
+	ledgerEntries,
+	forfeits,
 	groupMembers,
 	profiles,
 	yesnoBets,
@@ -757,8 +760,21 @@ export interface BetDetail {
 			createdAt: Date;
 		}[];
 	} | null;
-	// jury votes (for matches in 'judging' status)
+	// jury votes (for matches in 'judging' or 'resolved' status)
 	juryVotes: JuryVoteRow[];
+	// resolution data (for matches in 'resolved' status)
+	resolution: {
+		winners: { userId: string; pseudo: string; avatarUrl: string | null; share: string | null }[];
+		ledgerEntries: {
+			id: string;
+			debtorId: string;
+			debtorPseudo: string;
+			creditorId: string;
+			creditorPseudo: string;
+			amount: string;
+		}[];
+		pendingForfeits: { id: string; debtorId: string; debtorPseudo: string }[];
+	} | null;
 }
 
 /**
@@ -1026,7 +1042,8 @@ export async function getBetDetailForUser(
 				openMatches: openMatchData,
 				betJurorsList: betJurorRows as BetDetail['betJurorsList'],
 				proposition: null,
-				juryVotes: []
+				juryVotes: [],
+				resolution: null
 			};
 		}
 
@@ -1103,10 +1120,16 @@ export async function getBetDetailForUser(
 		}
 	}
 
-	// Fetch jury votes if we have a match in judging status
+	// Fetch jury votes if we have a match in judging or resolved status
 	let juryVotesList: JuryVoteRow[] = [];
-	if (matchId && matchStatus === 'judging') {
+	if (matchId && (matchStatus === 'judging' || matchStatus === 'resolved')) {
 		juryVotesList = await getJuryVotesForMatch(matchId);
+	}
+
+	// Fetch resolution data if match is resolved
+	let resolutionData: BetDetail['resolution'] = null;
+	if (matchId && matchStatus === 'resolved') {
+		resolutionData = await getMatchResolutionData(matchId);
 	}
 
 	return {
@@ -1135,7 +1158,92 @@ export async function getBetDetailForUser(
 		openMatches: [],
 		betJurorsList: [],
 		proposition: propositionData,
-		juryVotes: juryVotesList
+		juryVotes: juryVotesList,
+		resolution: resolutionData
+	};
+}
+
+/**
+ * Fetches resolution data for a resolved match:
+ * - match_winners with profiles
+ * - ledger_entries with debtor/creditor profiles
+ * - pending forfeits with debtor profiles
+ */
+async function getMatchResolutionData(matchId: string): Promise<BetDetail['resolution']> {
+	// Fetch winners with profiles
+	const winnerRows = await db
+		.select({
+			userId: matchWinners.userId,
+			pseudo: profiles.pseudo,
+			avatarUrl: profiles.avatarUrl,
+			share: matchWinners.share
+		})
+		.from(matchWinners)
+		.innerJoin(profiles, eq(profiles.id, matchWinners.userId))
+		.where(eq(matchWinners.matchId, matchId));
+
+	// Fetch ledger entries for this match
+	const ledgerRows = await db
+		.select({
+			id: ledgerEntries.id,
+			debtorId: ledgerEntries.debtorId,
+			creditorId: ledgerEntries.creditorId,
+			amount: ledgerEntries.amount
+		})
+		.from(ledgerEntries)
+		.where(eq(ledgerEntries.matchId, matchId));
+
+	// Fetch profiles for debtors and creditors
+	const resolvedLedgerEntries: NonNullable<BetDetail['resolution']>['ledgerEntries'] = [];
+
+	if (ledgerRows.length > 0) {
+		const allUserIds = Array.from(
+			new Set([...ledgerRows.map((l) => l.debtorId), ...ledgerRows.map((l) => l.creditorId)])
+		);
+
+		const profileRows = await db
+			.select({ id: profiles.id, pseudo: profiles.pseudo })
+			.from(profiles)
+			.where(inArray(profiles.id, allUserIds));
+
+		const profileMap = new Map(profileRows.map((p) => [p.id, p.pseudo]));
+
+		for (const l of ledgerRows) {
+			resolvedLedgerEntries.push({
+				id: l.id,
+				debtorId: l.debtorId,
+				debtorPseudo: profileMap.get(l.debtorId) ?? l.debtorId,
+				creditorId: l.creditorId,
+				creditorPseudo: profileMap.get(l.creditorId) ?? l.creditorId,
+				amount: l.amount
+			});
+		}
+	}
+
+	// Fetch pending forfeits
+	const forfeitRows = await db
+		.select({
+			id: forfeits.id,
+			debtorId: forfeits.debtorId,
+			pseudo: profiles.pseudo
+		})
+		.from(forfeits)
+		.innerJoin(profiles, eq(profiles.id, forfeits.debtorId))
+		.where(eq(forfeits.matchId, matchId));
+
+	return {
+		winners: winnerRows.map((w) => ({
+			userId: w.userId,
+			pseudo: w.pseudo,
+			avatarUrl: w.avatarUrl,
+			share: w.share
+		})),
+		ledgerEntries: resolvedLedgerEntries,
+		pendingForfeits: forfeitRows.map((f) => ({
+			id: f.id,
+			debtorId: f.debtorId,
+			debtorPseudo: f.pseudo
+		}))
 	};
 }
 

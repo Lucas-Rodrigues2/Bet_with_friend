@@ -31,7 +31,8 @@ const GROUP_URL = `/app/groups/${SEEDED_GROUP_ID}`;
 const ALICE_ID = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa';
 const BOB_ID = 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb';
 const CAROL_ID = 'cccccccc-cccc-cccc-cccc-cccccccccccc';
-// DAVE_ID intentionally unused — Dave is tested only as a non-juror (Bob covers that scenario)
+// DAVE_ID is used as a 2nd juror in unanimous mode to prevent S-041 auto-resolution on first vote
+const DAVE_ID = 'dddddddd-dddd-dddd-dddd-dddddddddddd';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -55,13 +56,15 @@ async function createClosestBet(opts: {
 		matchStatus = 'judging'
 	} = opts;
 
+	// Use unanimous + 2 jurés (Carol + Dave) so that 1 vote alone (S-040 tests)
+	// does not trigger S-041 auto-resolution — the threshold requires both to agree.
 	let betRow: { id: string }[];
 	if (stakeType === 'points') {
 		betRow = await db`
       INSERT INTO bets (group_id, creator_id, type, title, stake_type, stake_amount, hide_answers, participation_deadline, jury_mode, status)
       VALUES (
         ${SEEDED_GROUP_ID}, ${ALICE_ID}, 'closest', ${title},
-        'points', '10', false, null, 'majority', 'open'
+        'points', '10', false, null, 'unanimous', 'open'
       )
       RETURNING id
     `;
@@ -70,7 +73,7 @@ async function createClosestBet(opts: {
       INSERT INTO bets (group_id, creator_id, type, title, stake_type, forfeit_description, forfeit_scope, hide_answers, participation_deadline, jury_mode, status)
       VALUES (
         ${SEEDED_GROUP_ID}, ${ALICE_ID}, 'closest', ${title},
-        'forfeit', 'Faire le café', ${forfeitScope}, false, null, 'majority', 'open'
+        'forfeit', 'Faire le café', ${forfeitScope}, false, null, 'unanimous', 'open'
       )
       RETURNING id
     `;
@@ -87,7 +90,10 @@ async function createClosestBet(opts: {
     INSERT INTO matches (bet_id, status) VALUES (${bet.id}, ${matchStatus}) RETURNING id
   `;
 
-	await db`INSERT INTO match_jurors (match_id, user_id) VALUES (${match.id}, ${CAROL_ID})`;
+	await db`
+    INSERT INTO match_jurors (match_id, user_id)
+    SELECT ${match.id}, unnest(ARRAY[${CAROL_ID}, ${DAVE_ID}]::uuid[])
+  `;
 
 	if (withParticipants) {
 		if (stakeType === 'points') {
