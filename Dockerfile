@@ -29,6 +29,10 @@ WORKDIR /app
 COPY --from=builder /app/build build/
 COPY --from=builder /app/node_modules node_modules/
 COPY package.json .
+# adapter-node places the handler chunk in build/server/chunks/ but resolves
+# the static client dir relative to that chunk (import.meta.url), so we need
+# to create a symlink so build/server/chunks/client → build/client.
+RUN ln -s /app/build/client /app/build/server/chunks/client
 EXPOSE 3000
 ENV NODE_ENV=production
 CMD ["node", "build"]
