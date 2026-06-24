@@ -1,7 +1,7 @@
 ---
 id: S-040
 epic: E05 — Jury & résolution
-status: tracking
+status: done
 depends_on: [S-022, S-031]
 ---
 
