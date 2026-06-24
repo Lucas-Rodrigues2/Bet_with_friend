@@ -9,7 +9,8 @@ import {
 	profiles
 } from '$lib/server/db/schema';
 import { and, eq, inArray } from 'drizzle-orm';
-import { evaluateVerdict } from '$lib/server/resolution';
+import { evaluateVerdict, type VerdictResult } from '$lib/server/resolution';
+import { captureServer } from '$lib/server/analytics';
 
 export interface CastJuryVoteParams {
 	matchId: string;
@@ -46,8 +47,12 @@ export interface JuryVoteRow {
  *
  * Throws on violation, returns voteId on success.
  */
-export async function castJuryVote(params: CastJuryVoteParams): Promise<{ voteId: string }> {
+export async function castJuryVote(
+	params: CastJuryVoteParams
+): Promise<{ voteId: string; verdictResult: VerdictResult | null }> {
 	let voteId: string | undefined;
+	// Use a container so TypeScript sees the assignment through the async closure
+	const verdictContainer: { result: VerdictResult | null } = { result: null };
 
 	await db.transaction(async (tx) => {
 		// Verify match exists and is in judging status
@@ -157,11 +162,31 @@ export async function castJuryVote(params: CastJuryVoteParams): Promise<{ voteId
 		}
 
 		// Evaluate verdict after recording the vote (same transaction)
-		await evaluateVerdict(params.matchId, tx);
+		verdictContainer.result = await evaluateVerdict(params.matchId, tx);
 	});
 
 	if (!voteId) throw new Error('Erreur lors de lenregistrement du vote.');
-	return { voteId };
+
+	// Emit analytics event after transaction commit (fact is confirmed)
+	const vr = verdictContainer.result;
+	if (vr) {
+		await captureServer({
+			distinctId: params.jurorId,
+			event: 'match_resolved',
+			properties: {
+				match_id: params.matchId,
+				bet_id: vr.betId,
+				group_id: vr.groupId,
+				bet_type: vr.betType,
+				resolution_type: vr.resolutionType,
+				winner_count: vr.winnerCount,
+				stake_type: vr.stakeType,
+				jury_mode: vr.juryMode
+			}
+		});
+	}
+
+	return { voteId, verdictResult: vr };
 }
 
 /**

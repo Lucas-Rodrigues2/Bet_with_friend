@@ -265,6 +265,17 @@
 			});
 		}
 	});
+
+	// Track resolution section viewed (quand le verdict du jury est affiché)
+	$effect(() => {
+		if (isResolved && resolution) {
+			track('resolution_section_viewed', {
+				bet_id: data.bet.id,
+				bet_type: data.bet.type,
+				stake_type: data.bet.stakeType
+			});
+		}
+	});
 </script>
 
 <div class="container mx-auto max-w-2xl px-4 py-10">

@@ -16,6 +16,16 @@ import { eq, inArray, sql } from 'drizzle-orm';
 // Extract the transaction type from db.transaction callback parameter
 type Tx = Parameters<Parameters<typeof db.transaction>[0]>[0];
 
+export interface VerdictResult {
+	betId: string;
+	groupId: string;
+	betType: string;
+	stakeType: string;
+	juryMode: string;
+	winnerCount: number;
+	resolutionType: 'winners_selected' | 'not_resolved';
+}
+
 /**
  * Evaluates whether the current set of jury votes for a match has reached the
  * required consensus threshold (unanimous or majority), and if so, resolves the
@@ -33,21 +43,23 @@ type Tx = Parameters<Parameters<typeof db.transaction>[0]>[0];
  *  - No threshold reached yet: no-op
  *
  * Idempotence guard: exits immediately if match is already 'resolved'.
+ *
+ * Returns a VerdictResult when a resolution occurred, null otherwise.
  */
-export async function evaluateVerdict(matchId: string, tx: Tx): Promise<void> {
+export async function evaluateVerdict(matchId: string, tx: Tx): Promise<VerdictResult | null> {
 	// Lock the match row to prevent concurrent double-resolution
 	const matchRows = await tx.execute(
 		sql`SELECT id, bet_id, status FROM matches WHERE id = ${matchId} FOR UPDATE`
 	);
 
-	if (matchRows.length === 0) return;
+	if (matchRows.length === 0) return null;
 
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	const match = matchRows[0] as any;
 
 	// Idempotence guard
-	if (match.status === 'resolved') return;
-	if (match.status !== 'judging') return;
+	if (match.status === 'resolved') return null;
+	if (match.status !== 'judging') return null;
 
 	const betId: string = match.bet_id;
 
@@ -66,7 +78,7 @@ export async function evaluateVerdict(matchId: string, tx: Tx): Promise<void> {
 		.where(eq(bets.id, betId))
 		.limit(1);
 
-	if (betRows.length === 0) return;
+	if (betRows.length === 0) return null;
 	const bet = betRows[0];
 
 	// Count total jurors
@@ -76,7 +88,7 @@ export async function evaluateVerdict(matchId: string, tx: Tx): Promise<void> {
 		.where(eq(matchJurors.matchId, matchId));
 
 	const totalJurors = jurorRows.length;
-	if (totalJurors === 0) return;
+	if (totalJurors === 0) return null;
 
 	// Fetch all votes with their winner sets
 	const voteRows = await tx
@@ -89,14 +101,14 @@ export async function evaluateVerdict(matchId: string, tx: Tx): Promise<void> {
 
 	const totalVotes = voteRows.length;
 
-	if (totalVotes === 0) return;
+	if (totalVotes === 0) return null;
 
 	// Check if enough votes exist to reach the threshold
 	// For unanimous: all jurors must have voted
 	// For majority: > 50% of jurors must agree
 	if (bet.juryMode === 'unanimous' && totalVotes < totalJurors) {
 		// Not all jurors have voted yet
-		return;
+		return null;
 	}
 
 	// Fetch all vote winners
@@ -166,7 +178,15 @@ export async function evaluateVerdict(matchId: string, tx: Tx): Promise<void> {
 		// Purge votes and reopen the match
 		await tx.delete(juryVotes).where(eq(juryVotes.matchId, matchId));
 		await tx.update(matches).set({ status: 'open' }).where(eq(matches.id, matchId));
-		return;
+		return {
+			betId: bet.id,
+			groupId: bet.groupId,
+			betType: bet.type,
+			stakeType: bet.stakeType,
+			juryMode: bet.juryMode,
+			winnerCount: 0,
+			resolutionType: 'not_resolved' as const
+		};
 	}
 
 	// Check if any winner set has reached threshold
@@ -183,7 +203,7 @@ export async function evaluateVerdict(matchId: string, tx: Tx): Promise<void> {
 
 	if (!resolvedWinnerIds || resolvedWinnerIds.length === 0) {
 		// No consensus yet
-		return;
+		return null;
 	}
 
 	// ─── Resolution ──────────────────────────────────────────────────────────────
@@ -225,6 +245,16 @@ export async function evaluateVerdict(matchId: string, tx: Tx): Promise<void> {
 			losersByVote
 		});
 	}
+
+	return {
+		betId: bet.id,
+		groupId: bet.groupId,
+		betType: bet.type,
+		stakeType: bet.stakeType,
+		juryMode: bet.juryMode,
+		winnerCount: resolvedWinnerIds.length,
+		resolutionType: 'winners_selected' as const
+	};
 }
 
 // ─── Points resolution ────────────────────────────────────────────────────────

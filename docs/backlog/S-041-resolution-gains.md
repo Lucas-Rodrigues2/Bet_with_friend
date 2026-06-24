@@ -1,7 +1,7 @@
 ---
 id: S-041
 epic: E05 — Jury & résolution
-status: testing
+status: tracking
 depends_on: [S-040]
 ---
 
