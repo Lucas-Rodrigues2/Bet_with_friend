@@ -46,12 +46,11 @@ chaque fichier story ; ce tableau doit rester synchronisé.
 
 ## E05 — Jury & résolution
 
-| Story                                | Titre                              | Statut   | Dépend de    |
-| ------------------------------------ | ---------------------------------- | -------- | ------------ |
-| [S-040](S-040-vote-jury.md)          | Vote du jury                       | done     | S-022, S-031 |
-| [S-041](S-041-resolution-gains.md)   | Résolution & attribution des gains | done     | S-040        |
-| [S-042](S-042-annulation-unanime.md) | Annulation unanime                 | todo     | S-022, S-031 |
-| [S-043](S-043-litige-admin.md)       | Litige → admin du groupe           | todo     | S-040        |
+| Story                                | Titre                              | Statut      | Dépend de    |
+| ------------------------------------ | ---------------------------------- | ----------- | ------------ |
+| [S-040](S-040-vote-jury.md)          | Vote du jury                       | done        | S-022, S-031 |
+| [S-041](S-041-resolution-gains.md)   | Résolution & attribution des gains | done        | S-040        |
+| [S-042](S-042-annulation-unanime.md) | Annulation unanime                 | testing     | S-022, S-031 |
 
 ## E06 — Ardoise & gages
 
@@ -60,10 +59,13 @@ chaque fichier story ; ce tableau doit rester synchronisé.
 | [S-050](S-050-ardoise.md) | Ardoise (soldes, règlements)          | todo   | S-041     |
 | [S-051](S-051-gages.md)   | Gages (accomplissement, confirmation) | todo   | S-041     |
 
-## E07 — Notifications
+## E07 — Historique et Notifications
 
 | Story                                       | Titre                         | Statut | Dépend de |
 | ------------------------------------------- | ----------------------------- | ------ | --------- |
+| [S-070](S-070-fil-activite.md)              | Fil d'activité du groupe      | todo   | S-041     |
+| [S-071](S-071-leaderboard.md)               | Leaderboard & stats           | todo   | S-050     |
+| [S-072](S-072-historique.md)                | Historique des paris          | todo   | S-041     |
 | [S-060](S-060-notifications-in-app.md)      | Notifications in-app (cloche) | todo   | S-041     |
 | [S-061](S-061-preferences-notifications.md) | Préférences par canal/type    | todo   | S-060     |
 | [S-062](S-062-notifications-email.md)       | Notifications email           | todo   | S-061     |
@@ -73,7 +75,4 @@ chaque fichier story ; ce tableau doit rester synchronisé.
 
 | Story                              | Titre                             | Statut | Dépend de           |
 | ---------------------------------- | --------------------------------- | ------ | ------------------- |
-| [S-070](S-070-fil-activite.md)     | Fil d'activité du groupe          | todo   | S-041               |
-| [S-071](S-071-leaderboard.md)      | Leaderboard & stats               | todo   | S-050               |
-| [S-072](S-072-historique.md)       | Historique des paris              | todo   | S-041               |
 | [S-080](S-080-mobile-capacitor.md) | App mobile Capacitor + push natif | todo   | S-050, S-051, S-063 |

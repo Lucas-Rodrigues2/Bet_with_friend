@@ -17,6 +17,7 @@ import {
 	cancelProposition,
 	counterPropose
 } from '$lib/server/propositions';
+import { requestMatchCancellation, withdrawCancellationRequest } from '$lib/server/cancellation';
 import { captureServer } from '$lib/server/analytics';
 import type { Actions, PageServerLoad } from './$types';
 
@@ -84,6 +85,7 @@ export const load: PageServerLoad = async ({ locals, params }) => {
 			openMatches: bet.openMatches,
 			betJurorsList: bet.betJurorsList,
 			proposition: bet.proposition,
+			cancellationRequests: bet.cancellationRequests,
 			juryVotes: bet.juryVotes,
 			resolution: bet.resolution
 		},
@@ -601,6 +603,124 @@ export const actions: Actions = {
 		} catch (err) {
 			const message = err instanceof Error ? err.message : "Erreur lors de l'acceptation du défi.";
 			return fail(400, { challengeError: message });
+		}
+
+		throw redirect(303, `/app/groups/${params.id}/bets/${params.betId}`);
+	},
+
+	// ─── Annulation unanime ───────────────────────────────────────────────────
+
+	request_cancellation: async ({ locals, params }) => {
+		const { session, user } = await locals.safeGetSession();
+		if (!session || !user) return fail(401, { cancellationError: 'Non authentifié.' });
+
+		if (!uuidRegex.test(params.id) || !uuidRegex.test(params.betId)) {
+			return fail(400, { cancellationError: 'Paramètres invalides.' });
+		}
+
+		// Verify group membership
+		const isMember = await isActiveMemberOfBetGroup(params.betId, params.id, user.id);
+		if (!isMember) {
+			return fail(403, { cancellationError: 'Accès refusé.' });
+		}
+
+		// Fetch bet to get matchId
+		const bet = await getBetDetailForUser(params.betId, user.id);
+		if (!bet) {
+			return fail(404, { cancellationError: 'Pari introuvable.' });
+		}
+
+		if (!bet.matchId) {
+			return fail(400, { cancellationError: 'Aucun match associé à ce pari.' });
+		}
+
+		if (bet.matchStatus === 'resolved' || bet.matchStatus === 'cancelled') {
+			return fail(400, {
+				cancellationError: "L'annulation n'est pas possible sur un match résolu ou déjà annulé."
+			});
+		}
+
+		try {
+			const state = await requestMatchCancellation({
+				matchId: bet.matchId,
+				userId: user.id
+			});
+
+			await captureServer({
+				distinctId: user.id,
+				event: 'match_cancellation_requested',
+				properties: {
+					bet_id: params.betId,
+					match_id: bet.matchId,
+					group_id: params.id,
+					requester_count: state.requesters.length,
+					total_participants: state.totalParticipants,
+					is_cancelled: state.isCancelled
+				}
+			});
+
+			if (state.isCancelled) {
+				await captureServer({
+					distinctId: user.id,
+					event: 'match_cancelled_unanimously',
+					properties: {
+						bet_id: params.betId,
+						match_id: bet.matchId,
+						group_id: params.id
+					}
+				});
+			}
+		} catch (err) {
+			const message =
+				err instanceof Error ? err.message : "Erreur lors de la demande d'annulation.";
+			return fail(400, { cancellationError: message });
+		}
+
+		throw redirect(303, `/app/groups/${params.id}/bets/${params.betId}`);
+	},
+
+	withdraw_cancellation: async ({ locals, params }) => {
+		const { session, user } = await locals.safeGetSession();
+		if (!session || !user) return fail(401, { cancellationError: 'Non authentifié.' });
+
+		if (!uuidRegex.test(params.id) || !uuidRegex.test(params.betId)) {
+			return fail(400, { cancellationError: 'Paramètres invalides.' });
+		}
+
+		// Verify group membership
+		const isMember = await isActiveMemberOfBetGroup(params.betId, params.id, user.id);
+		if (!isMember) {
+			return fail(403, { cancellationError: 'Accès refusé.' });
+		}
+
+		// Fetch bet to get matchId
+		const bet = await getBetDetailForUser(params.betId, user.id);
+		if (!bet) {
+			return fail(404, { cancellationError: 'Pari introuvable.' });
+		}
+
+		if (!bet.matchId) {
+			return fail(400, { cancellationError: 'Aucun match associé à ce pari.' });
+		}
+
+		try {
+			await withdrawCancellationRequest({
+				matchId: bet.matchId,
+				userId: user.id
+			});
+
+			await captureServer({
+				distinctId: user.id,
+				event: 'match_cancellation_withdrawn',
+				properties: {
+					bet_id: params.betId,
+					match_id: bet.matchId,
+					group_id: params.id
+				}
+			});
+		} catch (err) {
+			const message = err instanceof Error ? err.message : 'Erreur lors du retrait de la demande.';
+			return fail(400, { cancellationError: message });
 		}
 
 		throw redirect(303, `/app/groups/${params.id}/bets/${params.betId}`);

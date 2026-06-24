@@ -7,6 +7,7 @@ import {
 	matchJurors,
 	matchParticipants,
 	matchWinners,
+	matchCancellations,
 	ledgerEntries,
 	forfeits,
 	groupMembers,
@@ -760,6 +761,8 @@ export interface BetDetail {
 			createdAt: Date;
 		}[];
 	} | null;
+	// cancellation requests (for matches in 'open' or 'judging' status)
+	cancellationRequests: string[]; // user IDs who have requested cancellation
 	// jury votes (for matches in 'judging' or 'resolved' status)
 	juryVotes: JuryVoteRow[];
 	// resolution data (for matches in 'resolved' status)
@@ -1042,6 +1045,7 @@ export async function getBetDetailForUser(
 				openMatches: openMatchData,
 				betJurorsList: betJurorRows as BetDetail['betJurorsList'],
 				proposition: null,
+				cancellationRequests: [],
 				juryVotes: [],
 				resolution: null
 			};
@@ -1132,6 +1136,19 @@ export async function getBetDetailForUser(
 		resolutionData = await getMatchResolutionData(matchId);
 	}
 
+	// Fetch cancellation requests for active matches (open or judging)
+	let cancellationRequests: string[] = [];
+	if (
+		matchId &&
+		(matchStatus === 'open' || matchStatus === 'judging' || matchStatus === 'cancelled')
+	) {
+		const cancellationRows = await db
+			.select({ userId: matchCancellations.userId })
+			.from(matchCancellations)
+			.where(eq(matchCancellations.matchId, matchId));
+		cancellationRequests = cancellationRows.map((r) => r.userId);
+	}
+
 	return {
 		id: bet.id,
 		groupId: bet.groupId,
@@ -1158,6 +1175,7 @@ export async function getBetDetailForUser(
 		openMatches: [],
 		betJurorsList: [],
 		proposition: propositionData,
+		cancellationRequests,
 		juryVotes: juryVotesList,
 		resolution: resolutionData
 	};

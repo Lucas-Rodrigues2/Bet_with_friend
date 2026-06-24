@@ -243,6 +243,26 @@
 	// Participation form answer state
 	let answerValue = $derived.by(() => data.bet.myParticipation?.answer ?? '');
 
+	// ─── Cancellation state ───────────────────────────────────────────────────
+
+	const isCancelled = $derived(data.bet.matchStatus === 'cancelled');
+
+	// Participants (for duel: from participants array; for closest: from participants array)
+	// cancellationRequests: user IDs who have requested cancellation
+	const cancellationRequests = $derived(data.bet.cancellationRequests ?? []);
+	const totalParticipants = $derived(data.bet.participants.length);
+
+	// Has the current user already requested cancellation?
+	const hasCancellationRequest = $derived(cancellationRequests.includes(data.currentUserId));
+
+	// Can request cancellation: must be a participant, match is open or judging, not yet cancelled, not resolved
+	const canRequestCancellation = $derived(
+		data.isParticipant &&
+			!isCancelled &&
+			data.bet.matchStatus !== 'resolved' &&
+			(data.bet.matchStatus === 'open' || data.bet.matchStatus === 'judging')
+	);
+
 	// Track bet viewed
 	$effect(() => {
 		const betId = data.bet.id;
@@ -1704,6 +1724,74 @@
 					</p>
 				</div>
 			{/if}
+		{/if}
+
+		<!-- ── Annulation unanime ───────────────────────────────────────── -->
+		{#if isCancelled}
+			<!-- Match annulé -->
+			<div
+				class="border-orange-200 bg-orange-50 mt-4 rounded-lg border p-4"
+				data-testid="match-cancelled-section"
+			>
+				<h2 class="text-orange-800 mb-1 text-sm font-semibold">Pari annulé d'un commun accord</h2>
+				<p class="text-orange-700 text-sm">
+					Tous les participants ont demandé l'annulation. Aucune mise n'est prélevée.
+				</p>
+			</div>
+		{:else if canRequestCancellation}
+			<!-- Panneau demande d'annulation -->
+			<div
+				class="border-border bg-card mt-4 rounded-lg border p-4"
+				data-testid="cancellation-section"
+			>
+				<h2 class="text-foreground mb-1 text-sm font-semibold">Annulation unanime</h2>
+				<p class="text-muted-foreground mb-3 text-xs">
+					Si tous les participants demandent l'annulation, le match sera annulé et aucune mise ne
+					sera prélevée.
+				</p>
+
+				<!-- Compteur -->
+				<p class="text-foreground mb-3 text-sm" data-testid="cancellation-counter">
+					{cancellationRequests.length} / {totalParticipants} joueur{totalParticipants > 1
+						? 's'
+						: ''} veulent annuler
+				</p>
+
+				{#if (form as { cancellationError?: string } | null)?.cancellationError}
+					<p class="text-destructive mb-2 text-sm" data-testid="cancellation-error">
+						{(form as { cancellationError?: string }).cancellationError}
+					</p>
+				{/if}
+
+				{#if hasCancellationRequest}
+					<!-- L'utilisateur a déjà demandé l'annulation — il peut retirer -->
+					<p class="text-muted-foreground mb-2 text-sm" data-testid="cancellation-pending-msg">
+						Vous avez demandé l'annulation. En attente des autres participants.
+					</p>
+					<form method="POST" action="?/withdraw_cancellation" use:enhance>
+						<Button
+							type="submit"
+							variant="outline"
+							class="text-destructive border-destructive/40 hover:bg-destructive/10"
+							data-testid="withdraw-cancellation-btn"
+						>
+							Retirer ma demande
+						</Button>
+					</form>
+				{:else}
+					<!-- L'utilisateur n'a pas encore demandé l'annulation -->
+					<form method="POST" action="?/request_cancellation" use:enhance>
+						<Button
+							type="submit"
+							variant="outline"
+							class="text-destructive border-destructive/40 hover:bg-destructive/10"
+							data-testid="request-cancellation-btn"
+						>
+							Demander l'annulation
+						</Button>
+					</form>
+				{/if}
+			</div>
 		{/if}
 	</div>
 </div>
