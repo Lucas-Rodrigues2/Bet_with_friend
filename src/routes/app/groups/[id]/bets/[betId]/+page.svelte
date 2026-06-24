@@ -183,13 +183,49 @@
 
 	const canParticipate = $derived(isClosest && data.bet.matchStatus === 'open' && !deadlinePassed);
 
-	// Can submit to jury: must be closest, match open, and user is a participant
+	// Can submit to jury (closest): must be closest, match open, and user is a participant
 	const canSubmitToJury = $derived(
 		isClosest && data.bet.matchStatus === 'open' && data.isParticipant
 	);
 
+	// Can submit to jury (yesno): must be yesno duel match open, and user is a participant
+	const canSubmitToJuryYesno = $derived(
+		isYesno && data.bet.matchStatus === 'open' && data.isParticipant
+	);
+
 	// Is judging
 	const isJudging = $derived(data.bet.matchStatus === 'judging');
+
+	// Jury votes
+	const juryVotes = $derived(data.bet.juryVotes ?? []);
+
+	// My current vote (if any)
+	const myVote = $derived(juryVotes.find((v) => v.jurorId === data.currentUserId) ?? null);
+
+	// Vote form state
+	let voteVerdict = $state<'winners_selected' | 'not_resolved' | ''>('');
+	let voteWinnerIds = $state<string[]>([]);
+	let voteLoserId = $state<string>('');
+
+	// Pre-fill vote form with my existing vote
+	$effect(() => {
+		if (myVote) {
+			voteVerdict = myVote.verdict;
+			voteWinnerIds = myVote.winners.map((w) => w.userId);
+			voteLoserId = myVote.losers[0]?.userId ?? '';
+		}
+	});
+
+	// Toggle winner checkbox for closest (multi-winner)
+	function toggleWinner(userId: string) {
+		if (voteWinnerIds.includes(userId)) {
+			voteWinnerIds = voteWinnerIds.filter((id) => id !== userId);
+		} else {
+			voteWinnerIds = [...voteWinnerIds, userId];
+		}
+	}
+
+	const isLastOne = $derived(data.bet.forfeitScope === 'last_one');
 
 	// Stake label for participate button
 	const stakeLabel = $derived(
@@ -271,43 +307,40 @@
 								: (statusLabels[data.bet.status] ?? data.bet.status)}
 					</span>
 				{:else if isYesno && proposition}
-					<span
-						class="rounded-full px-2 py-0.5 text-xs font-medium {proposition.status ===
-						'negotiating'
-							? 'bg-amber-100 text-amber-700'
-							: proposition.status === 'accepted'
-								? 'bg-green-100 text-green-700'
-								: 'bg-muted text-muted-foreground'}"
-						data-testid="proposition-status-badge"
-					>
-						{propStatusLabel}
-					</span>
-					{#if propIsNegotiating && !currentUserIsLastProposer && (isCurrentUserCreator || isCurrentUserTarget)}
+					{#if propIsAccepted && data.bet.matchStatus === 'judging'}
+						<!-- Duel accepté + match en jugement → badge statut match -->
 						<span
-							class="bg-primary text-primary-foreground rounded-full px-2 py-0.5 text-xs font-medium"
-							data-testid="proposition-received-badge"
+							class="rounded-full px-2 py-0.5 text-xs font-medium bg-amber-100 text-amber-700"
+							data-testid="bet-status-badge"
 						>
-							À toi de jouer
+							{matchStatusLabel}
 						</span>
-					{:else if propIsNegotiating && currentUserIsLastProposer}
+					{:else}
+						<!-- Négociation ou accepté (match open) → badge proposition -->
 						<span
-							class="bg-amber-100 text-amber-700 rounded-full px-2 py-0.5 text-xs font-medium"
-							data-testid="proposition-waiting-badge"
-						>
-							En attente de réponse
-						</span>
-					{/if}
-				{:else if isYesno && propIsAccepted && data.bet.matchStatus}
-					<span
-						class="rounded-full px-2 py-0.5 text-xs font-medium {data.bet.matchStatus === 'open'
-							? 'bg-green-100 text-green-700'
-							: data.bet.matchStatus === 'judging'
+							class="rounded-full px-2 py-0.5 text-xs font-medium {propIsNegotiating
 								? 'bg-amber-100 text-amber-700'
-								: 'bg-muted text-muted-foreground'}"
-						data-testid="bet-status-badge"
-					>
-						{matchStatusLabel}
-					</span>
+								: 'bg-green-100 text-green-700'}"
+							data-testid="proposition-status-badge"
+						>
+							{propStatusLabel}
+						</span>
+						{#if propIsNegotiating && !currentUserIsLastProposer && (isCurrentUserCreator || isCurrentUserTarget)}
+							<span
+								class="bg-primary text-primary-foreground rounded-full px-2 py-0.5 text-xs font-medium"
+								data-testid="proposition-received-badge"
+							>
+								À toi de jouer
+							</span>
+						{:else if propIsNegotiating && currentUserIsLastProposer}
+							<span
+								class="bg-amber-100 text-amber-700 rounded-full px-2 py-0.5 text-xs font-medium"
+								data-testid="proposition-waiting-badge"
+							>
+								En attente de réponse
+							</span>
+						{/if}
+					{/if}
 				{:else if matchStatusLabel}
 					<span
 						class="rounded-full px-2 py-0.5 text-xs font-medium {data.bet.matchStatus === 'open'
@@ -1115,6 +1148,266 @@
 			Créé le {formatDate(data.bet.createdAt)}
 		</p>
 
+		<!-- Yesno: Soumettre au jury (participants, match open) -->
+		{#if canSubmitToJuryYesno}
+			<div
+				class="border-border bg-card mt-2 rounded-lg border p-4"
+				data-testid="submit-to-jury-yesno-section"
+			>
+				<h2 class="text-foreground mb-1 text-sm font-semibold">Soumettre au jury</h2>
+				<p class="text-muted-foreground mb-3 text-xs">
+					Soumettre le duel au jury pour qu'il désigne le gagnant.
+				</p>
+				{#if (form as { submitError?: string } | null)?.submitError}
+					<p class="text-destructive mb-3 text-sm" data-testid="submit-error">
+						{(form as { submitError?: string }).submitError}
+					</p>
+				{/if}
+				<form method="POST" action="?/submit_to_jury_yesno" use:enhance>
+					<Button type="submit" variant="outline" data-testid="submit-to-jury-btn">
+						Soumettre au jury
+					</Button>
+				</form>
+			</div>
+		{/if}
+
+		<!-- Panneau de vote du jury (judging) — visible à tous -->
+		{#if isJudging}
+			<!-- Votes déjà exprimés — visibles par tous -->
+			{#if juryVotes.length > 0}
+				<div
+					class="border-border bg-card mt-2 rounded-lg border p-4"
+					data-testid="jury-votes-display"
+				>
+					<h2 class="text-foreground mb-3 text-sm font-semibold">
+						Votes exprimés ({juryVotes.length})
+					</h2>
+					<ul class="flex flex-col gap-3">
+						{#each juryVotes as vote (vote.id)}
+							<li
+								class="flex flex-col gap-1 rounded-md border p-3 {vote.jurorId ===
+								data.currentUserId
+									? 'border-primary/40 bg-primary/5'
+									: 'border-border'}"
+								data-testid="jury-vote-item"
+							>
+								<div class="flex items-center gap-2">
+									{#if vote.jurorAvatarUrl}
+										<img
+											src={vote.jurorAvatarUrl}
+											alt={vote.jurorPseudo}
+											class="h-5 w-5 rounded-full object-cover"
+										/>
+									{:else}
+										<div
+											class="bg-muted text-muted-foreground flex h-5 w-5 items-center justify-center rounded-full text-xs font-medium"
+										>
+											{vote.jurorPseudo.charAt(0).toUpperCase()}
+										</div>
+									{/if}
+									<span class="text-foreground text-sm font-medium" data-testid="jury-vote-juror">
+										{vote.jurorPseudo}{vote.jurorId === data.currentUserId ? ' (moi)' : ''}
+									</span>
+								</div>
+								{#if vote.verdict === 'not_resolved'}
+									<p class="text-muted-foreground text-sm" data-testid="jury-vote-verdict">
+										Pas encore résolu
+									</p>
+								{:else}
+									<div data-testid="jury-vote-verdict">
+										<p class="text-foreground text-sm font-medium">
+											Gagnant{vote.winners.length > 1 ? 's' : ''} :
+										</p>
+										<ul class="mt-1 flex flex-wrap gap-1">
+											{#each vote.winners as winner (winner.userId)}
+												<li
+													class="bg-green-100 text-green-800 rounded-full px-2 py-0.5 text-xs font-medium"
+													data-testid="jury-vote-winner"
+												>
+													{winner.pseudo}
+												</li>
+											{/each}
+										</ul>
+										{#if vote.losers.length > 0}
+											<p class="text-foreground mt-2 text-sm font-medium">Le plus loin :</p>
+											<ul class="mt-1 flex flex-wrap gap-1">
+												{#each vote.losers as loser (loser.userId)}
+													<li
+														class="bg-red-100 text-red-800 rounded-full px-2 py-0.5 text-xs font-medium"
+														data-testid="jury-vote-loser"
+													>
+														{loser.pseudo}
+													</li>
+												{/each}
+											</ul>
+										{/if}
+									</div>
+								{/if}
+							</li>
+						{/each}
+					</ul>
+				</div>
+			{:else}
+				<div
+					class="border-border bg-card mt-2 rounded-lg border p-4"
+					data-testid="jury-votes-empty"
+				>
+					<p class="text-muted-foreground text-sm">Aucun vote exprimé pour l'instant.</p>
+				</div>
+			{/if}
+
+			<!-- Formulaire de vote (jurés uniquement) -->
+			{#if data.isJuror}
+				<div
+					class="border-amber-200 bg-amber-50 mt-2 rounded-lg border p-4"
+					data-testid="jury-vote-section"
+				>
+					<h2 class="text-amber-800 mb-3 text-sm font-semibold">
+						{myVote ? 'Modifier mon vote' : 'Mon vote'}
+					</h2>
+
+					{#if (form as { voteError?: string } | null)?.voteError}
+						<p class="text-destructive mb-3 text-sm" data-testid="vote-error">
+							{(form as { voteError?: string }).voteError}
+						</p>
+					{/if}
+
+					<form method="POST" action="?/cast_jury_vote" use:enhance class="flex flex-col gap-4">
+						<!-- Option : Pas encore résolu -->
+						<label class="flex cursor-pointer items-center gap-2">
+							<input
+								type="radio"
+								name="verdict"
+								value="not_resolved"
+								class="accent-amber-600"
+								checked={voteVerdict === 'not_resolved'}
+								onchange={() => {
+									voteVerdict = 'not_resolved';
+									voteWinnerIds = [];
+									voteLoserId = '';
+								}}
+								data-testid="verdict-not-resolved"
+							/>
+							<span class="text-amber-900 text-sm font-medium">Pas encore résolu</span>
+						</label>
+
+						<!-- Option : Désigner le(s) gagnant(s) -->
+						<label class="flex cursor-pointer items-center gap-2">
+							<input
+								type="radio"
+								name="verdict"
+								value="winners_selected"
+								class="accent-amber-600"
+								checked={voteVerdict === 'winners_selected'}
+								onchange={() => {
+									voteVerdict = 'winners_selected';
+								}}
+								data-testid="verdict-winners-selected"
+							/>
+							<span class="text-amber-900 text-sm font-medium">
+								{isClosest ? 'Désigner le(s) gagnant(s)' : 'Désigner le gagnant'}
+							</span>
+						</label>
+
+						{#if voteVerdict === 'winners_selected'}
+							<div class="ml-5 flex flex-col gap-2" data-testid="winners-selection">
+								{#if isYesno}
+									<!-- Yesno: radio pour choisir 1 gagnant parmi les participants -->
+									{#each data.bet.participants as participant (participant.userId)}
+										<label class="flex cursor-pointer items-center gap-2">
+											<input
+												type="radio"
+												name="winnerUserIds"
+												value={participant.userId}
+												class="accent-amber-600"
+												checked={voteWinnerIds.includes(participant.userId)}
+												onchange={() => {
+													voteWinnerIds = [participant.userId];
+												}}
+												data-testid="winner-radio"
+											/>
+											<span class="text-foreground text-sm">
+												{participant.pseudo}{participant.userId === data.currentUserId
+													? ' (moi)'
+													: ''}
+											</span>
+										</label>
+									{/each}
+								{:else}
+									<!-- Closest: checkboxes pour ≥1 gagnant -->
+									{#each data.bet.participants as participant (participant.userId)}
+										<label class="flex cursor-pointer items-center gap-2">
+											<input
+												type="checkbox"
+												name="winnerUserIds"
+												value={participant.userId}
+												class="rounded accent-amber-600"
+												checked={voteWinnerIds.includes(participant.userId)}
+												onchange={() => toggleWinner(participant.userId)}
+												data-testid="winner-checkbox"
+											/>
+											<span class="text-foreground text-sm">
+												{participant.pseudo}{participant.userId === data.currentUserId
+													? ' (moi)'
+													: ''}
+											</span>
+										</label>
+									{/each}
+
+									<!-- Gage last_one: désigner le plus loin -->
+									{#if isLastOne}
+										<div class="mt-3 border-t pt-3" data-testid="loser-selection">
+											<p class="text-foreground mb-2 text-sm font-medium">
+												Qui est le plus loin ? (gage « dernier »)
+											</p>
+											{#each data.bet.participants as participant (participant.userId)}
+												<label class="flex cursor-pointer items-center gap-2 mb-1">
+													<input
+														type="radio"
+														name="loserUserId"
+														value={participant.userId}
+														class="accent-red-600"
+														checked={voteLoserId === participant.userId}
+														onchange={() => {
+															voteLoserId = participant.userId;
+														}}
+														data-testid="loser-radio"
+													/>
+													<span class="text-foreground text-sm">
+														{participant.pseudo}{participant.userId === data.currentUserId
+															? ' (moi)'
+															: ''}
+													</span>
+												</label>
+											{/each}
+										</div>
+									{/if}
+								{/if}
+							</div>
+						{/if}
+
+						<Button
+							type="submit"
+							class="bg-amber-600 hover:bg-amber-700 text-white w-fit"
+							disabled={voteVerdict === ''}
+							data-testid="cast-vote-btn"
+						>
+							{myVote ? 'Modifier mon vote' : 'Voter'}
+						</Button>
+					</form>
+				</div>
+			{:else}
+				<div
+					class="border-border bg-card mt-2 rounded-lg border p-4"
+					data-testid="judging-info-section"
+				>
+					<p class="text-muted-foreground text-sm">
+						Ce pari est en cours de jugement. En attente du verdict du jury.
+					</p>
+				</div>
+			{/if}
+		{/if}
+
 		<!-- Actions closest -->
 		{#if isClosest}
 			<!-- Bouton Soumettre au jury (uniquement pour les participants, match open) -->
@@ -1137,28 +1430,6 @@
 							Soumettre au jury
 						</Button>
 					</form>
-				</div>
-			{/if}
-
-			<!-- Phase de jugement : placeholder vote jury (S-040) -->
-			{#if isJudging && data.isJuror}
-				<div
-					class="border-amber-200 bg-amber-50 mt-2 rounded-lg border p-4"
-					data-testid="jury-vote-section"
-				>
-					<h2 class="text-amber-800 mb-1 text-sm font-semibold">Vote du jury</h2>
-					<p class="text-amber-700 text-sm" data-testid="jury-vote-placeholder">
-						Le vote du jury sera disponible prochainement (S-040).
-					</p>
-				</div>
-			{:else if isJudging}
-				<div
-					class="border-border bg-card mt-2 rounded-lg border p-4"
-					data-testid="judging-info-section"
-				>
-					<p class="text-muted-foreground text-sm">
-						Ce pari est en cours de jugement. En attente du verdict du jury.
-					</p>
 				</div>
 			{/if}
 

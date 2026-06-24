@@ -10,6 +10,7 @@ import {
 	acceptOpenChallenge
 } from '$lib/server/bets';
 import { submitMatchToJury } from '$lib/server/matches';
+import { castJuryVote } from '$lib/server/jury';
 import {
 	acceptProposition,
 	refuseProposition,
@@ -82,7 +83,8 @@ export const load: PageServerLoad = async ({ locals, params }) => {
 			yesno: bet.yesno,
 			openMatches: bet.openMatches,
 			betJurorsList: bet.betJurorsList,
-			proposition: bet.proposition
+			proposition: bet.proposition,
+			juryVotes: bet.juryVotes
 		},
 		currentUserId: user.id,
 		isParticipant,
@@ -277,6 +279,144 @@ export const actions: Actions = {
 		}
 
 		// Redirect to reload the page with fresh data
+		throw redirect(303, `/app/groups/${params.id}/bets/${params.betId}`);
+	},
+
+	submit_to_jury_yesno: async ({ locals, params }) => {
+		const { session, user } = await locals.safeGetSession();
+		if (!session || !user) return fail(401, { submitError: 'Non authentifie.' });
+
+		if (!uuidRegex.test(params.id) || !uuidRegex.test(params.betId)) {
+			return fail(400, { submitError: 'Parametres invalides.' });
+		}
+
+		// Verify user is active member of the group
+		const isMember = await isActiveMemberOfBetGroup(params.betId, params.id, user.id);
+		if (!isMember) {
+			return fail(403, { submitError: 'Acces refuse.' });
+		}
+
+		// Fetch bet to verify access and get matchId
+		const bet = await getBetDetailForUser(params.betId, user.id);
+		if (!bet) {
+			return fail(404, { submitError: 'Pari introuvable.' });
+		}
+
+		if (bet.type !== 'yesno') {
+			return fail(400, { submitError: 'Ce pari nest pas un duel Oui/Non.' });
+		}
+
+		if (!bet.matchId) {
+			return fail(400, { submitError: 'Aucun match associe a ce pari.' });
+		}
+
+		// Verify caller is a participant
+		const isParticipant = bet.participants.some((p) => p.userId === user.id);
+		if (!isParticipant) {
+			return fail(403, { submitError: 'Seuls les participants peuvent soumettre au jury.' });
+		}
+
+		try {
+			await submitMatchToJury(bet.matchId);
+
+			await captureServer({
+				distinctId: user.id,
+				event: 'bet_submitted_to_jury',
+				properties: {
+					bet_id: params.betId,
+					match_id: bet.matchId,
+					group_id: params.id,
+					bet_type: 'yesno'
+				}
+			});
+		} catch (err) {
+			const message = err instanceof Error ? err.message : 'Erreur lors de la soumission au jury.';
+			return fail(400, { submitError: message });
+		}
+
+		// Redirect to reload the page with fresh data
+		throw redirect(303, `/app/groups/${params.id}/bets/${params.betId}`);
+	},
+
+	cast_jury_vote: async ({ locals, params, request }) => {
+		const { session, user } = await locals.safeGetSession();
+		if (!session || !user) return fail(401, { voteError: 'Non authentifie.' });
+
+		if (!uuidRegex.test(params.id) || !uuidRegex.test(params.betId)) {
+			return fail(400, { voteError: 'Parametres invalides.' });
+		}
+
+		// Verify user is reachable (member OR juror — jury access checked in castJuryVote)
+		// We intentionally skip isActiveMemberOfBetGroup so jurors who are not group members
+		// can still vote (they have access via matchJurors).
+
+		// Fetch bet to verify access and get matchId
+		const bet = await getBetDetailForUser(params.betId, user.id);
+		if (!bet) {
+			return fail(404, { voteError: 'Pari introuvable.' });
+		}
+
+		if (!bet.matchId) {
+			return fail(400, { voteError: 'Aucun match associe a ce pari.' });
+		}
+
+		const formData = await request.formData();
+		const verdict = formData.get('verdict') as string;
+
+		if (verdict !== 'winners_selected' && verdict !== 'not_resolved') {
+			return fail(400, { voteError: 'Verdict invalide.' });
+		}
+
+		let winnerUserIds: string[] = [];
+		let loserUserId: string | null = null;
+
+		if (verdict === 'winners_selected') {
+			const rawWinners = formData.getAll('winnerUserIds') as string[];
+			winnerUserIds = rawWinners.filter((id) => uuidRegex.test(id));
+
+			if (winnerUserIds.length === 0) {
+				return fail(400, { voteError: 'Vous devez sélectionner au moins un gagnant.' });
+			}
+
+			// For yesno: max 1 winner
+			if (bet.type === 'yesno' && winnerUserIds.length > 1) {
+				return fail(400, { voteError: 'Un seul gagnant possible pour un duel Oui/Non.' });
+			}
+
+			// Loser (last_one scope for closest only)
+			if (bet.type === 'closest' && bet.forfeitScope === 'last_one') {
+				const rawLoser = formData.get('loserUserId') as string | null;
+				if (rawLoser && uuidRegex.test(rawLoser)) {
+					loserUserId = rawLoser;
+				}
+			}
+		}
+
+		try {
+			await castJuryVote({
+				matchId: bet.matchId,
+				jurorId: user.id,
+				verdict: verdict as 'winners_selected' | 'not_resolved',
+				winnerUserIds: verdict === 'winners_selected' ? winnerUserIds : [],
+				loserUserId
+			});
+
+			await captureServer({
+				distinctId: user.id,
+				event: 'jury_vote_cast',
+				properties: {
+					bet_id: params.betId,
+					match_id: bet.matchId,
+					group_id: params.id,
+					bet_type: bet.type,
+					verdict
+				}
+			});
+		} catch (err) {
+			const message = err instanceof Error ? err.message : 'Erreur lors du vote.';
+			return fail(400, { voteError: message });
+		}
+
 		throw redirect(303, `/app/groups/${params.id}/bets/${params.betId}`);
 	},
 

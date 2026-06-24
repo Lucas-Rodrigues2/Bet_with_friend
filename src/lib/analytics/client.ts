@@ -1,5 +1,5 @@
 import { browser } from '$app/environment';
-import { env } from '$env/dynamic/public';
+import { PUBLIC_POSTHOG_KEY, PUBLIC_POSTHOG_HOST } from '$env/static/public';
 import posthog from 'posthog-js';
 
 let initialized = false;
@@ -12,8 +12,8 @@ export function initAnalytics(): void {
 	if (!browser) return;
 	if (initialized) return;
 
-	const key = env.PUBLIC_POSTHOG_KEY;
-	const host = env.PUBLIC_POSTHOG_HOST;
+	const key = PUBLIC_POSTHOG_KEY;
+	const host = PUBLIC_POSTHOG_HOST;
 
 	if (!key) return; // désactivé si clé absente
 
@@ -22,6 +22,10 @@ export function initAnalytics(): void {
 		person_profiles: 'always',
 		capture_pageview: false,
 		capture_pageleave: false,
+		disable_session_recording: false,
+		session_recording: {
+			maskAllInputs: true
+		},
 		// Flush rapide en dev/test pour que les events soient envoyés immédiatement
 		// (minimum 250ms autorisé par posthog-js)
 		request_queue_config: {

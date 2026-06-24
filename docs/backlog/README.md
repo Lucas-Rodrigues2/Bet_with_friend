@@ -38,20 +38,20 @@ chaque fichier story ; ce tableau doit rester synchronisé.
 
 ## E04 — Pari Oui/Non
 
-| Story                         | Titre                                   | Statut   | Dépend de |
-| ----------------------------- | --------------------------------------- | -------- | --------- |
-| [S-030](S-030-creer-duel.md)  | Créer un duel (cible, camps, mise)      | done     | S-013     |
-| [S-031](S-031-negociation.md) | Négociation (contre-offres, gages, 48h) | done     | S-030     |
-| [S-032](S-032-defi-ouvert.md) | Défi ouvert (max_opponents)             | done     | S-030     |
+| Story                         | Titre                                   | Statut | Dépend de |
+| ----------------------------- | --------------------------------------- | ------ | --------- |
+| [S-030](S-030-creer-duel.md)  | Créer un duel (cible, camps, mise)      | done   | S-013     |
+| [S-031](S-031-negociation.md) | Négociation (contre-offres, gages, 48h) | done   | S-030     |
+| [S-032](S-032-defi-ouvert.md) | Défi ouvert (max_opponents)             | done   | S-030     |
 
 ## E05 — Jury & résolution
 
-| Story                                | Titre                              | Statut | Dépend de    |
-| ------------------------------------ | ---------------------------------- | ------ | ------------ |
-| [S-040](S-040-vote-jury.md)          | Vote du jury                       | todo   | S-022, S-031 |
-| [S-041](S-041-resolution-gains.md)   | Résolution & attribution des gains | todo   | S-040        |
-| [S-042](S-042-annulation-unanime.md) | Annulation unanime                 | todo   | S-022, S-031 |
-| [S-043](S-043-litige-admin.md)       | Litige → admin du groupe           | todo   | S-040        |
+| Story                                | Titre                              | Statut      | Dépend de    |
+| ------------------------------------ | ---------------------------------- | ----------- | ------------ |
+| [S-040](S-040-vote-jury.md)          | Vote du jury                       | testing     | S-022, S-031 |
+| [S-041](S-041-resolution-gains.md)   | Résolution & attribution des gains | todo        | S-040        |
+| [S-042](S-042-annulation-unanime.md) | Annulation unanime                 | todo        | S-022, S-031 |
+| [S-043](S-043-litige-admin.md)       | Litige → admin du groupe           | todo        | S-040        |
 
 ## E06 — Ardoise & gages
 

@@ -1,7 +1,7 @@
 ---
 id: S-021
 epic: E03 — Pari au plus proche
-status: todo
+status: done
 depends_on: [S-020]
 ---
 

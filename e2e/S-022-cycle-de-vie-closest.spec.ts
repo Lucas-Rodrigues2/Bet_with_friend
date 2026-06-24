@@ -281,9 +281,11 @@ test('Carol (jurée hors liste de visibilité) voit le pari en À juger après s
 	await expect(carolPage.getByTestId('bet-status-badge')).toHaveText('En jugement');
 	await expect(carolPage.getByTestId('bet-title')).toHaveText('[E2E] S022 Carol À juger');
 
-	// Carol (jurée) voit le placeholder pour le vote du jury
+	// Carol (jurée) voit le panneau de vote (implémenté par S-040)
 	await expect(carolPage.getByTestId('jury-vote-section')).toBeVisible();
-	await expect(carolPage.getByTestId('jury-vote-placeholder')).toContainText('S-040');
+	// Le vrai panneau de vote S-040 remplace le placeholder — les radios de verdict sont visibles
+	await expect(carolPage.getByTestId('verdict-not-resolved')).toBeVisible();
+	await expect(carolPage.getByTestId('verdict-winners-selected')).toBeVisible();
 
 	await carolContext.close();
 });

@@ -17,7 +17,11 @@
 			Créez vos groupes, lancez vos défis et départagez les gagnants !
 		</p>
 
-		{#if !data.session}
+		{#if data.session}
+			<div class="mt-4">
+				<Button href="/app" size="lg">Mes groupes</Button>
+			</div>
+		{:else}
 			<div class="mt-4 flex flex-col gap-3 sm:flex-row">
 				<Button href="/login" size="lg">Se connecter</Button>
 				<Button href="/signup" variant="outline" size="lg">Créer un compte</Button>

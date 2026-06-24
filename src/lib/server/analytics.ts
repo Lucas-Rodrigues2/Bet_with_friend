@@ -1,14 +1,14 @@
 import { PostHog } from 'posthog-node';
 import { env } from '$env/dynamic/private';
-import { env as pubEnv } from '$env/dynamic/public';
+import { PUBLIC_POSTHOG_KEY, PUBLIC_POSTHOG_HOST } from '$env/static/public';
 import { db } from '$lib/server/db/index';
 import { analyticsEventsTest } from '$lib/server/db/schema';
 
 const isDev = process.env.NODE_ENV !== 'production';
 
 function createClient(): PostHog | null {
-	const key = env.POSTHOG_KEY ?? pubEnv.PUBLIC_POSTHOG_KEY;
-	const host = env.POSTHOG_HOST ?? pubEnv.PUBLIC_POSTHOG_HOST;
+	const key = env.POSTHOG_KEY ?? PUBLIC_POSTHOG_KEY;
+	const host = env.POSTHOG_HOST ?? PUBLIC_POSTHOG_HOST;
 
 	if (!key) return null;
 

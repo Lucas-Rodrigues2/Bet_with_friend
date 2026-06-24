@@ -1,7 +1,7 @@
 ---
 id: S-040
 epic: E05 — Jury & résolution
-status: todo
+status: testing
 depends_on: [S-022, S-031]
 ---
 

@@ -1,7 +1,7 @@
 ---
 id: S-031
 epic: E04 — Pari Oui/Non
-status: testing
+status: done
 depends_on: [S-030]
 ---
 

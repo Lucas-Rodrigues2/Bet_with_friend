@@ -16,6 +16,7 @@ import {
 import { and, eq, inArray, isNull, asc, sql } from 'drizzle-orm';
 import { resolveMatchStatus } from '$lib/server/matches';
 import { resolvePropositionStatus } from '$lib/server/propositions';
+import { getJuryVotesForMatch, type JuryVoteRow } from '$lib/server/jury';
 
 export interface CreateClosestBetParams {
 	groupId: string;
@@ -756,6 +757,8 @@ export interface BetDetail {
 			createdAt: Date;
 		}[];
 	} | null;
+	// jury votes (for matches in 'judging' status)
+	juryVotes: JuryVoteRow[];
 }
 
 /**
@@ -925,6 +928,32 @@ export async function getBetDetailForUser(
 			yesnoData = yesnoRows[0];
 		}
 
+		// For yesno duel: fetch match participants (needed for isParticipant + jury vote panel)
+		if (matchId && yesnoData?.mode === 'duel') {
+			const participantRows = await db
+				.select({
+					userId: matchParticipants.userId,
+					pseudo: profiles.pseudo,
+					avatarUrl: profiles.avatarUrl,
+					stake: matchParticipants.stake
+				})
+				.from(matchParticipants)
+				.innerJoin(profiles, eq(profiles.id, matchParticipants.userId))
+				.where(eq(matchParticipants.matchId, matchId));
+
+			for (const p of participantRows) {
+				if (p.userId === userId) {
+					myParticipation = { answer: '', stake: p.stake };
+				}
+				participants.push({
+					userId: p.userId,
+					pseudo: p.pseudo,
+					avatarUrl: p.avatarUrl,
+					answer: null
+				});
+			}
+		}
+
 		// For open mode: fetch all matches created by acceptors + bet_jurors
 		if (yesnoData?.mode === 'open') {
 			// Fetch all matches for this bet (each acceptance creates one)
@@ -969,6 +998,8 @@ export async function getBetDetailForUser(
 				.innerJoin(profiles, eq(profiles.id, betJurors.userId))
 				.where(eq(betJurors.betId, betId));
 
+			// For open challenges, collect votes across all judging matches visible to the user
+			// (for simplicity, we skip votes in the overview — the detail page per match handles it)
 			return {
 				id: bet.id,
 				groupId: bet.groupId,
@@ -994,7 +1025,8 @@ export async function getBetDetailForUser(
 				yesno: yesnoData,
 				openMatches: openMatchData,
 				betJurorsList: betJurorRows as BetDetail['betJurorsList'],
-				proposition: null
+				proposition: null,
+				juryVotes: []
 			};
 		}
 
@@ -1071,6 +1103,12 @@ export async function getBetDetailForUser(
 		}
 	}
 
+	// Fetch jury votes if we have a match in judging status
+	let juryVotesList: JuryVoteRow[] = [];
+	if (matchId && matchStatus === 'judging') {
+		juryVotesList = await getJuryVotesForMatch(matchId);
+	}
+
 	return {
 		id: bet.id,
 		groupId: bet.groupId,
@@ -1096,7 +1134,8 @@ export async function getBetDetailForUser(
 		yesno: yesnoData,
 		openMatches: [],
 		betJurorsList: [],
-		proposition: propositionData
+		proposition: propositionData,
+		juryVotes: juryVotesList
 	};
 }
 

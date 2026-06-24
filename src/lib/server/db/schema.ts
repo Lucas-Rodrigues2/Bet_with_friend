@@ -321,6 +321,21 @@ export const juryVoteWinners = pgTable(
 	(t) => [primaryKey({ columns: [t.voteId, t.winnerUserId] })]
 );
 
+// jury_vote_losers: used for closest bets with forfeit_scope='last_one'
+// The juror designates who is the furthest from the correct answer.
+export const juryVoteLosers = pgTable(
+	'jury_vote_losers',
+	{
+		voteId: uuid('vote_id')
+			.notNull()
+			.references(() => juryVotes.id, { onDelete: 'cascade' }),
+		loserUserId: uuid('loser_user_id')
+			.notNull()
+			.references(() => profiles.id)
+	},
+	(t) => [primaryKey({ columns: [t.voteId, t.loserUserId] })]
+);
+
 export const matchCancellations = pgTable(
 	'match_cancellations',
 	{
