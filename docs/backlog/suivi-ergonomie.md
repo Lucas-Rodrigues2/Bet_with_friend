@@ -15,7 +15,7 @@ Statuts : `à faire` · `fait` · `ignoré` (avec raison).
 
 ## S-041 — Résolution & attribution des gains — 2026-06-24
 
-- [majeur] `à faire` — Page pari yesno résolu (badge de statut) : quand `matchStatus === 'resolved'` et `proposition.status === 'accepted'`, le badge affiche "Acceptée" (vert) au lieu de "Résolu" (bleu). La condition dans `+page.svelte` est `propIsAccepted && data.bet.matchStatus === 'judging'` — ne couvre pas le cas `resolved`. Aussi : la card "Duel accepté !" affiche "Le match est en cours (statut : Résolu)" — message contradictoire. → Étendre la condition à `judging || resolved` pour afficher `bet-status-badge` avec `matchStatusLabel`, et changer le texte de la card accepted en cas résolu (ex : "Duel terminé — résolu par le jury.").
+- [majeur] `fait` — Page pari yesno résolu (badge de statut) : quand `matchStatus === 'resolved'` et `proposition.status === 'accepted'`, le badge affiche "Acceptée" (vert) au lieu de "Résolu" (bleu). La condition dans `+page.svelte` est `propIsAccepted && data.bet.matchStatus === 'judging'` — ne couvre pas le cas `resolved`. Aussi : la card "Duel accepté !" affiche "Le match est en cours (statut : Résolu)" — message contradictoire. → Étendre la condition à `judging || resolved` pour afficher `bet-status-badge` avec `matchStatusLabel`, et changer le texte de la card accepted en cas résolu (ex : "Duel terminé — résolu par le jury.").
 - [mineur] `à faire` — Pseudo utilisateur absent dans le header mobile : seule l'initiale est visible, sans le nom complet. Comportement existant, hors périmètre S-041. → À traiter dans un ticket UI global.
 
 ---
@@ -44,8 +44,8 @@ Statuts : `à faire` · `fait` · `ignoré` (avec raison).
 
 ## S-011 — Liens d'invitation — 2026-06-19
 
-- [majeur] `à faire` — Page groupe / section Membres : le toggle `can_invite` (« Ne peut pas inviter » / « Peut inviter ») agit immédiatement sans confirmation ni feedback visuel (toast) après le changement. → Ajouter un toast de confirmation après toggle réussi.
-- [majeur] `à faire` — Page groupe / section Invitations : après création d'un lien, la zone « Lien créé : » (portée par les form action data) disparaît après rechargement de page ; le lien reste visible dans la liste mais le feedback initial est fugace. → Envisager de stocker le token fraîchement créé dans un `$state` client pour persistance post-action.
+- [majeur] `fait` — Page groupe / section Membres : le toggle `can_invite` (« Ne peut pas inviter » / « Peut inviter ») agit immédiatement sans confirmation ni feedback visuel (toast) après le changement. → Ajouter un toast de confirmation après toggle réussi.
+- [majeur] `fait` — Page groupe / section Invitations : après création d'un lien, la zone « Lien créé : » (portée par les form action data) disparaît après rechargement de page ; le lien reste visible dans la liste mais le feedback initial est fugace. → Envisager de stocker le token fraîchement créé dans un `$state` client pour persistance post-action.
 
 ---
 
@@ -81,7 +81,7 @@ Statuts : `à faire` · `fait` · `ignoré` (avec raison).
 
 ## S-004 — Mode invité + réclamation de compte — 2026-06-17
 
-- [majeur] `à faire` — `/claim` (page de succès) : après réclamation email réussie, le `load()` de `/claim` redirige vers `/` car `is_anonymous` est désormais `false`, et la page de succès (`{#if f?.success}`) n'est jamais affichée. L'utilisateur ne voit pas l'instruction de vérifier sa boîte mail (email de confirmation). → Stocker l'état de succès en cookie de session ou ajouter un paramètre de query (`?claimed=1`) pour afficher le message sur `/` après la redirection, ou ne pas rediriger si `f?.success` est vrai (SvelteKit ne re-run le load() que si la page re-rend, donc un `{#if f?.success}` dans le composant suffirait si le redirect est conditionnel).
+- [majeur] `fait` — `/claim` (page de succès) : après réclamation email réussie, le `load()` de `/claim` redirige vers `/` car `is_anonymous` est désormais `false`, et la page de succès (`{#if f?.success}`) n'est jamais affichée. L'utilisateur ne voit pas l'instruction de vérifier sa boîte mail (email de confirmation). → Stocker l'état de succès en cookie de session ou ajouter un paramètre de query (`?claimed=1`) pour afficher le message sur `/` après la redirection, ou ne pas rediriger si `f?.success` est vrai (SvelteKit ne re-run le load() que si la page re-rend, donc un `{#if f?.success}` dans le composant suffirait si le redirect est conditionnel).
 - [mineur] `à faire` — `/login` et `/signup` : aucun lien vers « Continuer en invité » (`/guest`). Un visiteur ne peut accéder à `/guest` que via URL directe ou lien d'invitation. → Ajouter un lien discret "Continuer en invité" sur `/login` et `/signup` (en bas de page, muted) pour rendre la fonctionnalité discoverable avant S-011 (liens d'invitation).
 - [mineur] `à faire` — `/guest` et `/claim` : titres de page browser génériques ("Bet With Friend"). → Ajouter `<svelte:head><title>Continuer en invité — Bet With Friend</title></svelte:head>` dans `/guest/+page.svelte` et `<title>Sécurise ton compte — Bet With Friend</title>` dans `/claim/+page.svelte`.
 
