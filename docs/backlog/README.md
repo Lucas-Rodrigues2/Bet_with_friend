@@ -51,7 +51,7 @@ chaque fichier story ; ce tableau doit rester synchronisé.
 | ------------------------------------ | ---------------------------------- | -------- | ------------ |
 | [S-040](S-040-vote-jury.md)          | Vote du jury                       | done     | S-022, S-031 |
 | [S-041](S-041-resolution-gains.md)   | Résolution & attribution des gains | done     | S-040        |
-| [S-042](S-042-annulation-unanime.md) | Annulation unanime                 | tracking | S-022, S-031 |
+| [S-042](S-042-annulation-unanime.md) | Annulation unanime                 | done     | S-022, S-031 |
 
 ## E06 — Ardoise & gages
 
