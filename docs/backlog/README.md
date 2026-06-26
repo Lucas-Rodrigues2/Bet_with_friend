@@ -27,7 +27,7 @@ chaque fichier story ; ce tableau doit rester synchronisé.
 | [S-011](S-011-invitations.md)               | Liens d'invitation + droit délégable   | done     | S-010        |
 | [S-012](S-012-membres.md)                   | Gestion des membres (rôles, exclusion) | done     | S-011        |
 | [S-013](S-013-page-groupe.md)               | Page groupe (dashboard)                | done     | S-010        |
-| [S-014](S-014-renommer-supprimer-groupe.md) | Renommer / supprimer un groupe         | tracking | S-012, S-013 |
+| [S-014](S-014-renommer-supprimer-groupe.md) | Renommer / supprimer un groupe         | done     | S-012, S-013 |
 
 ## E03 — Pari « au plus proche »
 

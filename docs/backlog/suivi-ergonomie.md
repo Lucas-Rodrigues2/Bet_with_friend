@@ -13,6 +13,14 @@ Statuts : `à faire` · `fait` · `ignoré` (avec raison).
 
 ---
 
+## S-014 — Renommer / supprimer un groupe — 2026-06-26
+
+- [mineur] `à faire` — Page /settings (lien "Paramètres" dans l'en-tête du groupe) : texte brut discret, peu discoverable pour l'admin. → Ajouter un bouton/icône engrenage avec `aria-label` ou style outline pour plus de visibilité.
+- [mineur] `à faire` — Page /settings (section suppression) : le message "La suppression est irréversible" pourrait mentionner plus explicitement ce qui est conservé (paris, ardoise) avant le formulaire de confirmation. → Ajouter une phrase rassurante ex : "Les paris et l'ardoise sont conservés."
+- [mineur] `à faire` — Champ nom (validation) : tooltip natif du navigateur pour < 2 caractères affiché en anglais (`Please lengthen this text…`). Partagé avec S-010 (textarea description). → Supprimer `minlength` HTML natif et laisser uniquement la validation Zod serveur, ou utiliser `setCustomValidity` pour un message FR.
+
+---
+
 ## S-041 — Résolution & attribution des gains — 2026-06-24
 
 - [majeur] `fait` — Page pari yesno résolu (badge de statut) : quand `matchStatus === 'resolved'` et `proposition.status === 'accepted'`, le badge affiche "Acceptée" (vert) au lieu de "Résolu" (bleu). La condition dans `+page.svelte` est `propIsAccepted && data.bet.matchStatus === 'judging'` — ne couvre pas le cas `resolved`. Aussi : la card "Duel accepté !" affiche "Le match est en cours (statut : Résolu)" — message contradictoire. → Étendre la condition à `judging || resolved` pour afficher `bet-status-badge` avec `matchStatusLabel`, et changer le texte de la card accepted en cas résolu (ex : "Duel terminé — résolu par le jury.").
