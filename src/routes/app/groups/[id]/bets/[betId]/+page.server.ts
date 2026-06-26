@@ -646,27 +646,31 @@ export const actions: Actions = {
 				userId: user.id
 			});
 
-			await captureServer({
-				distinctId: user.id,
-				event: 'match_cancellation_requested',
-				properties: {
-					bet_id: params.betId,
-					match_id: bet.matchId,
-					group_id: params.id,
-					requester_count: state.requesters.length,
-					total_participants: state.totalParticipants,
-					is_cancelled: state.isCancelled
-				}
-			});
-
 			if (state.isCancelled) {
+				// Tous les participants ont demandé l'annulation → match cancelled
 				await captureServer({
 					distinctId: user.id,
 					event: 'match_cancelled_unanimously',
 					properties: {
-						bet_id: params.betId,
 						match_id: bet.matchId,
-						group_id: params.id
+						bet_id: params.betId,
+						group_id: params.id,
+						bet_type: bet.type,
+						participant_count: state.totalParticipants
+					}
+				});
+			} else {
+				// Demande enregistrée mais unanimité pas encore atteinte
+				await captureServer({
+					distinctId: user.id,
+					event: 'match_cancellation_requested',
+					properties: {
+						match_id: bet.matchId,
+						bet_id: params.betId,
+						group_id: params.id,
+						bet_type: bet.type,
+						cancellation_count: state.requesters.length,
+						participant_count: state.totalParticipants
 					}
 				});
 			}
