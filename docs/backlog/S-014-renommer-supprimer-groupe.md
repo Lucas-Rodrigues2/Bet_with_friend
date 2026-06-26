@@ -1,7 +1,7 @@
 ---
 id: S-014
 epic: E02 — Groupes & invitations
-status: testing
+status: tracking
 depends_on: [S-012, S-013]
 ---
 

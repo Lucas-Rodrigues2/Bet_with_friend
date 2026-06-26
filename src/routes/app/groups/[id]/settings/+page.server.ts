@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { db } from '$lib/server/db/index';
 import { groups, groupMembers } from '$lib/server/db/schema';
 import { and, eq, isNull } from 'drizzle-orm';
+// analytics: group_renamed, group_archived
 import { captureServer } from '$lib/server/analytics';
 import { renameGroup, archiveGroup } from '$lib/server/groups';
 import type { Actions, PageServerLoad } from './$types';
@@ -168,7 +169,7 @@ export const actions: Actions = {
 
 		await captureServer({
 			distinctId: user.id,
-			event: 'group_deleted',
+			event: 'group_archived',
 			properties: { group_id: params.id }
 		});
 
