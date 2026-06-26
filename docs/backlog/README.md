@@ -21,12 +21,13 @@ chaque fichier story ; ce tableau doit rester synchronisé.
 
 ## E02 — Groupes & invitations
 
-| Story                          | Titre                                  | Statut | Dépend de |
-| ------------------------------ | -------------------------------------- | ------ | --------- |
-| [S-010](S-010-creer-groupe.md) | Créer un groupe                        | done   | S-002     |
-| [S-011](S-011-invitations.md)  | Liens d'invitation + droit délégable   | done   | S-010     |
-| [S-012](S-012-membres.md)      | Gestion des membres (rôles, exclusion) | done   | S-011     |
-| [S-013](S-013-page-groupe.md)  | Page groupe (dashboard)                | done   | S-010     |
+| Story                                       | Titre                                  | Statut | Dépend de    |
+| ------------------------------------------- | -------------------------------------- | ------ | ------------ |
+| [S-010](S-010-creer-groupe.md)              | Créer un groupe                        | done   | S-002        |
+| [S-011](S-011-invitations.md)               | Liens d'invitation + droit délégable   | done   | S-010        |
+| [S-012](S-012-membres.md)                   | Gestion des membres (rôles, exclusion) | done   | S-011        |
+| [S-013](S-013-page-groupe.md)               | Page groupe (dashboard)                | done   | S-010        |
+| [S-014](S-014-renommer-supprimer-groupe.md) | Renommer / supprimer un groupe         | todo   | S-012, S-013 |
 
 ## E03 — Pari « au plus proche »
 
@@ -46,11 +47,11 @@ chaque fichier story ; ce tableau doit rester synchronisé.
 
 ## E05 — Jury & résolution
 
-| Story                                | Titre                              | Statut      | Dépend de    |
-| ------------------------------------ | ---------------------------------- | ----------- | ------------ |
-| [S-040](S-040-vote-jury.md)          | Vote du jury                       | done        | S-022, S-031 |
-| [S-041](S-041-resolution-gains.md)   | Résolution & attribution des gains | done        | S-040        |
-| [S-042](S-042-annulation-unanime.md) | Annulation unanime                 | tracking    | S-022, S-031 |
+| Story                                | Titre                              | Statut   | Dépend de    |
+| ------------------------------------ | ---------------------------------- | -------- | ------------ |
+| [S-040](S-040-vote-jury.md)          | Vote du jury                       | done     | S-022, S-031 |
+| [S-041](S-041-resolution-gains.md)   | Résolution & attribution des gains | done     | S-040        |
+| [S-042](S-042-annulation-unanime.md) | Annulation unanime                 | tracking | S-022, S-031 |
 
 ## E06 — Ardoise & gages
 
