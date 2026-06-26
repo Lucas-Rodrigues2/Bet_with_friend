@@ -66,6 +66,7 @@
 	const newYesnoHref = $derived(
 		resolveRoute('/app/groups/[id]/bets/new/yesno', { id: data.group.id })
 	);
+	const settingsHref = $derived(resolveRoute('/app/groups/[id]/settings', { id: data.group.id }));
 
 	function canGenerateInvite() {
 		return data.group.role === 'admin' || data.group.canInvite;
@@ -174,6 +175,17 @@
 				</p>
 			</div>
 		</div>
+
+		<!-- Lien Paramètres (admin uniquement) -->
+		{#if data.group.role === 'admin'}
+			<a
+				href={settingsHref}
+				class="text-muted-foreground hover:text-foreground shrink-0 text-sm underline-offset-4 hover:underline"
+				data-testid="settings-link"
+			>
+				Paramètres
+			</a>
+		{/if}
 	</div>
 
 	<!-- Section Paris -->

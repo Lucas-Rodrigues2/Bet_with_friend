@@ -29,7 +29,7 @@ export const load: PageServerLoad = async ({ locals, params }) => {
 	}
 	const { id } = params;
 
-	// Load group + verify user is an active member
+	// Load group + verify user is an active member + group is not archived
 	const rows = await db
 		.select({
 			id: groups.id,
@@ -50,7 +50,7 @@ export const load: PageServerLoad = async ({ locals, params }) => {
 				isNull(groupMembers.removedAt)
 			)
 		)
-		.where(eq(groups.id, id))
+		.where(and(eq(groups.id, id), isNull(groups.archivedAt)))
 		.limit(1);
 
 	if (rows.length === 0) {

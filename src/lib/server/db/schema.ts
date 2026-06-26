@@ -62,7 +62,8 @@ export const groups = pgTable('groups', {
 	creatorId: uuid('creator_id')
 		.notNull()
 		.references(() => profiles.id),
-	createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
+	createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+	archivedAt: timestamp('archived_at', { withTimezone: true })
 });
 
 export const groupMembers = pgTable(

@@ -12,7 +12,8 @@ export interface GroupSummary {
 }
 
 /**
- * Returns all groups where the given user is an active member (removed_at IS NULL).
+ * Returns all groups where the given user is an active member (removed_at IS NULL)
+ * and the group is not archived (archived_at IS NULL).
  */
 export async function getUserGroups(userId: string): Promise<GroupSummary[]> {
 	const rows = await db
@@ -33,9 +34,73 @@ export async function getUserGroups(userId: string): Promise<GroupSummary[]> {
 				isNull(groupMembers.removedAt)
 			)
 		)
+		.where(isNull(groups.archivedAt))
 		.orderBy(groups.createdAt);
 
 	return rows as GroupSummary[];
+}
+
+/**
+ * Renames a group. Only admins may rename.
+ * Returns error string or null on success.
+ */
+export async function renameGroup(params: {
+	groupId: string;
+	newName: string;
+	adminUserId: string;
+}): Promise<{ error?: string }> {
+	// Verify actor is admin of non-archived group
+	const rows = await db
+		.select({ role: groupMembers.role })
+		.from(groupMembers)
+		.innerJoin(groups, eq(groups.id, groupMembers.groupId))
+		.where(
+			and(
+				eq(groupMembers.groupId, params.groupId),
+				eq(groupMembers.userId, params.adminUserId),
+				isNull(groupMembers.removedAt),
+				isNull(groups.archivedAt)
+			)
+		)
+		.limit(1);
+
+	if (rows.length === 0) return { error: 'Accès refusé.' };
+	if (rows[0].role !== 'admin') return { error: 'Seul un admin peut renommer le groupe.' };
+
+	await db.update(groups).set({ name: params.newName }).where(eq(groups.id, params.groupId));
+
+	return {};
+}
+
+/**
+ * Soft-deletes a group by setting archived_at. Only admins may archive.
+ * Returns error string or null on success.
+ */
+export async function archiveGroup(params: {
+	groupId: string;
+	adminUserId: string;
+}): Promise<{ error?: string }> {
+	// Verify actor is admin of non-archived group
+	const rows = await db
+		.select({ role: groupMembers.role })
+		.from(groupMembers)
+		.innerJoin(groups, eq(groups.id, groupMembers.groupId))
+		.where(
+			and(
+				eq(groupMembers.groupId, params.groupId),
+				eq(groupMembers.userId, params.adminUserId),
+				isNull(groupMembers.removedAt),
+				isNull(groups.archivedAt)
+			)
+		)
+		.limit(1);
+
+	if (rows.length === 0) return { error: 'Accès refusé.' };
+	if (rows[0].role !== 'admin') return { error: 'Seul un admin peut supprimer le groupe.' };
+
+	await db.update(groups).set({ archivedAt: new Date() }).where(eq(groups.id, params.groupId));
+
+	return {};
 }
 
 export interface MemberInfo {
