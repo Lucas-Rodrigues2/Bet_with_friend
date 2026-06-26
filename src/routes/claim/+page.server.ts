@@ -14,7 +14,7 @@ const claimEmailSchema = z.object({
 		.max(72, 'Le mot de passe est trop long')
 });
 
-export const load: PageServerLoad = async ({ locals }) => {
+export const load: PageServerLoad = async ({ locals, cookies }) => {
 	const { session, user } = await locals.safeGetSession();
 
 	// Must be logged in as anonymous user to claim
@@ -25,6 +25,14 @@ export const load: PageServerLoad = async ({ locals }) => {
 	// Check if user is anonymous
 	const rows = await db.select().from(profiles).where(eq(profiles.id, user.id)).limit(1);
 	const profile = rows[0] ?? null;
+
+	// Si un cookie "just_claimed" est présent (posé par l'action email juste avant),
+	// on ne redirige pas vers "/" pour que le composant puisse afficher le message de succès.
+	const justClaimed = cookies.get('just_claimed');
+	if (justClaimed) {
+		cookies.delete('just_claimed', { path: '/' });
+		return { pseudo: profile?.pseudo ?? '' };
+	}
 
 	if (!profile || !profile.isAnonymous) {
 		// Already a full account
@@ -38,7 +46,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 
 export const actions: Actions = {
 	// Claim via email/password
-	email: async ({ request, locals }) => {
+	email: async ({ request, locals, cookies }) => {
 		const { session, user } = await locals.safeGetSession();
 
 		if (!session || !user) {
@@ -89,6 +97,15 @@ export const actions: Actions = {
 				properties: { method: 'email' }
 			});
 		}
+
+		// Poser un cookie court-terme pour que load() ne redirige pas vers "/"
+		// avant que le composant n'ait pu afficher le message de succès.
+		cookies.set('just_claimed', '1', {
+			path: '/',
+			maxAge: 120,
+			httpOnly: true,
+			sameSite: 'lax'
+		});
 
 		return { success: true, email };
 	},

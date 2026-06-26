@@ -13,9 +13,8 @@
  * Note :
  * - La réclamation Google (linkIdentity OAuth) n'est pas automatisable en E2E
  *   → couverte manuellement, skippée ici.
- * - Après réclamation email, le load() de /claim redirige vers / car is_anonymous
- *   devient false. La page de succès (/claim) ne s'affiche pas dans ce flux.
- *   Le test vérifie la réussite fonctionnelle via la DB et la disparition du bandeau.
+ * - Après réclamation email, la page /claim affiche "Compte sécurisé !" (fix UX S-004).
+ *   L'action pose un cookie httpOnly `just_claimed` qui empêche load() de rediriger vers /.
  */
 import { test, expect } from '@playwright/test';
 import { login } from './helpers/auth';
@@ -131,11 +130,12 @@ test.describe('S-004 — Mode invité + réclamation de compte', () => {
 		await page.getByRole('textbox', { name: 'Choisir un mot de passe' }).fill(CLAIM_PASSWORD);
 		await page.getByRole('button', { name: 'Sécuriser avec email' }).click();
 
-		// Après réclamation, redirigé vers / (le load() de /claim redirige car is_anonymous=false)
-		// La page de succès n'est pas affichée (voir note en haut du fichier)
-		await expect(page).toHaveURL('/');
+		// Après réclamation (fix UX S-004) : la page reste sur /claim et affiche le message de succès.
+		// L'action pose un cookie httpOnly `just_claimed` empêchant load() de rediriger vers /.
+		await expect(page).toHaveURL('/claim');
+		await expect(page.getByRole('heading', { name: 'Compte sécurisé !' })).toBeVisible();
 
-		// Le bandeau invité doit avoir disparu (is_anonymous=false)
+		// Le bandeau invité doit avoir disparu (is_anonymous=false dans le layout)
 		await expect(page.getByTestId('guest-banner')).not.toBeVisible();
 
 		// Vérification DB : is_anonymous est bien passé à false

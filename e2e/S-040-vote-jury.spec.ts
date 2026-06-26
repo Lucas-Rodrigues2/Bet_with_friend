@@ -486,14 +486,13 @@ test('Bob (participant yesno) soumet le duel au jury → badge En jugement', asy
 	await expect(bobPage.getByTestId('submit-to-jury-btn')).toBeVisible();
 	await expect(bobPage.getByTestId('submit-to-jury-btn')).toContainText('Soumettre au jury');
 
-	// Bob soumet — attendre la réponse du serveur puis le rechargement complet
-	const [submitResponse] = await Promise.all([
+	// Bob soumet — l'action redirect(303) vers la même page (reload des données)
+	await Promise.all([
 		bobPage.waitForResponse((r) =>
 			r.url().includes(`/bets/${betId}`) && r.request().method() === 'POST'
 		),
 		bobPage.getByTestId('submit-to-jury-btn').click()
 	]);
-	expect(submitResponse.status()).toBe(200);
 	await bobPage.waitForURL(new RegExp(`/app/groups/${SEEDED_GROUP_ID}/bets/${betId}`));
 	await bobPage.waitForLoadState('networkidle');
 

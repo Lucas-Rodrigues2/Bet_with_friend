@@ -355,10 +355,13 @@
 								: (statusLabels[data.bet.status] ?? data.bet.status)}
 					</span>
 				{:else if isYesno && proposition}
-					{#if propIsAccepted && data.bet.matchStatus === 'judging'}
-						<!-- Duel accepté + match en jugement → badge statut match -->
+					{#if propIsAccepted && (data.bet.matchStatus === 'judging' || data.bet.matchStatus === 'resolved')}
+						<!-- Duel accepté + match en jugement ou résolu → badge statut match -->
 						<span
-							class="rounded-full px-2 py-0.5 text-xs font-medium bg-amber-100 text-amber-700"
+							class="rounded-full px-2 py-0.5 text-xs font-medium {data.bet.matchStatus ===
+							'resolved'
+								? 'bg-blue-100 text-blue-700'
+								: 'bg-amber-100 text-amber-700'}"
 							data-testid="bet-status-badge"
 						>
 							{matchStatusLabel}
@@ -1022,7 +1025,11 @@
 					>
 						<h2 class="text-green-800 mb-1 text-sm font-semibold">Duel accepté !</h2>
 						<p class="text-green-700 text-sm">
-							Les termes sont figés. Le match est en cours (statut : {matchStatusLabel ?? '—'}).
+							{#if data.bet.matchStatus === 'resolved'}
+								Duel terminé — résolu par le jury.
+							{:else}
+								Les termes sont figés. Le match est en cours (statut : {matchStatusLabel ?? '—'}).
+							{/if}
 						</p>
 					</div>
 				{:else}

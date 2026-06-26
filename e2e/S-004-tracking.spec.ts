@@ -158,8 +158,9 @@ test.describe('S-004 — Tracking PostHog mode invité + réclamation', () => {
 		await page.getByRole('textbox', { name: 'Choisir un mot de passe' }).fill(claimPassword);
 		await page.getByRole('button', { name: 'Sécuriser avec email' }).click();
 
-		// Après réclamation réussie, le load() de /claim redirige vers / (is_anonymous=false)
-		await expect(page).toHaveURL('/');
+		// Après réclamation réussie (fix UX S-004), la page reste sur /claim et affiche le succès.
+		// On attend le heading de succès (garantit que le serveur a traité l'action complètement).
+		await expect(page.getByRole('heading', { name: 'Compte sécurisé !' })).toBeVisible({ timeout: 10000 });
 
 		// Étape 3 : vérifier l'event dans le sink DB
 		const events = await readServerEvents(db, { event: 'guest_account_claimed' });
@@ -235,7 +236,9 @@ test.describe('S-004 — Tracking PostHog mode invité + réclamation', () => {
 		await page.getByRole('textbox', { name: 'Adresse email' }).fill(claimEmail);
 		await page.getByRole('textbox', { name: 'Choisir un mot de passe' }).fill('test-password-123');
 		await page.getByRole('button', { name: 'Sécuriser avec email' }).click();
-		await expect(page).toHaveURL('/');
+		// Après réclamation réussie (fix UX S-004), attendre le heading de succès
+		// (garantit que le serveur a traité l'action et écrit l'event analytics)
+		await expect(page.getByRole('heading', { name: 'Compte sécurisé !' })).toBeVisible({ timeout: 10000 });
 
 		// Vérifier que guest_account_claimed a le même distinct_id
 		const claimEvents = await readServerEvents(db, {

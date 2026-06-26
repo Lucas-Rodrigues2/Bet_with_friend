@@ -2,6 +2,7 @@
 	import { resolveRoute } from '$app/paths';
 	import { enhance } from '$app/forms';
 	import { onMount } from 'svelte';
+	import { toast } from 'svelte-sonner';
 	import { Button } from '$lib/components/ui/button/index.js';
 	import { track } from '$lib/analytics/client';
 	import type { ActionData, PageData } from './$types';
@@ -14,6 +15,8 @@
 	let showInviteForm = $state(false);
 	let inviteLoading = $state(false);
 	let copiedToken = $state<string | null>(null);
+	// Token du lien d'invitation fraîchement créé — persisté côté client
+	let persistedInviteToken = $state<string | null>(null);
 
 	// Résultats du formulaire
 	const f = $derived(
@@ -29,6 +32,16 @@
 
 	// URL de base pour les liens d'invitation
 	const baseUrl = $derived(typeof window !== 'undefined' ? window.location.origin : '');
+
+	// Persister le token du lien fraîchement créé + toast après toggle can_invite
+	$effect(() => {
+		if (f?.inviteToken) {
+			persistedInviteToken = f.inviteToken;
+		}
+		if (f?.canInviteUpdated) {
+			toast.success("Droits d'invitation mis à jour.");
+		}
+	});
 
 	function toggleNewBetMenu() {
 		const opening = !showNewBetMenu;
@@ -473,24 +486,24 @@
 			{/if}
 
 			<!-- Lien nouvellement créé -->
-			{#if f?.inviteToken}
+			{#if persistedInviteToken}
 				<div class="border-border bg-card mb-4 rounded-lg border p-4" data-testid="new-invite-link">
 					<p class="text-foreground mb-2 text-sm font-medium">Lien créé :</p>
 					<div class="flex items-center gap-2">
 						<input
 							type="text"
 							readonly
-							value={`${baseUrl}/invite/${f.inviteToken}`}
+							value={`${baseUrl}/invite/${persistedInviteToken}`}
 							class="border-border bg-muted text-foreground flex-1 rounded-md border px-3 py-2 text-sm"
 							data-testid="invite-link-input"
 						/>
 						<Button
 							variant="outline"
 							size="sm"
-							onclick={() => f?.inviteToken && copyInviteLink(f.inviteToken)}
+							onclick={() => persistedInviteToken && copyInviteLink(persistedInviteToken)}
 							data-testid="copy-invite-btn"
 						>
-							{copiedToken === f.inviteToken ? 'Copié !' : 'Copier'}
+							{copiedToken === persistedInviteToken ? 'Copié !' : 'Copier'}
 						</Button>
 					</div>
 				</div>
