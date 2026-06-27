@@ -263,6 +263,16 @@
 			(data.bet.matchStatus === 'open' || data.bet.matchStatus === 'judging')
 	);
 
+	// ─── Gages (forfeits) ─────────────────────────────────────────────────────
+
+	// Is the current user a winner of the resolved match?
+	const isCurrentUserWinner = $derived(
+		resolution?.winners.some((w) => w.userId === data.currentUserId) ?? false
+	);
+
+	// State for claim forfeit form (show/hide per forfeit id)
+	let claimingForfeitId = $state<string | null>(null);
+
 	// Track bet viewed
 	$effect(() => {
 		const betId = data.bet.id;
@@ -1529,22 +1539,229 @@
 					</div>
 				{/if}
 
-				<!-- Gages en attente -->
-				{#if resolution.pendingForfeits.length > 0}
+				<!-- Gages -->
+				{#if resolution.forfeits.length > 0}
 					<div data-testid="resolution-forfeits">
 						<p class="text-blue-700 mb-2 text-xs font-medium uppercase tracking-wide">
-							Gage{resolution.pendingForfeits.length > 1 ? 's' : ''} en attente
+							Gage{resolution.forfeits.length > 1 ? 's' : ''}
 						</p>
-						<ul class="flex flex-col gap-1">
-							{#each resolution.pendingForfeits as f (f.id)}
+						<ul class="flex flex-col gap-2">
+							{#each resolution.forfeits as f (f.id)}
 								<li
-									class="text-foreground rounded-md bg-white px-3 py-2 text-sm"
+									class="rounded-md border bg-white px-3 py-2 text-sm {f.status === 'done'
+										? 'border-green-200'
+										: f.status === 'not_done'
+											? 'border-red-200'
+											: f.claimedAt
+												? 'border-amber-200'
+												: 'border-gray-200'}"
 									data-testid="forfeit-entry"
 								>
-									<span class="font-medium" data-testid="forfeit-debtor">{f.debtorPseudo}</span>
-									doit exécuter le gage
+									<!-- Header: debtor + status badge -->
+									<div class="flex items-start justify-between gap-2 flex-wrap">
+										<span class="font-medium text-foreground" data-testid="forfeit-debtor">
+											{f.debtorPseudo}{f.debtorId === data.currentUserId ? ' (moi)' : ''}
+										</span>
+										{#if f.status === 'done'}
+											<span
+												class="rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700"
+												data-testid="forfeit-status"
+											>
+												Accompli ✓
+											</span>
+										{:else if f.status === 'not_done'}
+											<span
+												class="rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-700"
+												data-testid="forfeit-status"
+											>
+												Gage non tenu
+											</span>
+										{:else if f.claimedAt}
+											<span
+												class="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700"
+												data-testid="forfeit-status"
+											>
+												En attente de confirmation
+											</span>
+										{:else}
+											<span
+												class="rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600"
+												data-testid="forfeit-status"
+											>
+												À faire
+											</span>
+										{/if}
+									</div>
+
+									<!-- Forfeit description -->
 									{#if data.bet.forfeitDescription}
-										: <span class="italic">{data.bet.forfeitDescription}</span>
+										<p class="text-muted-foreground mt-1 text-xs italic" data-testid="forfeit-desc">
+											{data.bet.forfeitDescription}
+										</p>
+									{/if}
+
+									<!-- Claimed date + proof -->
+									{#if f.claimedAt}
+										<p class="text-muted-foreground mt-1 text-xs" data-testid="forfeit-claimed-at">
+											Déclaré fait le {formatDate(f.claimedAt)}
+										</p>
+									{/if}
+
+									{#if f.proofUrl}
+										<div class="mt-2" data-testid="forfeit-proof">
+											<a
+												href={f.proofUrl}
+												target="_blank"
+												rel="noopener noreferrer"
+												class="text-primary text-xs underline underline-offset-2"
+												data-testid="forfeit-proof-link"
+											>
+												Voir la preuve
+											</a>
+										</div>
+									{/if}
+
+									<!-- Confirmed by -->
+									{#if f.status === 'done' && f.confirmedByPseudo}
+										<p
+											class="text-muted-foreground mt-1 text-xs"
+											data-testid="forfeit-confirmed-by"
+										>
+											Confirmé par {f.confirmedByPseudo}
+										</p>
+									{:else if f.status === 'not_done' && f.confirmedByPseudo}
+										<p class="text-muted-foreground mt-1 text-xs" data-testid="forfeit-not-done-by">
+											Marqué non tenu par {f.confirmedByPseudo}
+										</p>
+									{/if}
+
+									<!-- Error for this forfeit -->
+									{#if (form as { forfeitError?: string; forfeitId?: string } | null)?.forfeitError && (form as { forfeitId?: string } | null)?.forfeitId === f.id}
+										<p class="text-destructive mt-1 text-xs" data-testid="forfeit-error">
+											{(form as { forfeitError?: string }).forfeitError}
+										</p>
+									{/if}
+
+									<!-- ── Actions for debtor ──────────────────────────────────────── -->
+									{#if f.debtorId === data.currentUserId && f.status === 'pending' && !f.claimedAt}
+										<div class="mt-3 border-t pt-3" data-testid="claim-section">
+											{#if claimingForfeitId === f.id}
+												<form
+													method="POST"
+													action="?/claim_forfeit"
+													enctype="multipart/form-data"
+													use:enhance
+													class="flex flex-col gap-2"
+													data-testid="claim-form"
+												>
+													<input type="hidden" name="forfeitId" value={f.id} />
+													<div>
+														<label
+															for="proof-{f.id}"
+															class="text-foreground mb-1 block text-xs font-medium"
+														>
+															Preuve (optionnel — photo ou vidéo)
+														</label>
+														<input
+															id="proof-{f.id}"
+															name="proof"
+															type="file"
+															accept="image/*,video/mp4,video/webm"
+															class="border-input bg-background text-foreground text-xs file:mr-2 file:rounded file:border-0 file:bg-gray-100 file:px-2 file:py-1 file:text-xs w-full rounded-md border px-3 py-2"
+															data-testid="proof-input"
+														/>
+													</div>
+													<div class="flex gap-2">
+														<Button type="submit" size="sm" data-testid="claim-btn">
+															J'ai fait mon gage
+														</Button>
+														<Button
+															type="button"
+															variant="ghost"
+															size="sm"
+															onclick={() => (claimingForfeitId = null)}
+														>
+															Annuler
+														</Button>
+													</div>
+												</form>
+											{:else}
+												<Button
+													variant="outline"
+													size="sm"
+													onclick={() => (claimingForfeitId = f.id)}
+													data-testid="show-claim-btn"
+												>
+													J'ai fait mon gage
+												</Button>
+											{/if}
+										</div>
+									{:else if f.debtorId === data.currentUserId && f.status === 'pending' && f.claimedAt}
+										<p class="text-muted-foreground mt-2 text-xs" data-testid="claim-pending-msg">
+											En attente de confirmation par un gagnant.
+										</p>
+									{/if}
+
+									<!-- ── Actions for winner ──────────────────────────────────────── -->
+									{#if isCurrentUserWinner && f.debtorId !== data.currentUserId && f.status === 'pending'}
+										<div
+											class="mt-3 border-t pt-3 flex flex-wrap gap-2"
+											data-testid="winner-actions"
+										>
+											{#if f.claimedAt}
+												<!-- Claimed: confirm or reject -->
+												<form
+													method="POST"
+													action="?/confirm_forfeit"
+													use:enhance
+													data-testid="confirm-forfeit-form"
+												>
+													<input type="hidden" name="forfeitId" value={f.id} />
+													<Button
+														type="submit"
+														size="sm"
+														class="bg-green-600 hover:bg-green-700"
+														data-testid="confirm-forfeit-btn"
+													>
+														Confirmer
+													</Button>
+												</form>
+												<form
+													method="POST"
+													action="?/reject_forfeit"
+													use:enhance
+													data-testid="reject-forfeit-form"
+												>
+													<input type="hidden" name="forfeitId" value={f.id} />
+													<Button
+														type="submit"
+														variant="outline"
+														size="sm"
+														data-testid="reject-forfeit-btn"
+													>
+														Refuser
+													</Button>
+												</form>
+											{/if}
+											<!-- Not done: always available while pending -->
+											<form
+												method="POST"
+												action="?/mark_forfeit_not_done"
+												use:enhance
+												data-testid="not-done-forfeit-form"
+											>
+												<input type="hidden" name="forfeitId" value={f.id} />
+												<Button
+													type="submit"
+													variant="ghost"
+													size="sm"
+													class="text-red-600 hover:text-red-700"
+													data-testid="not-done-forfeit-btn"
+												>
+													Gage non tenu
+												</Button>
+											</form>
+										</div>
 									{/if}
 								</li>
 							{/each}

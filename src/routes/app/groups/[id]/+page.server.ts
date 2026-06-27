@@ -16,6 +16,7 @@ import {
 import { removeMember, promoteMember } from '$lib/server/groups';
 import { getGroupBetsForUser, getJudgingBetsForJuror } from '$lib/server/bets';
 import { getMyNetBalance } from '$lib/server/ledger';
+import { getMyPendingForfeitsForGroup } from '$lib/server/forfeits';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ locals, params }) => {
@@ -89,6 +90,9 @@ export const load: PageServerLoad = async ({ locals, params }) => {
 	// Solde net de l'utilisateur dans ce groupe (ardoise)
 	const myNetBalance = await getMyNetBalance(id, user.id);
 
+	// Gages en attente pour l'utilisateur dans ce groupe
+	const myPendingForfeits = await getMyPendingForfeitsForGroup(id, user.id);
+
 	// Track group_viewed après vérification d'appartenance (fait réel)
 	await captureServer({
 		distinctId: user.id,
@@ -148,6 +152,14 @@ export const load: PageServerLoad = async ({ locals, params }) => {
 			matchId: b.matchId,
 			matchStatus: b.matchStatus,
 			createdAt: b.createdAt
+		})),
+		myPendingForfeits: myPendingForfeits.map((f) => ({
+			id: f.id,
+			betId: f.betId,
+			betTitle: f.betTitle,
+			forfeitDescription: f.forfeitDescription,
+			claimedAt: f.claimedAt,
+			status: f.status
 		}))
 	};
 };

@@ -55,10 +55,10 @@ chaque fichier story ; ce tableau doit rester synchronisé.
 
 ## E06 — Ardoise & gages
 
-| Story                     | Titre                                 | Statut   | Dépend de |
-| ------------------------- | ------------------------------------- | -------- | --------- |
-| [S-050](S-050-ardoise.md) | Ardoise (soldes, règlements)          | done     | S-041     |
-| [S-051](S-051-gages.md)   | Gages (accomplissement, confirmation) | todo     | S-041     |
+| Story                     | Titre                                 | Statut      | Dépend de |
+| ------------------------- | ------------------------------------- | ----------- | --------- |
+| [S-050](S-050-ardoise.md) | Ardoise (soldes, règlements)          | done        | S-041     |
+| [S-051](S-051-gages.md)   | Gages (accomplissement, confirmation) | in-progress | S-041     |
 
 ## E07 — Historique et Notifications
 

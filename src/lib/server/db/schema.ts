@@ -397,6 +397,8 @@ export const forfeits = pgTable('forfeits', {
 		.notNull()
 		.references(() => profiles.id),
 	status: forfeitStatusEnum('status').notNull().default('pending'),
+	// null = pending (debtor has not yet claimed), non-null = claimed (waiting for winner confirmation)
+	claimedAt: timestamp('claimed_at', { withTimezone: true }),
 	proofUrl: text('proof_url'),
 	confirmedBy: uuid('confirmed_by').references(() => profiles.id),
 	createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()

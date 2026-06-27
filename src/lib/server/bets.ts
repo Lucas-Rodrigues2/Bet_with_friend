@@ -776,7 +776,17 @@ export interface BetDetail {
 			creditorPseudo: string;
 			amount: string;
 		}[];
-		pendingForfeits: { id: string; debtorId: string; debtorPseudo: string }[];
+		// Full forfeit lifecycle data (replaces old pendingForfeits)
+		forfeits: {
+			id: string;
+			debtorId: string;
+			debtorPseudo: string;
+			status: 'pending' | 'done' | 'not_done';
+			claimedAt: Date | null;
+			proofUrl: string | null;
+			confirmedBy: string | null;
+			confirmedByPseudo: string | null;
+		}[];
 	} | null;
 }
 
@@ -1238,16 +1248,37 @@ async function getMatchResolutionData(matchId: string): Promise<BetDetail['resol
 		}
 	}
 
-	// Fetch pending forfeits
+	// Fetch all forfeits for this match (all statuses)
 	const forfeitRows = await db
 		.select({
 			id: forfeits.id,
 			debtorId: forfeits.debtorId,
-			pseudo: profiles.pseudo
+			status: forfeits.status,
+			claimedAt: forfeits.claimedAt,
+			proofUrl: forfeits.proofUrl,
+			confirmedBy: forfeits.confirmedBy
 		})
 		.from(forfeits)
-		.innerJoin(profiles, eq(profiles.id, forfeits.debtorId))
 		.where(eq(forfeits.matchId, matchId));
+
+	// Fetch profiles for all debtor + confirmedBy user IDs
+	const forfeitUserIds = Array.from(
+		new Set([
+			...forfeitRows.map((f) => f.debtorId),
+			...forfeitRows.filter((f) => f.confirmedBy).map((f) => f.confirmedBy!)
+		])
+	);
+
+	const forfeitProfileMap = new Map<string, string>();
+	if (forfeitUserIds.length > 0) {
+		const forfeitProfiles = await db
+			.select({ id: profiles.id, pseudo: profiles.pseudo })
+			.from(profiles)
+			.where(inArray(profiles.id, forfeitUserIds));
+		for (const p of forfeitProfiles) {
+			forfeitProfileMap.set(p.id, p.pseudo);
+		}
+	}
 
 	return {
 		winners: winnerRows.map((w) => ({
@@ -1257,10 +1288,15 @@ async function getMatchResolutionData(matchId: string): Promise<BetDetail['resol
 			share: w.share
 		})),
 		ledgerEntries: resolvedLedgerEntries,
-		pendingForfeits: forfeitRows.map((f) => ({
+		forfeits: forfeitRows.map((f) => ({
 			id: f.id,
 			debtorId: f.debtorId,
-			debtorPseudo: f.pseudo
+			debtorPseudo: forfeitProfileMap.get(f.debtorId) ?? f.debtorId,
+			status: f.status as 'pending' | 'done' | 'not_done',
+			claimedAt: f.claimedAt,
+			proofUrl: f.proofUrl,
+			confirmedBy: f.confirmedBy,
+			confirmedByPseudo: f.confirmedBy ? (forfeitProfileMap.get(f.confirmedBy) ?? null) : null
 		}))
 	};
 }

@@ -606,6 +606,48 @@
 		</section>
 	{/if}
 
+	<!-- Section Mes gages -->
+	{#if data.myPendingForfeits && data.myPendingForfeits.length > 0}
+		<section class="mb-8" data-testid="my-forfeits-section">
+			<h2 class="text-foreground mb-4 text-lg font-semibold">Mes gages</h2>
+			<ul class="flex flex-col gap-2" data-testid="my-forfeits-list">
+				{#each data.myPendingForfeits as forfeit (forfeit.id)}
+					<li data-testid="my-forfeit-item">
+						<a
+							href={resolveRoute('/app/groups/[id]/bets/[betId]', {
+								id: data.group.id,
+								betId: forfeit.betId
+							})}
+							class="border-border bg-card hover:bg-accent/30 flex items-start justify-between gap-3 rounded-lg border p-3 transition-colors"
+						>
+							<div class="min-w-0 flex-1">
+								<p class="text-foreground text-sm font-medium" data-testid="my-forfeit-title">
+									{forfeit.betTitle}
+								</p>
+								{#if forfeit.forfeitDescription}
+									<p
+										class="text-muted-foreground text-xs italic"
+										data-testid="my-forfeit-description"
+									>
+										{forfeit.forfeitDescription}
+									</p>
+								{/if}
+							</div>
+							<span
+								class="shrink-0 rounded-full px-2 py-0.5 text-xs font-medium {forfeit.claimedAt
+									? 'bg-amber-100 text-amber-700'
+									: 'bg-orange-100 text-orange-700'}"
+								data-testid="my-forfeit-status"
+							>
+								{forfeit.claimedAt ? 'En attente de confirmation' : 'À faire'}
+							</span>
+						</a>
+					</li>
+				{/each}
+			</ul>
+		</section>
+	{/if}
+
 	<!-- Section Ardoise -->
 	<section data-testid="ledger-section">
 		<div class="mb-4 flex items-center justify-between">

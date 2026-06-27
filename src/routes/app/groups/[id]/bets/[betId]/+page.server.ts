@@ -1,5 +1,6 @@
 import { error, fail, redirect } from '@sveltejs/kit';
 import { z } from 'zod';
+import { createClient } from '@supabase/supabase-js';
 import { db } from '$lib/server/db/index';
 import { groupMembers } from '$lib/server/db/schema';
 import { and, eq, isNull } from 'drizzle-orm';
@@ -18,8 +19,33 @@ import {
 	counterPropose
 } from '$lib/server/propositions';
 import { requestMatchCancellation, withdrawCancellationRequest } from '$lib/server/cancellation';
+import {
+	claimForfeit,
+	confirmForfeit,
+	rejectForfeit,
+	markForfeitNotDone
+} from '$lib/server/forfeits';
 import { captureServer } from '$lib/server/analytics';
+import { env } from '$env/dynamic/private';
+import { env as pubEnv } from '$env/dynamic/public';
 import type { Actions, PageServerLoad } from './$types';
+
+const PROOF_ALLOWED_MIME = [
+	'image/jpeg',
+	'image/png',
+	'image/webp',
+	'image/gif',
+	'video/mp4',
+	'video/webm'
+];
+const PROOF_MAX_SIZE = 10 * 1024 * 1024; // 10 Mo
+
+function getServiceClient() {
+	const url = pubEnv.PUBLIC_SUPABASE_URL;
+	const key = env.SUPABASE_SERVICE_ROLE_KEY;
+	if (!url || !key) throw new Error('Supabase service role config manquante');
+	return createClient(url, key, { auth: { persistSession: false } });
+}
 
 // UUID regex that accepts any 8-4-4-4-12 hex format (not restricted to RFC 4122 version/variant bits)
 const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -88,6 +114,12 @@ export const load: PageServerLoad = async ({ locals, params }) => {
 			cancellationRequests: bet.cancellationRequests,
 			juryVotes: bet.juryVotes,
 			resolution: bet.resolution
+				? {
+						winners: bet.resolution.winners,
+						ledgerEntries: bet.resolution.ledgerEntries,
+						forfeits: bet.resolution.forfeits
+					}
+				: null
 		},
 		currentUserId: user.id,
 		isParticipant,
@@ -820,6 +852,178 @@ export const actions: Actions = {
 		} catch (err) {
 			const message = err instanceof Error ? err.message : 'Erreur lors de la contre-proposition.';
 			return fail(400, { negotiateError: message });
+		}
+
+		throw redirect(303, `/app/groups/${params.id}/bets/${params.betId}`);
+	},
+
+	// ─── Forfeit lifecycle ────────────────────────────────────────────────────
+
+	claim_forfeit: async ({ locals, params, request }) => {
+		const { session, user } = await locals.safeGetSession();
+		if (!session || !user) return fail(401, { forfeitError: 'Non authentifié.' });
+
+		if (!uuidRegex.test(params.id) || !uuidRegex.test(params.betId)) {
+			return fail(400, { forfeitError: 'Paramètres invalides.' });
+		}
+
+		const isMember = await isActiveMemberOfBetGroup(params.betId, params.id, user.id);
+		if (!isMember) return fail(403, { forfeitError: 'Accès refusé.' });
+
+		const formData = await request.formData();
+		const forfeitId = formData.get('forfeitId') as string | null;
+
+		if (!forfeitId || !uuidRegex.test(forfeitId)) {
+			return fail(400, { forfeitError: 'Identifiant du gage invalide.' });
+		}
+
+		// Handle optional proof file upload
+		let proofUrl: string | null = null;
+		const file = formData.get('proof');
+
+		if (file instanceof File && file.size > 0) {
+			if (!PROOF_ALLOWED_MIME.includes(file.type)) {
+				return fail(400, {
+					forfeitError: 'Format de preuve invalide. Utilisez jpg, png, webp, gif, mp4 ou webm.'
+				});
+			}
+			if (file.size > PROOF_MAX_SIZE) {
+				return fail(400, { forfeitError: 'La preuve ne doit pas dépasser 10 Mo.' });
+			}
+
+			const ext = file.name.split('.').pop() ?? 'bin';
+			const path = `${params.betId}/${forfeitId}/${user.id}.${ext}`;
+			const arrayBuffer = await file.arrayBuffer();
+			const buffer = Buffer.from(arrayBuffer);
+
+			const supabaseService = getServiceClient();
+			const { error: uploadError } = await supabaseService.storage
+				.from('proofs')
+				.upload(path, buffer, { contentType: file.type, upsert: true });
+
+			if (uploadError) {
+				return fail(500, { forfeitError: `Erreur upload : ${uploadError.message}` });
+			}
+
+			const {
+				data: { publicUrl }
+			} = supabaseService.storage.from('proofs').getPublicUrl(path);
+			proofUrl = publicUrl;
+		}
+
+		try {
+			await claimForfeit({ forfeitId, userId: user.id, proofUrl });
+
+			await captureServer({
+				distinctId: user.id,
+				event: 'forfeit_claimed',
+				properties: { bet_id: params.betId, forfeit_id: forfeitId, has_proof: proofUrl !== null }
+			});
+		} catch (err) {
+			const message = err instanceof Error ? err.message : 'Erreur lors de la déclaration du gage.';
+			return fail(400, { forfeitError: message });
+		}
+
+		throw redirect(303, `/app/groups/${params.id}/bets/${params.betId}`);
+	},
+
+	confirm_forfeit: async ({ locals, params, request }) => {
+		const { session, user } = await locals.safeGetSession();
+		if (!session || !user) return fail(401, { forfeitError: 'Non authentifié.' });
+
+		if (!uuidRegex.test(params.id) || !uuidRegex.test(params.betId)) {
+			return fail(400, { forfeitError: 'Paramètres invalides.' });
+		}
+
+		const isMember = await isActiveMemberOfBetGroup(params.betId, params.id, user.id);
+		if (!isMember) return fail(403, { forfeitError: 'Accès refusé.' });
+
+		const formData = await request.formData();
+		const forfeitId = formData.get('forfeitId') as string | null;
+
+		if (!forfeitId || !uuidRegex.test(forfeitId)) {
+			return fail(400, { forfeitError: 'Identifiant du gage invalide.' });
+		}
+
+		try {
+			await confirmForfeit({ forfeitId, userId: user.id });
+
+			await captureServer({
+				distinctId: user.id,
+				event: 'forfeit_confirmed',
+				properties: { bet_id: params.betId, forfeit_id: forfeitId }
+			});
+		} catch (err) {
+			const message = err instanceof Error ? err.message : 'Erreur lors de la confirmation.';
+			return fail(400, { forfeitError: message });
+		}
+
+		throw redirect(303, `/app/groups/${params.id}/bets/${params.betId}`);
+	},
+
+	reject_forfeit: async ({ locals, params, request }) => {
+		const { session, user } = await locals.safeGetSession();
+		if (!session || !user) return fail(401, { forfeitError: 'Non authentifié.' });
+
+		if (!uuidRegex.test(params.id) || !uuidRegex.test(params.betId)) {
+			return fail(400, { forfeitError: 'Paramètres invalides.' });
+		}
+
+		const isMember = await isActiveMemberOfBetGroup(params.betId, params.id, user.id);
+		if (!isMember) return fail(403, { forfeitError: 'Accès refusé.' });
+
+		const formData = await request.formData();
+		const forfeitId = formData.get('forfeitId') as string | null;
+
+		if (!forfeitId || !uuidRegex.test(forfeitId)) {
+			return fail(400, { forfeitError: 'Identifiant du gage invalide.' });
+		}
+
+		try {
+			await rejectForfeit({ forfeitId, userId: user.id });
+
+			await captureServer({
+				distinctId: user.id,
+				event: 'forfeit_rejected',
+				properties: { bet_id: params.betId, forfeit_id: forfeitId }
+			});
+		} catch (err) {
+			const message = err instanceof Error ? err.message : 'Erreur lors du refus.';
+			return fail(400, { forfeitError: message });
+		}
+
+		throw redirect(303, `/app/groups/${params.id}/bets/${params.betId}`);
+	},
+
+	mark_forfeit_not_done: async ({ locals, params, request }) => {
+		const { session, user } = await locals.safeGetSession();
+		if (!session || !user) return fail(401, { forfeitError: 'Non authentifié.' });
+
+		if (!uuidRegex.test(params.id) || !uuidRegex.test(params.betId)) {
+			return fail(400, { forfeitError: 'Paramètres invalides.' });
+		}
+
+		const isMember = await isActiveMemberOfBetGroup(params.betId, params.id, user.id);
+		if (!isMember) return fail(403, { forfeitError: 'Accès refusé.' });
+
+		const formData = await request.formData();
+		const forfeitId = formData.get('forfeitId') as string | null;
+
+		if (!forfeitId || !uuidRegex.test(forfeitId)) {
+			return fail(400, { forfeitError: 'Identifiant du gage invalide.' });
+		}
+
+		try {
+			await markForfeitNotDone({ forfeitId, userId: user.id });
+
+			await captureServer({
+				distinctId: user.id,
+				event: 'forfeit_marked_not_done',
+				properties: { bet_id: params.betId, forfeit_id: forfeitId }
+			});
+		} catch (err) {
+			const message = err instanceof Error ? err.message : 'Erreur lors du marquage gage non tenu.';
+			return fail(400, { forfeitError: message });
 		}
 
 		throw redirect(303, `/app/groups/${params.id}/bets/${params.betId}`);

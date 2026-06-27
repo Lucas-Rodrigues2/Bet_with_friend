@@ -167,3 +167,14 @@ VALUES (
   ARRAY['image/jpeg', 'image/png', 'image/webp']
 )
 ON CONFLICT (id) DO NOTHING;
+
+-- Bucket pour les preuves de gages (S-051)
+INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+VALUES (
+  'proofs',
+  'proofs',
+  true,
+  10485760,
+  ARRAY['image/jpeg', 'image/png', 'image/webp', 'video/mp4', 'video/webm']
+)
+ON CONFLICT (id) DO NOTHING;
