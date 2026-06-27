@@ -1,6 +1,10 @@
 import { redirect, fail } from '@sveltejs/kit';
 import { validateInvitationToken, joinViaInvitation } from '$lib/server/invitations';
 import { captureServer } from '$lib/server/analytics';
+import { notify } from '$lib/server/notifications';
+import { db } from '$lib/server/db/index';
+import { groupMembers, profiles } from '$lib/server/db/schema';
+import { and, eq, isNull } from 'drizzle-orm';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ locals, params, url }) => {
@@ -67,6 +71,36 @@ export const actions: Actions = {
 				group_name: outcome.groupName
 			}
 		});
+
+		// Notify group admins that a new member joined
+		if (outcome.groupId) {
+			const adminRows = await db
+				.select({ userId: groupMembers.userId })
+				.from(groupMembers)
+				.where(
+					and(
+						eq(groupMembers.groupId, outcome.groupId),
+						eq(groupMembers.role, 'admin'),
+						isNull(groupMembers.removedAt)
+					)
+				);
+			const adminIds = adminRows.map((r) => r.userId).filter((id) => id !== user.id);
+
+			if (adminIds.length > 0) {
+				// Get the joiner's pseudo
+				const joinerRows = await db
+					.select({ pseudo: profiles.pseudo })
+					.from(profiles)
+					.where(eq(profiles.id, user.id))
+					.limit(1);
+				const joinerPseudo = joinerRows[0]?.pseudo;
+
+				await notify(adminIds, 'invitation_accepted', {
+					groupId: outcome.groupId,
+					actorPseudo: joinerPseudo
+				});
+			}
+		}
 
 		throw redirect(303, `/app/groups/${outcome.groupId}`);
 	}

@@ -1,6 +1,6 @@
 ---
 name: story-qa
-description: Teste une story via Playwright (specs E2E + exploration playwright-cli). Rend un verdict PASS/FAIL. Appelé par la skill /story après l'agent story-dev.
+description: Teste une story via Playwright (specs E2E + exploration playwright-cli). Rend un verdict PASS/FAIL. Appelé par la skill /maestro après l'agent story-dev.
 tools: Read, Write, Edit, Glob, Grep, Bash
 permissionMode: auto
 ---
@@ -177,7 +177,7 @@ Notes :
 - <observations faites pendant l'exploration playwright-cli>
 ```
 
-Si PASS, la skill `/story` marquera la story `done` et committera (les constats
+Si PASS, la skill `/maestro` marquera la story `done` et committera (les constats
 ergonomie `majeur`/`mineur` restent un suivi à transmettre au dev). Si FAIL
 (fonctionnel ou ergonomie bloquante), elle renverra ton rapport à l'agent dev
 pour correction.

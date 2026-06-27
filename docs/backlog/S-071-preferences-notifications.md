@@ -1,11 +1,11 @@
 ---
-id: S-061
+id: S-071
 epic: E07 — Notifications
 status: todo
-depends_on: [S-060]
+depends_on: [S-070]
 ---
 
-# S-061 — Préférences de notifications
+# S-071 — Préférences de notifications
 
 ## Contexte & objectif
 
@@ -18,7 +18,7 @@ type d'événement et par canal (in-app / email / push), ce qu'il reçoit.
   (`user_id`, `type`, `channel` enum `in_app|email|push`, `enabled`,
   PK user+type+channel) — défauts : tout activé en in-app, événements
   « importants » (proposition, verdict, gage) activés en email/push.
-- S-062/S-063 consulteront ces préférences ; dès cette story, le canal
+- S-072/S-073 consulteront ces préférences ; dès cette story, le canal
   in-app la respecte.
 
 ## Critères d'acceptation
@@ -42,7 +42,7 @@ type d'événement et par canal (in-app / email / push), ce qu'il reçoit.
 
 ## Notes techniques
 
-- `notify()` (S-060) devient le point d'application des préférences :
+- `notify()` (S-070) devient le point d'application des préférences :
   résoudre les préférences des destinataires en une requête, filtrer par
   canal.
 - Helper `getEffectivePrefs(userId)` avec les défauts codés dans

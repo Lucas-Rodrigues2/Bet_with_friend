@@ -5,6 +5,9 @@ set -euo pipefail
 echo "==> CLI Claude Code (commande 'claude' dans le terminal)"
 npm install -g @anthropic-ai/claude-code
 
+echo "==> CLI opencode (commande 'opencode' dans le terminal)"
+curl -fsSL https://opencode.ai/install | bash
+
 echo "==> Dépendances npm"
 npm install
 
@@ -38,8 +41,8 @@ Démarrer l'app manuellement :
   npm run dev             # http://localhost:5173
 
 Lancer l'usine agentique :
-  /story S-001            # une story
-  /story wave             # vague parallèle (worktrees + stacks isolées)
+  /maestro S-001            # une story
+  /maestro wave             # vague parallèle (worktrees + stacks isolées)
 
 L'hôte est protégé : ici tu peux activer le mode auto (bypass permissions)
 sans craindre pour ta machine — au pire, tu reconstruis le conteneur.

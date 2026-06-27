@@ -73,22 +73,22 @@ npx supabase start|stop|status            # instance Supabase locale (Docker)
 - La QA rend aussi un **rapport d'ergonomie** : constats `bloquant` = FAIL (corrigés
   par la boucle dev↔QA) ; `majeur`/`mineur` persistés à la clôture dans
   `docs/backlog/suivi-ergonomie.md` (suivi, non bloquant).
-- `/story` : traite les stories **une par une, séquentiellement**, et **enchaîne**
+- `/maestro` : traite les stories **une par une, séquentiellement**, et **enchaîne**
   automatiquement la suivante sans s'arrêter, jusqu'à épuisement du backlog jouable.
-- `/story S-0XX` : traite cette seule story puis s'arrête.
-- `claude_resume.bash` : lance `/story` en bypass total des permissions
+- `/maestro S-0XX` : traite cette seule story puis s'arrête.
+- `claude_resume.bash` : lance `/maestro` en bypass total des permissions
   (`--dangerously-skip-permissions`, claude + sous-agents) et relance après quota
   en reprenant la conversation. À n'utiliser que dans le devcontainer isolé.
-- Agents : `.claude/agents/story-dev.md` (implémente), `.claude/agents/story-qa.md`
-  (teste, n'écrit que dans `e2e/`), `.claude/agents/story-security.md` (audit
+- Agents : `.claude/agents/maestro-dev.md` (implémente), `.claude/agents/maestro-qa.md`
+  (teste, n'écrit que dans `e2e/`), `.claude/agents/maestro-security.md` (audit
   sécu après PASS QA, lecture seule, **toujours sur Opus 4.8**, vérifie les CVE
-  récentes en ligne), `.claude/agents/story-tracker.md` (instrumente PostHog
+  récentes en ligne), `.claude/agents/maestro-tracker.md` (instrumente PostHog
   client+serveur après le PASS QA, vérifie l'envoi réel en E2E).
 - Analytics : PostHog client (`posthog-js`) + serveur (`posthog-node`), même
   `distinct_id` (= `user.id` Supabase). Events serveur émis après commit DB.
   En test, sink DB (`analytics_events_test`) + interception réseau pour vérifier.
 - `scripts/worktree.mjs` et `.claude/agents/integration-qa.md` ne sont plus
-  utilisés par `/story` (hérités du mode parallèle abandonné) — conservés au cas où.
+  utilisés par `/maestro` (hérités du mode parallèle abandonné) — conservés au cas où.
 - La QA explore l'app avec **playwright-cli** (skill
   `.claude/skills/playwright-cli/`) avant d'écrire ses specs : snapshots,
   locators générés, debug via `npx playwright test --debug=cli` + `playwright-cli attach`.

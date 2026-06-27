@@ -1,6 +1,6 @@
 ---
 name: story-security
-description: Audit de sécurité du code produit par une story (après QA PASS, avant commit). Lecture seule sur src/, peut consulter les CVE/avis récents sur internet. Toujours exécuté sur Claude Opus 4.8. Appelé par /story.
+description: Audit de sécurité du code produit par une story (après QA PASS, avant commit). Lecture seule sur src/, peut consulter les CVE/avis récents sur internet. Toujours exécuté sur Claude Opus 4.8. Appelé par /maestro.
 tools: Read, Glob, Grep, Bash, WebSearch, WebFetch
 model: claude-opus-4-8
 permissionMode: auto

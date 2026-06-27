@@ -1,11 +1,11 @@
 ---
-id: S-060
+id: S-070
 epic: E07 — Notifications
-status: todo
+status: in-progress
 depends_on: [S-041]
 ---
 
-# S-060 — Notifications in-app (cloche)
+# S-070 — Notifications in-app (cloche)
 
 ## Contexte & objectif
 
@@ -19,7 +19,7 @@ panneau listant les événements qui concernent l'utilisateur, badge non-lu.
   contre-offre reçue, pari soumis au jury (pour les jurés), demande de vote,
   verdict rendu (participants), dette créée sur mon ardoise, gage à
   faire/à confirmer, litige ouvert (admin).
-- Les canaux email/push viennent après (S-062/S-063) ; cette story pose
+- Les canaux email/push viennent après (S-072/S-073) ; cette story pose
   l'**émission centralisée** des événements.
 
 ## Critères d'acceptation

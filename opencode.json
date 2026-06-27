@@ -1,0 +1,73 @@
+{
+	"$schema": "https://opencode.ai/config.json",
+	"model": "openrouter/deepseek/deepseek-v4-flash",
+	"small_model": "openrouter/deepseek/deepseek-v4-flash",
+	"shell": "pwsh",
+	"instructions": ["CLAUDE.md"],
+	"skills": {
+		"paths": [".opencode/skills", ".claude/skills"]
+	},
+	"agent": {
+		"story-dev": {
+			"description": "Implémente une story du backlog (migrations, logique serveur, UI + tracking PostHog). Appelé par /maestro via Task.",
+			"mode": "subagent",
+			"model": "opencode/glm-5.2",
+			"permission": {
+				"edit": "allow",
+				"bash": {
+					"npm run check": "allow",
+					"npm run lint": "allow",
+					"npm run db:push": "allow",
+					"npm run dev": "allow",
+					"npm install *": "allow",
+					"npx playwright-cli *": "allow",
+					"npx supabase *": "allow",
+					"*": "ask"
+				}
+			}
+		},
+		"story-qa": {
+			"description": "Teste une story via Playwright (specs E2E + exploration playwright-cli). Rend un verdict PASS/FAIL. Écrit uniquement dans e2e/. Appelé par /maestro.",
+			"mode": "subagent",
+			"model": "opencode/glm-5.2",
+			"permission": {
+				"edit": "allow",
+				"bash": {
+					"npx playwright test *": "allow",
+					"npx playwright-cli *": "allow",
+					"npx supabase *": "allow",
+					"npm run test:e2e": "allow",
+					"*": "ask"
+				}
+			}
+		},
+		"story-security": {
+			"description": "Audit de sécurité du code produit par une story (après QA PASS, avant commit). Lecture seule sur src/, peut consulter les CVE/avis récents sur internet. Appelé par /maestro.",
+			"mode": "subagent",
+			"model": "opencode/glm-5.2",
+			"permission": {
+				"edit": "deny",
+				"bash": {
+					"git diff *": "allow",
+					"git log *": "allow",
+					"npm ls *": "allow",
+					"grep *": "allow",
+					"*": "ask"
+				},
+				"webfetch": "allow",
+				"websearch": "allow"
+			}
+		}
+	},
+	"command": {
+		"maestro": {
+			"description": "Orchestre l'implémentation des stories du backlog, UNE par UNE, en enchaînant automatiquement la suivante. Usage: /maestro ou /maestro S-0XX",
+			"template": "Exécute le pipeline complet pour la/les stories du backlog selon les instructions de la skill « maestro ». Contexte : CLAUDE.md, le backlog, et les agents story-dev et story-qa disponibles en subagents GLM 5.2.",
+			"subtask": false
+		},
+		"backlog": {
+			"description": "Affiche l'état du backlog des stories et propose la prochaine story jouable.",
+			"template": "Affiche l'état du backlog selon la skill « backlog ». Lis docs/backlog/README.md et les frontmatter des stories, puis rends un tableau compact par épic avec la prochaine story jouable."
+		}
+	}
+}

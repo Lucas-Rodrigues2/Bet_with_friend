@@ -5,6 +5,7 @@ import { groups, groupMembers, profiles } from '$lib/server/db/schema';
 import { and, eq, isNull, ne } from 'drizzle-orm';
 import { createYesnoDuel, createOpenChallenge } from '$lib/server/bets';
 import { captureServer } from '$lib/server/analytics';
+import { notify } from '$lib/server/notifications';
 import type { Actions, PageServerLoad } from './$types';
 
 // UUID regex that accepts any 8-4-4-4-12 hex format (not restricted to RFC 4122 version/variant bits)
@@ -475,12 +476,21 @@ export const actions: Actions = {
 		const validHours = isNaN(expirationHours) || expirationHours <= 0 ? 48 : expirationHours;
 		const expiresAt = new Date(Date.now() + validHours * 60 * 60 * 1000);
 
+		// Get creator's pseudo for notification
+		const creatorProfileRows = await db
+			.select({ pseudo: profiles.pseudo })
+			.from(profiles)
+			.where(eq(profiles.id, user.id))
+			.limit(1);
+		const creatorPseudo = creatorProfileRows[0]?.pseudo;
+
 		// Create the bet
 		try {
+			const betTitle = data.title.trim();
 			const { betId } = await createYesnoDuel({
 				groupId,
 				creatorId: user.id,
-				title: data.title.trim(),
+				title: betTitle,
 				description: data.description?.trim() || null,
 				choiceA: data.choiceA.trim(),
 				choiceB: data.choiceB.trim(),
@@ -508,6 +518,14 @@ export const actions: Actions = {
 					jury_mode: data.juryMode,
 					expiration_hours: validHours
 				}
+			});
+
+			// Notify the target about the new duel proposition
+			await notify([data.targetId], 'proposition_received', {
+				betId,
+				groupId,
+				betTitle,
+				actorPseudo: creatorPseudo
 			});
 
 			throw redirect(303, `/app/groups/${groupId}/bets/${betId}`);

@@ -6,7 +6,7 @@ validation des stories. Les constats **bloquants** sont corrigés immédiatement
 accumule les constats **majeur** / **mineur** d'une story qui a passé le
 fonctionnel : ils ne bloquent pas la livraison mais restent à traiter.
 
-L'orchestrateur `/story` ajoute une entrée ici à la clôture de chaque story
+L'orchestrateur `/maestro` ajoute une entrée ici à la clôture de chaque story
 (à partir de la section « ERGONOMIE — à changer pour le dev » du QA RAPPORT).
 
 Statuts : `à faire` · `fait` · `ignoré` (avec raison).

@@ -1,6 +1,6 @@
 ---
 name: story-tracker
-description: Après le PASS de la QA, instrumente la story avec des trackers PostHog (events client + serveur) et vérifie leur envoi réel via E2E. Appelé par /story entre la QA et le merge.
+description: Après le PASS de la QA, instrumente la story avec des trackers PostHog (events client + serveur) et vérifie leur envoi réel via E2E. Appelé par /maestro entre la QA et le merge.
 tools: Read, Write, Edit, Glob, Grep, Bash
 permissionMode: auto
 ---

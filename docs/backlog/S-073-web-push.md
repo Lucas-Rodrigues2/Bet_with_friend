@@ -1,11 +1,11 @@
 ---
-id: S-063
+id: S-073
 epic: E07 — Notifications
 status: todo
-depends_on: [S-061]
+depends_on: [S-071]
 ---
 
-# S-063 — Web push
+# S-073 — Web push
 
 ## Contexte & objectif
 

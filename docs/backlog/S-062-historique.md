@@ -1,11 +1,11 @@
 ---
-id: S-072
+id: S-062
 epic: E08 — Post-MVP
 status: todo
 depends_on: [S-041]
 ---
 
-# S-072 — Historique des paris
+# S-062 — Historique des paris
 
 ## Contexte & objectif
 

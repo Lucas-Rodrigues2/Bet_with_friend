@@ -2,7 +2,15 @@ import { error, fail, redirect } from '@sveltejs/kit';
 import { z } from 'zod';
 import { createClient } from '@supabase/supabase-js';
 import { db } from '$lib/server/db/index';
-import { groupMembers } from '$lib/server/db/schema';
+import {
+	groupMembers,
+	profiles,
+	bets,
+	propositions,
+	matchWinners,
+	ledgerEntries,
+	forfeits as forfeitsTable
+} from '$lib/server/db/schema';
 import { and, eq, isNull } from 'drizzle-orm';
 import {
 	getBetDetailForUser,
@@ -26,6 +34,7 @@ import {
 	markForfeitNotDone
 } from '$lib/server/forfeits';
 import { captureServer } from '$lib/server/analytics';
+import { notify } from '$lib/server/notifications';
 import { env } from '$env/dynamic/private';
 import { env as pubEnv } from '$env/dynamic/public';
 import type { Actions, PageServerLoad } from './$types';
@@ -308,6 +317,17 @@ export const actions: Actions = {
 					bet_type: 'closest'
 				}
 			});
+
+			// Notify all jurors to vote
+			const jurorIds = bet.jurors.map((j) => j.userId);
+			if (jurorIds.length > 0) {
+				await notify(jurorIds, 'jury_vote_requested', {
+					betId: params.betId,
+					matchId: bet.matchId,
+					groupId: params.id,
+					betTitle: bet.title
+				});
+			}
 		} catch (err) {
 			const message = err instanceof Error ? err.message : 'Erreur lors de la soumission au jury.';
 			return fail(400, { submitError: message });
@@ -374,6 +394,17 @@ export const actions: Actions = {
 					bet_type: 'yesno'
 				}
 			});
+
+			// Notify all jurors to vote
+			const jurorIds = bet.jurors.map((j) => j.userId);
+			if (jurorIds.length > 0) {
+				await notify(jurorIds, 'jury_vote_requested', {
+					betId: params.betId,
+					matchId: bet.matchId,
+					groupId: params.id,
+					betTitle: bet.title
+				});
+			}
 		} catch (err) {
 			const message = err instanceof Error ? err.message : 'Erreur lors de la soumission au jury.';
 			return fail(400, { submitError: message });
@@ -438,7 +469,7 @@ export const actions: Actions = {
 		}
 
 		try {
-			await castJuryVote({
+			const { verdictResult } = await castJuryVote({
 				matchId: bet.matchId,
 				jurorId: user.id,
 				verdict: verdict as 'winners_selected' | 'not_resolved',
@@ -457,6 +488,52 @@ export const actions: Actions = {
 					has_loser: loserUserId !== null
 				}
 			});
+
+			// If a verdict was rendered, notify all participants
+			if (verdictResult && verdictResult.resolutionType === 'winners_selected') {
+				const participantIds = bet.participants.map((p) => p.userId);
+				if (participantIds.length > 0) {
+					await notify(participantIds, 'verdict_rendered', {
+						betId: params.betId,
+						matchId: bet.matchId,
+						groupId: params.id,
+						betTitle: bet.title
+					});
+				}
+
+				// Notify debtors (debt_created or forfeit_to_do)
+				if (bet.stakeType === 'points') {
+					// Query ledger entries just created for this match
+					const ledgerRows = await db
+						.select({ debtorId: ledgerEntries.debtorId })
+						.from(ledgerEntries)
+						.where(eq(ledgerEntries.matchId, bet.matchId));
+					const debtorIds = [...new Set(ledgerRows.map((r) => r.debtorId))];
+					if (debtorIds.length > 0) {
+						await notify(debtorIds, 'debt_created', {
+							betId: params.betId,
+							matchId: bet.matchId,
+							groupId: params.id,
+							betTitle: bet.title
+						});
+					}
+				} else if (bet.stakeType === 'forfeit') {
+					// Query forfeits just created for this match
+					const forfeitRows = await db
+						.select({ debtorId: forfeitsTable.debtorId })
+						.from(forfeitsTable)
+						.where(eq(forfeitsTable.matchId, bet.matchId));
+					const forfeitDebtorIds = [...new Set(forfeitRows.map((r) => r.debtorId))];
+					if (forfeitDebtorIds.length > 0) {
+						await notify(forfeitDebtorIds, 'forfeit_to_do', {
+							betId: params.betId,
+							matchId: bet.matchId,
+							groupId: params.id,
+							betTitle: bet.title
+						});
+					}
+				}
+			}
 		} catch (err) {
 			const message = err instanceof Error ? err.message : 'Erreur lors du vote.';
 			return fail(400, { voteError: message });
@@ -828,6 +905,39 @@ export const actions: Actions = {
 			}
 		}
 
+		// Fetch proposition and bet to identify the other party for notification
+		const propRows = await db
+			.select({
+				targetId: propositions.targetId,
+				betId: propositions.betId
+			})
+			.from(propositions)
+			.where(eq(propositions.id, data.propositionId))
+			.limit(1);
+
+		const otherPartyData =
+			propRows.length > 0
+				? await (async () => {
+						const betRows = await db
+							.select({ creatorId: bets.creatorId, title: bets.title })
+							.from(bets)
+							.where(eq(bets.id, propRows[0].betId))
+							.limit(1);
+						if (betRows.length === 0) return null;
+						const otherId =
+							user.id === betRows[0].creatorId ? propRows[0].targetId : betRows[0].creatorId;
+						return { otherId, betTitle: betRows[0].title };
+					})()
+				: null;
+
+		// Get actor pseudo for notification
+		const actorProfileRows = await db
+			.select({ pseudo: profiles.pseudo })
+			.from(profiles)
+			.where(eq(profiles.id, user.id))
+			.limit(1);
+		const actorPseudo = actorProfileRows[0]?.pseudo;
+
 		try {
 			await counterPropose({
 				propositionId: data.propositionId,
@@ -849,6 +959,16 @@ export const actions: Actions = {
 					stake_type: data.stakeType
 				}
 			});
+
+			// Notify the other party about the counter-offer
+			if (otherPartyData) {
+				await notify([otherPartyData.otherId], 'counter_offer_received', {
+					betId: params.betId,
+					groupId: params.id,
+					betTitle: otherPartyData.betTitle,
+					actorPseudo
+				});
+			}
 		} catch (err) {
 			const message = err instanceof Error ? err.message : 'Erreur lors de la contre-proposition.';
 			return fail(400, { negotiateError: message });
@@ -912,6 +1032,14 @@ export const actions: Actions = {
 		}
 
 		try {
+			// Get match info before claiming (to notify winners)
+			const forfeitRows = await db
+				.select({ matchId: forfeitsTable.matchId })
+				.from(forfeitsTable)
+				.where(eq(forfeitsTable.id, forfeitId))
+				.limit(1);
+			const forfeitMatchId = forfeitRows[0]?.matchId;
+
 			await claimForfeit({ forfeitId, userId: user.id, proofUrl });
 
 			await captureServer({
@@ -919,6 +1047,24 @@ export const actions: Actions = {
 				event: 'forfeit_claimed',
 				properties: { bet_id: params.betId, forfeit_id: forfeitId, has_proof: proofUrl !== null }
 			});
+
+			// Notify match winners that a forfeit was claimed
+			if (forfeitMatchId) {
+				const winnerRows = await db
+					.select({ userId: matchWinners.userId })
+					.from(matchWinners)
+					.where(eq(matchWinners.matchId, forfeitMatchId));
+				const winnerIds = winnerRows.map((w) => w.userId);
+				if (winnerIds.length > 0) {
+					const bet = await getBetDetailForUser(params.betId, user.id);
+					await notify(winnerIds, 'forfeit_to_confirm', {
+						betId: params.betId,
+						matchId: forfeitMatchId,
+						groupId: params.id,
+						betTitle: bet?.title
+					});
+				}
+			}
 		} catch (err) {
 			const message = err instanceof Error ? err.message : 'Erreur lors de la déclaration du gage.';
 			return fail(400, { forfeitError: message });

@@ -1,11 +1,11 @@
 ---
-id: S-071
+id: S-061
 epic: E08 — Post-MVP
 status: todo
 depends_on: [S-050]
 ---
 
-# S-071 — Leaderboard & stats
+# S-061 — Leaderboard & stats
 
 ## Contexte & objectif
 

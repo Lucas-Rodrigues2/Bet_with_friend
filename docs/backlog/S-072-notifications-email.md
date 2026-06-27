@@ -1,11 +1,11 @@
 ---
-id: S-062
+id: S-072
 epic: E07 — Notifications
 status: todo
-depends_on: [S-061]
+depends_on: [S-071]
 ---
 
-# S-062 — Notifications email
+# S-072 — Notifications email
 
 ## Contexte & objectif
 

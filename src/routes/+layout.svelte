@@ -5,6 +5,7 @@
 	import { Button } from '$lib/components/ui/button/index.js';
 	import { resolveRoute } from '$app/paths';
 	import GuestBanner from '$lib/components/GuestBanner.svelte';
+	import NotificationBell from '$lib/components/NotificationBell.svelte';
 	import { onMount } from 'svelte';
 	import { initAnalytics, identifyUser } from '$lib/analytics/client';
 
@@ -48,6 +49,7 @@
 
 			<nav class="flex items-center gap-3">
 				{#if data.session && data.profile}
+					<NotificationBell initialUnreadCount={data.unreadNotificationsCount ?? 0} />
 					<a
 						href={profileHref}
 						class="flex items-center gap-2 hover:opacity-80"

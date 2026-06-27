@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
-# claude-resume : lance la skill /story en mode AUTO TOTAL (bypass permissions)
+# claude-resume : lance la skill /maestro en mode AUTO TOTAL (bypass permissions)
 # et relance automatiquement après un quota, en reprenant la conversation.
 #
-#   ./claude_resume.bash                 # enchaîne tout le backlog jouable (/story)
-#   ./claude_resume.bash "/story S-010"  # cible une story précise
+#   ./claude_resume.bash                 # enchaîne tout le backlog jouable (/maestro)
+#   ./claude_resume.bash "/maestro S-010"  # cible une story précise
 #
 # ⚠️  --dangerously-skip-permissions : claude ET tous ses sous-agents (story-dev,
 #     story-qa, story-security, story-tracker) exécutent commandes/éditions SANS
@@ -12,7 +12,7 @@
 #     le devcontainer tourne en utilisateur `node`, donc c'est OK.
 
 POLL_INTERVAL="${CLAUDE_POLL_INTERVAL:-300}"   # délai entre tentatives (secondes)
-PROMPT="${*:-/story}"                          # prompt initial (défaut : /story)
+PROMPT="${*:-/maestro}"                          # prompt initial (défaut : /maestro)
 RESUME_NUDGE="Reprends l'enchaînement des stories du backlog là où tu t'es arrêté, sans t'arrêter."
 started=0
 

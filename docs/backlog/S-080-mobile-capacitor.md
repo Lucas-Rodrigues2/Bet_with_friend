@@ -2,7 +2,7 @@
 id: S-080
 epic: E08 — Post-MVP
 status: todo
-depends_on: [S-050, S-051, S-063]
+depends_on: [S-050, S-051, S-073]
 ---
 
 # S-080 — App mobile Capacitor + push natif

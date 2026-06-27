@@ -1,11 +1,11 @@
 ---
-id: S-070
+id: S-060
 epic: E08 — Post-MVP
 status: todo
 depends_on: [S-041]
 ---
 
-# S-070 — Fil d'activité du groupe
+# S-060 — Fil d'activité du groupe
 
 ## Contexte & objectif
 

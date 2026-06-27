@@ -3,7 +3,7 @@
 Tableau de bord des stories. Le statut de référence est le frontmatter de
 chaque fichier story ; ce tableau doit rester synchronisé.
 
-**Workflow** : `/story S-0XX` lance la boucle dev → QA Playwright → corrections
+**Workflow** : `/maestro S-0XX` lance la boucle dev → QA Playwright → corrections
 → PASS. Une story n'est jouable que si toutes ses dépendances sont `done`.
 
 **Statuts** : `todo` → `in-progress` (dev) → `testing` (QA + audit sécurité) →
@@ -55,25 +55,25 @@ chaque fichier story ; ce tableau doit rester synchronisé.
 
 ## E06 — Ardoise & gages
 
-| Story                     | Titre                                 | Statut   | Dépend de |
-| ------------------------- | ------------------------------------- | -------- | --------- |
-| [S-050](S-050-ardoise.md) | Ardoise (soldes, règlements)          | done     | S-041     |
-| [S-051](S-051-gages.md)   | Gages (accomplissement, confirmation) | done     | S-041     |
+| Story                     | Titre                                 | Statut | Dépend de |
+| ------------------------- | ------------------------------------- | ------ | --------- |
+| [S-050](S-050-ardoise.md) | Ardoise (soldes, règlements)          | done   | S-041     |
+| [S-051](S-051-gages.md)   | Gages (accomplissement, confirmation) | done   | S-041     |
 
 ## E07 — Historique et Notifications
 
-| Story                                       | Titre                         | Statut | Dépend de |
-| ------------------------------------------- | ----------------------------- | ------ | --------- |
-| [S-070](S-070-fil-activite.md)              | Fil d'activité du groupe      | todo   | S-041     |
-| [S-071](S-071-leaderboard.md)               | Leaderboard & stats           | todo   | S-050     |
-| [S-072](S-072-historique.md)                | Historique des paris          | todo   | S-041     |
-| [S-060](S-060-notifications-in-app.md)      | Notifications in-app (cloche) | todo   | S-041     |
-| [S-061](S-061-preferences-notifications.md) | Préférences par canal/type    | todo   | S-060     |
-| [S-062](S-062-notifications-email.md)       | Notifications email           | todo   | S-061     |
-| [S-063](S-063-web-push.md)                  | Web push                      | todo   | S-061     |
+| Story                                       | Titre                         | Statut      | Dépend de |
+| ------------------------------------------- | ----------------------------- | ----------- | --------- |
+| [S-060](S-060-fil-activite.md)              | Fil d'activité du groupe      | todo        | S-041     |
+| [S-061](S-061-leaderboard.md)               | Leaderboard & stats           | todo        | S-050     |
+| [S-062](S-062-historique.md)                | Historique des paris          | todo        | S-041     |
+| [S-070](S-070-notifications-in-app.md)      | Notifications in-app (cloche) | in-progress | S-041     |
+| [S-071](S-071-preferences-notifications.md) | Préférences par canal/type    | todo        | S-070     |
+| [S-072](S-072-notifications-email.md)       | Notifications email           | todo        | S-071     |
+| [S-073](S-073-web-push.md)                  | Web push                      | todo        | S-071     |
 
 ## E08 — Post-MVP
 
 | Story                              | Titre                             | Statut | Dépend de           |
 | ---------------------------------- | --------------------------------- | ------ | ------------------- |
-| [S-080](S-080-mobile-capacitor.md) | App mobile Capacitor + push natif | todo   | S-050, S-051, S-063 |
+| [S-080](S-080-mobile-capacitor.md) | App mobile Capacitor + push natif | todo   | S-050, S-051, S-073 |

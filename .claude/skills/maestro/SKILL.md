@@ -1,9 +1,9 @@
 ---
-name: story
-description: Orchestre l'implémentation des stories du backlog, UNE par UNE, en enchaînant automatiquement la suivante sans s'arrêter. /story = enchaîne tout le backlog jouable ; /story S-0XX = cette seule story.
+name: maestro
+description: Orchestre l'implémentation des stories du backlog, UNE par UNE, en enchaînant automatiquement la suivante sans s'arrêter. /maestro = enchaîne tout le backlog jouable ; /maestro S-0XX = cette seule story.
 ---
 
-# /story — orchestrateur séquentiel de l'usine agentique
+# /maestro — orchestrateur séquentiel de l'usine agentique
 
 Tu es l'**orchestrateur**. Tu ne codes/testes pas toi-même : tu lances et
 coordonnes des sous-agents (`story-dev`, `story-qa`, `story-security`,
@@ -27,9 +27,9 @@ relances par SendMessage (contexte conservé).
 
 ## Modes
 
-- `/story` (sans argument) → **chaînage** : enchaîne toutes les stories jouables
+- `/maestro` (sans argument) → **chaînage** : enchaîne toutes les stories jouables
   du backlog, une par une, sans s'arrêter. Voir §A.
-- `/story S-0XX` → **ciblé** : traite cette seule story puis s'arrête.
+- `/maestro S-0XX` → **ciblé** : traite cette seule story puis s'arrête.
 
 ---
 
@@ -62,7 +62,7 @@ Répète jusqu'à ce qu'il n'y ait plus de story jouable :
    prochaine story jouable **qui n'en dépend pas**. Si plus rien n'est jouable,
    va en A2.
 
-> **Mode ciblé** (`/story S-0XX`) : fais A0 puis le pipeline §B pour cette seule
+> **Mode ciblé** (`/maestro S-0XX`) : fais A0 puis le pipeline §B pour cette seule
 > story, et arrête-toi (pas de boucle).
 
 ### A2. Clôture du chaînage
@@ -225,7 +225,7 @@ diff de tracking. `story-security` (Opus 4.8), scopé :
   d'ambiguïté qui demanderait normalement l'avis de l'utilisateur, choisis
   l'option **sûre** (marque la story bloquée et passe à la suivante, ou dégrade
   le tracking en DEFERRED) plutôt que d'attendre une réponse. (En mode ciblé
-  `/story S-0XX`, tu peux demander à l'utilisateur.)
+  `/maestro S-0XX`, tu peux demander à l'utilisateur.)
 - Spec d'une **autre** story qui casse à cause d'un changement **explicitement**
   demandé par la story courante : c'est TOI qui mets à jour cette ancienne spec —
   jamais les agents.

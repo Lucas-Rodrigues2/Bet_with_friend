@@ -1,6 +1,6 @@
 ---
 name: backlog
-description: Affiche l'état du backlog des stories et propose la prochaine story jouable. Usage - /backlog
+description: Affiche l'état du backlog des stories (lecture de docs/backlog/README.md et frontmatter) et propose la prochaine story jouable. Déclenché par la commande /backlog.
 ---
 
 # /backlog — état du tableau de bord
