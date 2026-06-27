@@ -13,6 +13,15 @@ Statuts : `à faire` · `fait` · `ignoré` (avec raison).
 
 ---
 
+## S-051 — Gages : accomplissement & confirmation — 2026-06-27
+
+- [majeur] `à faire` — Page pari / section Gages — formulaire "J'ai fait mon gage" avec upload : aucun indicateur de chargement (spinner, bouton désactivé) pendant la soumission multipart. Sur connexion lente, l'utilisateur peut cliquer plusieurs fois → double-soumission possible. → Ajouter `disabled={submitting}` sur le bouton claim-btn pendant le traitement (pattern `use:enhance` avec `({ submitter }) => { submitter?.setAttribute('disabled','') ... }`).
+- [mineur] `à faire` — Page pari / bouton "Gage non tenu" : variant `ghost` avec texte rouge, visuellement discret. → Envisager `variant="outline"` + classe destructive ou ajouter une icône d'avertissement pour mieux signaler l'action de clôture définitive.
+- [mineur] `à faire` — Page pari / bouton "Gage non tenu" : action irréversible sans confirmation. → Ajouter un `window.confirm()` ou dialog de confirmation léger avant d'agir.
+- [mineur] `à faire` — Page pari / section Gages après claim sans preuve : lien preuve simplement absent, sans message "Pas de preuve fournie". → Ajouter un texte grisé "Pas de preuve fournie" pour la lisibilité des tiers.
+
+---
+
 ## S-050 — Ardoise (soldes, règlements) — 2026-06-27
 
 - [mineur] `à faire` — Page ardoise, section détail d'une paire sans match : la ligne d'écriture répète le texte de l'en-tête ("Bob te doit 5.00 EUR" affiché deux fois). → N'afficher le détail que lorsque l'écriture a un lien vers un pari (`bet_link`), ou ajouter une date/libellé pour la différencier.
