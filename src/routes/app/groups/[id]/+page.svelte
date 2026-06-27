@@ -66,6 +66,7 @@
 	const newYesnoHref = $derived(
 		resolveRoute('/app/groups/[id]/bets/new/yesno', { id: data.group.id })
 	);
+	const activityHref = $derived(resolveRoute('/app/groups/[id]/activity', { id: data.group.id }));
 	const settingsHref = $derived(resolveRoute('/app/groups/[id]/settings', { id: data.group.id }));
 	const ledgerHref = $derived(resolveRoute('/app/groups/[id]/ledger', { id: data.group.id }));
 
@@ -188,6 +189,38 @@
 			</a>
 		{/if}
 	</div>
+
+	<!-- Navigation onglets -->
+	<nav class="mb-8 flex gap-6 border-b pb-2" data-testid="group-tabs">
+		<a
+			href={resolveRoute('/app/groups/[id]', { id: data.group.id })}
+			class="text-foreground border-b-2 border-transparent pb-2 text-sm font-medium transition-colors hover:border-primary"
+			data-testid="tab-bets"
+		>
+			Paris
+		</a>
+		<a
+			href={ledgerHref}
+			class="text-muted-foreground hover:text-foreground border-b-2 border-transparent pb-2 text-sm font-medium transition-colors hover:border-primary"
+			data-testid="tab-ledger"
+		>
+			Ardoise
+		</a>
+		<a
+			href={activityHref}
+			class="text-muted-foreground hover:text-foreground border-b-2 border-transparent pb-2 text-sm font-medium transition-colors hover:border-primary"
+			data-testid="tab-activity"
+		>
+			Activité
+		</a>
+		<a
+			href={resolveRoute('/app/groups/[id]/members', { id: data.group.id })}
+			class="text-muted-foreground hover:text-foreground border-b-2 border-transparent pb-2 text-sm font-medium transition-colors hover:border-primary"
+			data-testid="tab-members"
+		>
+			Membres
+		</a>
+	</nav>
 
 	<!-- Section Paris -->
 	<section class="mb-8" data-testid="bets-section">
