@@ -4,6 +4,7 @@
 	import { toast } from 'svelte-sonner';
 	import { Button } from '$lib/components/ui/button/index.js';
 	import type { ActionData, PageData } from './$types';
+	import { track } from '$lib/analytics/client';
 
 	let { data, form }: { data: PageData; form: ActionData } = $props();
 
@@ -16,6 +17,10 @@
 		if (f?.error) {
 			toast.error(f.error);
 		}
+	});
+
+	$effect(() => {
+		track('ledger_viewed', { group_id: data.group.id });
 	});
 
 	// Pairs involving the current user (personal view)
