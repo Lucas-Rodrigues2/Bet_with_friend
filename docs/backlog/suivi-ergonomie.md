@@ -13,6 +13,14 @@ Statuts : `à faire` · `fait` · `ignoré` (avec raison).
 
 ---
 
+## S-050 — Ardoise (soldes, règlements) — 2026-06-27
+
+- [mineur] `à faire` — Page ardoise, section détail d'une paire sans match : la ligne d'écriture répète le texte de l'en-tête ("Bob te doit 5.00 EUR" affiché deux fois). → N'afficher le détail que lorsque l'écriture a un lien vers un pari (`bet_link`), ou ajouter une date/libellé pour la différencier.
+- [mineur] `à faire` — Page ardoise, format du solde nul : `+0.00 EUR` affiche un `+` trompeur quand le solde est exactement 0. → Afficher `0.00 EUR` sans signe lorsque `myNetBalance === 0`.
+- [mineur] `à faire` — Page ardoise, mobile 390px : pas de séparateur visuel fort entre l'en-tête d'une paire et la liste des écritures individuelles. → Ajouter une légère marge ou un séparateur pour clarifier la hiérarchie.
+
+---
+
 ## S-014 — Renommer / supprimer un groupe — 2026-06-26
 
 - [mineur] `à faire` — Page /settings (lien "Paramètres" dans l'en-tête du groupe) : texte brut discret, peu discoverable pour l'admin. → Ajouter un bouton/icône engrenage avec `aria-label` ou style outline pour plus de visibilité.

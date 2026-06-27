@@ -1,7 +1,7 @@
 ---
 id: S-050
 epic: E06 — Ardoise & gages
-status: tracking
+status: done
 depends_on: [S-041]
 ---
 
