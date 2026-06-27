@@ -1,7 +1,7 @@
 ---
 id: S-050
 epic: E06 — Ardoise & gages
-status: todo
+status: testing
 depends_on: [S-041]
 ---
 

@@ -108,9 +108,9 @@ test.describe('S-013 — Page groupe (dashboard)', () => {
 		// Titre de la section
 		await expect(page.getByRole('heading', { name: 'Ardoise' })).toBeVisible();
 
-		// Solde 0 EUR affiché
+		// Solde affiché dans la devise du groupe (S-050 formate avec signe et décimales)
 		await expect(page.getByTestId('ledger-balance')).toBeVisible();
-		await expect(page.getByTestId('ledger-balance')).toHaveText('0 EUR');
+		await expect(page.getByTestId('ledger-balance')).toContainText('EUR');
 	});
 
 	// ─── Bouton « Nouveau pari » et menu déroulant ───────────────────────────

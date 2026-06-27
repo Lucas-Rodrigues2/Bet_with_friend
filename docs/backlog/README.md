@@ -21,13 +21,13 @@ chaque fichier story ; ce tableau doit rester synchronisé.
 
 ## E02 — Groupes & invitations
 
-| Story                                       | Titre                                  | Statut   | Dépend de    |
-| ------------------------------------------- | -------------------------------------- | -------- | ------------ |
-| [S-010](S-010-creer-groupe.md)              | Créer un groupe                        | done     | S-002        |
-| [S-011](S-011-invitations.md)               | Liens d'invitation + droit délégable   | done     | S-010        |
-| [S-012](S-012-membres.md)                   | Gestion des membres (rôles, exclusion) | done     | S-011        |
-| [S-013](S-013-page-groupe.md)               | Page groupe (dashboard)                | done     | S-010        |
-| [S-014](S-014-renommer-supprimer-groupe.md) | Renommer / supprimer un groupe         | done     | S-012, S-013 |
+| Story                                       | Titre                                  | Statut | Dépend de    |
+| ------------------------------------------- | -------------------------------------- | ------ | ------------ |
+| [S-010](S-010-creer-groupe.md)              | Créer un groupe                        | done   | S-002        |
+| [S-011](S-011-invitations.md)               | Liens d'invitation + droit délégable   | done   | S-010        |
+| [S-012](S-012-membres.md)                   | Gestion des membres (rôles, exclusion) | done   | S-011        |
+| [S-013](S-013-page-groupe.md)               | Page groupe (dashboard)                | done   | S-010        |
+| [S-014](S-014-renommer-supprimer-groupe.md) | Renommer / supprimer un groupe         | done   | S-012, S-013 |
 
 ## E03 — Pari « au plus proche »
 
@@ -55,10 +55,10 @@ chaque fichier story ; ce tableau doit rester synchronisé.
 
 ## E06 — Ardoise & gages
 
-| Story                     | Titre                                 | Statut | Dépend de |
-| ------------------------- | ------------------------------------- | ------ | --------- |
-| [S-050](S-050-ardoise.md) | Ardoise (soldes, règlements)          | todo   | S-041     |
-| [S-051](S-051-gages.md)   | Gages (accomplissement, confirmation) | todo   | S-041     |
+| Story                     | Titre                                 | Statut      | Dépend de |
+| ------------------------- | ------------------------------------- | ----------- | --------- |
+| [S-050](S-050-ardoise.md) | Ardoise (soldes, règlements)          | in-progress | S-041     |
+| [S-051](S-051-gages.md)   | Gages (accomplissement, confirmation) | todo        | S-041     |
 
 ## E07 — Historique et Notifications
 

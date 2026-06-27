@@ -237,6 +237,16 @@ async function createYesnoDuelJudging(opts: {
 // ─── Cleanup ──────────────────────────────────────────────────────────────────
 
 test.afterEach(async () => {
+	// Supprimer les ledger_entries liées aux paris E2E avant de supprimer les paris
+	// (la FK match_id est ON DELETE SET NULL, donc les entrées orphelines resteraient sinon)
+	await db`
+		DELETE FROM ledger_entries
+		WHERE match_id IN (
+			SELECT m.id FROM matches m
+			JOIN bets b ON b.id = m.bet_id
+			WHERE b.title LIKE '[E2E] S041%'
+		)
+	`;
 	await db`DELETE FROM public.bets WHERE title LIKE '[E2E] S041%'`;
 });
 

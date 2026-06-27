@@ -15,6 +15,7 @@ import {
 } from '$lib/server/invitations';
 import { removeMember, promoteMember } from '$lib/server/groups';
 import { getGroupBetsForUser, getJudgingBetsForJuror } from '$lib/server/bets';
+import { getMyNetBalance } from '$lib/server/ledger';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ locals, params }) => {
@@ -85,6 +86,9 @@ export const load: PageServerLoad = async ({ locals, params }) => {
 	// Charger les paris en jugement où l'utilisateur est juré mais pas dans la liste de visibilité
 	const betsToJudge = await getJudgingBetsForJuror(id, user.id);
 
+	// Solde net de l'utilisateur dans ce groupe (ardoise)
+	const myNetBalance = await getMyNetBalance(id, user.id);
+
 	// Track group_viewed après vérification d'appartenance (fait réel)
 	await captureServer({
 		distinctId: user.id,
@@ -105,7 +109,8 @@ export const load: PageServerLoad = async ({ locals, params }) => {
 			createdAt: group.createdAt,
 			role: group.role as 'admin' | 'member',
 			canInvite: group.canInvite,
-			currentUserId: user.id
+			currentUserId: user.id,
+			myNetBalance
 		},
 		members: members.map((m) => ({
 			userId: m.userId,

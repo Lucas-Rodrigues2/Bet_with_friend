@@ -67,6 +67,7 @@
 		resolveRoute('/app/groups/[id]/bets/new/yesno', { id: data.group.id })
 	);
 	const settingsHref = $derived(resolveRoute('/app/groups/[id]/settings', { id: data.group.id }));
+	const ledgerHref = $derived(resolveRoute('/app/groups/[id]/ledger', { id: data.group.id }));
 
 	function canGenerateInvite() {
 		return data.group.role === 'admin' || data.group.canInvite;
@@ -607,15 +608,40 @@
 
 	<!-- Section Ardoise -->
 	<section data-testid="ledger-section">
-		<h2 class="text-foreground mb-4 text-lg font-semibold">Ardoise</h2>
-		<div class="border-border bg-card rounded-lg border p-5">
-			<p class="text-muted-foreground mb-1 text-sm">Solde personnel</p>
-			<p class="text-foreground text-2xl font-bold" data-testid="ledger-balance">
-				0 {data.group.currency}
-			</p>
-			<p class="text-muted-foreground mt-2 text-xs">
-				L'ardoise complète sera disponible prochainement.
-			</p>
+		<div class="mb-4 flex items-center justify-between">
+			<h2 class="text-foreground text-lg font-semibold">Ardoise</h2>
+			<a
+				href={ledgerHref}
+				class="text-muted-foreground hover:text-foreground text-sm underline-offset-4 hover:underline"
+				data-testid="ledger-link"
+			>
+				Voir l'ardoise complète →
+			</a>
 		</div>
+		<a
+			href={ledgerHref}
+			class="border-border bg-card hover:bg-accent/30 block rounded-lg border p-5 transition-colors"
+			data-testid="ledger-card"
+		>
+			<p class="text-muted-foreground mb-1 text-sm">Solde personnel</p>
+			<p
+				class="text-2xl font-bold {data.group.myNetBalance > 0
+					? 'text-green-600'
+					: data.group.myNetBalance < 0
+						? 'text-red-600'
+						: 'text-foreground'}"
+				data-testid="ledger-balance"
+			>
+				{data.group.myNetBalance >= 0 ? '+' : ''}{data.group.myNetBalance.toFixed(2)}
+				{data.group.currency}
+			</p>
+			{#if data.group.myNetBalance > 0}
+				<p class="text-muted-foreground mt-1 text-xs">On te doit de l'argent</p>
+			{:else if data.group.myNetBalance < 0}
+				<p class="text-muted-foreground mt-1 text-xs">Tu dois de l'argent</p>
+			{:else}
+				<p class="text-muted-foreground mt-1 text-xs">Aucune dette en cours</p>
+			{/if}
+		</a>
 	</section>
 </div>
