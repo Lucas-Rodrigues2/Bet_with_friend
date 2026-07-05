@@ -1,7 +1,7 @@
 ---
 id: S-060
 epic: E08 — Post-MVP
-status: testing
+status: done
 depends_on: [S-041]
 ---
 

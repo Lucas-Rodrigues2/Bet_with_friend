@@ -13,6 +13,14 @@ Statuts : `à faire` · `fait` · `ignoré` (avec raison).
 
 ---
 
+## S-060 — Fil d'activité du groupe — 2026-07-05
+
+- [mineur] `à faire` — Page activité (`+page.svelte`) : double tracking de la vue — un event serveur `activity_feed_viewed` (nouveau) ET un event client `activity_viewed` préexistant (déclenché dans `$effect`). Doublon redondant pour la même action. → Conserver un seul (le serveur, plus fiable) ou renommer/documenter la différence sémantique si intentionnelle.
+- [mineur] `à faire` — Page activité : `py-10` sur le container donne beaucoup de blanc en haut sur mobile 390px. → `py-6` mieux calibré pour petit écran.
+- [mineur] `à faire` — Bouton « Voir plus » : pas de `aria-busy` ni de spinner visible pendant `loading` (seul le texte passe à « Chargement… »). → Ajouter un spinner léger pour un meilleur feedback.
+
+---
+
 ## S-051 — Gages : accomplissement & confirmation — 2026-06-27
 
 - [majeur] `à faire` — Page pari / section Gages — formulaire "J'ai fait mon gage" avec upload : aucun indicateur de chargement (spinner, bouton désactivé) pendant la soumission multipart. Sur connexion lente, l'utilisateur peut cliquer plusieurs fois → double-soumission possible. → Ajouter `disabled={submitting}` sur le bouton claim-btn pendant le traitement (pattern `use:enhance` avec `({ submitter }) => { submitter?.setAttribute('disabled','') ... }`).
