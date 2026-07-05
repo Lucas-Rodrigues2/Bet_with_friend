@@ -1,9 +1,29 @@
 {
 	"$schema": "https://opencode.ai/config.json",
-	"model": "openrouter/deepseek/deepseek-v4-flash",
+	"model": "openrouter/z-ai/glm-5.2",
 	"small_model": "openrouter/deepseek/deepseek-v4-flash",
+	"permission": {
+		"*": {
+			"*": "allow"
+		}
+	},
 	"shell": "pwsh",
-	"instructions": ["CLAUDE.md"],
+	"provider": {
+		"openrouter": {
+			"models": {
+				"deepseek/deepseek-v4-flash": {
+					"options": {
+						"reasoningEffort": "high"
+					}
+				},
+				"z-ai/glm-5.2": {
+					"options": {
+						"reasoningEffort": "high"
+					}
+				}
+			}
+		}
+	},
 	"skills": {
 		"paths": [".opencode/skills", ".claude/skills"]
 	},
@@ -11,51 +31,28 @@
 		"story-dev": {
 			"description": "Implémente une story du backlog (migrations, logique serveur, UI + tracking PostHog). Appelé par /maestro via Task.",
 			"mode": "subagent",
-			"model": "opencode/glm-5.2",
 			"permission": {
-				"edit": "allow",
-				"bash": {
-					"npm run check": "allow",
-					"npm run lint": "allow",
-					"npm run db:push": "allow",
-					"npm run dev": "allow",
-					"npm install *": "allow",
-					"npx playwright-cli *": "allow",
-					"npx supabase *": "allow",
-					"*": "ask"
+				"*": {
+					"*": "allow"
 				}
 			}
 		},
 		"story-qa": {
 			"description": "Teste une story via Playwright (specs E2E + exploration playwright-cli). Rend un verdict PASS/FAIL. Écrit uniquement dans e2e/. Appelé par /maestro.",
 			"mode": "subagent",
-			"model": "opencode/glm-5.2",
 			"permission": {
-				"edit": "allow",
-				"bash": {
-					"npx playwright test *": "allow",
-					"npx playwright-cli *": "allow",
-					"npx supabase *": "allow",
-					"npm run test:e2e": "allow",
-					"*": "ask"
+				"*": {
+					"*": "allow"
 				}
 			}
 		},
 		"story-security": {
 			"description": "Audit de sécurité du code produit par une story (après QA PASS, avant commit). Lecture seule sur src/, peut consulter les CVE/avis récents sur internet. Appelé par /maestro.",
 			"mode": "subagent",
-			"model": "opencode/glm-5.2",
 			"permission": {
-				"edit": "deny",
-				"bash": {
-					"git diff *": "allow",
-					"git log *": "allow",
-					"npm ls *": "allow",
-					"grep *": "allow",
-					"*": "ask"
-				},
-				"webfetch": "allow",
-				"websearch": "allow"
+				"*": {
+					"*": "allow"
+				}
 			}
 		}
 	},

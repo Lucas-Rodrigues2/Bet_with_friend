@@ -9,7 +9,7 @@ permission:
     git log *: allow
     npm ls *: allow
     grep *: allow
-    "*": ask
+    '*': ask
   webfetch: allow
   websearch: allow
 ---

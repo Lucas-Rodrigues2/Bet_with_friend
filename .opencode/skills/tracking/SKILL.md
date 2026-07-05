@@ -41,7 +41,7 @@ Si `src/lib/server/analytics.ts` n'existe pas :
      commit de la transaction Drizzle.
    - **Sink de test** : quand `ANALYTICS_TEST_SINK=db` (en test), `captureServer`
      insère AUSSI dans `analytics_events_test (id, distinct_id, event, properties
-     jsonb, created_at)`. Ajoute cette table au schéma Drizzle + `npm run db:push`.
+jsonb, created_at)`. Ajoute cette table au schéma Drizzle + `npm run db:push`.
 4. **Env** : `.env.test` (et `.env.example` si présent) :
    ```
    PUBLIC_POSTHOG_KEY=phc_test_dummy
@@ -65,6 +65,7 @@ Identifie les events utiles de cette story :
 ## §3 — Vérification basique
 
 Avant de rendre la main, vérifie au moins que :
+
 - Les imports sont corrects (pas d'erreur `npm run check`)
 - Les events ne contiennent pas de PII
 - Le helper `e2e/helpers/analytics.ts` existe (ou tu l'as créé au bootstrap)

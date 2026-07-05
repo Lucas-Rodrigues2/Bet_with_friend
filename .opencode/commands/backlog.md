@@ -14,6 +14,7 @@ Statuts : `todo` · `in-progress` · `testing` · `done` (✅).
 « Bloquée par » = dépendances pas encore `done`.
 
 Termine par :
+
 - **Prochaine story jouable** : la première `todo` dont toutes les
   dépendances sont `done`.
 - Le décompte global : X done / Y total.

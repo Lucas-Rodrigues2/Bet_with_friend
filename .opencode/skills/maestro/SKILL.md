@@ -42,8 +42,9 @@ Répète jusqu'à ce qu'il n'y ait plus de story jouable :
 
 1. **Sélectionne la prochaine story** : lis le backlog
    (`docs/backlog/README.md` + frontmatter de chaque `docs/backlog/S-0XX-*.md`).
-   Story jouable = `status: todo` dont **toutes** les `depends_on` sont `done`.
-   Prends le plus petit ID.
+   Story jouable = `status: in-progress` OU (`status: todo` dont **toutes** les
+   `depends_on` sont `done`). **Priorité** : d'abord les `in-progress` (plus
+   petit ID), puis les `todo`. Prends le plus petit ID dans la catégorie prioritaire.
 2. **Traite-la** via le pipeline §B.
 3. **Succès** (`done`) → continue la boucle, **sans demander de confirmation**.
 4. **Échec dur** → `git checkout -- . && git clean -fd src e2e`, laisse la
@@ -97,7 +98,7 @@ Sécu PASS → `git add -A && git commit -m "feat(<ID>): <titre>"`.
 
 Lance `task` avec `subagent: story-dev` :
 
-> Implémente la story <ID> avec son tracking PostHog. Fichier : docs/backlog/<ID>-*.md.
+> Implémente la story <ID> avec son tracking PostHog. Fichier : docs/backlog/<ID>-\*.md.
 > Lis CLAUDE.md et les docs liées. La skill « tracking » est dispo pour les détails
 > PostHog. Rends ton `DEV RAPPORT` quand `npm run check` et `npm run lint` passent.
 
@@ -105,8 +106,8 @@ Lance `task` avec `subagent: story-dev` :
 
 Story → `testing`. Lance `task` avec `subagent: story-qa` :
 
-> Valide la story <ID>. Fichier : docs/backlog/<ID>-*.md. Rapport du dev
-> ci-dessous. Explore avec playwright-cli, écris e2e/<ID>-*.spec.ts, lance tes
+> Valide la story <ID>. Fichier : docs/backlog/<ID>-_.md. Rapport du dev
+> ci-dessous. Explore avec playwright-cli, écris e2e/<ID>-_.spec.ts, lance tes
 > tests PUIS la suite complète, rends ton `QA RAPPORT` (VERDICT: PASS|FAIL).
 > Vérifie aussi les events PostHog via les helpers e2e/helpers/analytics.ts.
 

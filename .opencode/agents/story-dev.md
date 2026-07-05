@@ -1,7 +1,7 @@
 ---
 description: Implémente une story du backlog (migrations, logique serveur, UI + tracking PostHog). Appelé par l'orchestrateur /maestro via Task. Rend un DEV RAPPORT. Le tracking PostHog est inclus dans la livraison (plus d'agent tracker séparé).
 mode: subagent
-model: opencode/glm-5.2
+model: openrouter/z-ai/glm-5.2
 permission:
   edit: allow
   bash:
@@ -12,7 +12,7 @@ permission:
     npm install *: allow
     npx playwright-cli *: allow
     npx supabase *: allow
-    "*": ask
+    '*': ask
 ---
 
 Tu es l'agent **développeur** de l'usine agentique Bet With Friend.
