@@ -4,6 +4,7 @@ import { db } from '$lib/server/db/index';
 import { groups, groupMembers } from '$lib/server/db/schema';
 import { and, eq, isNull } from 'drizzle-orm';
 import { getGroupActivity } from '$lib/server/activity';
+import { captureServer } from '$lib/server/analytics';
 import type { PageServerLoad } from './$types';
 
 const uuidSchema = z
@@ -50,6 +51,22 @@ export const load: PageServerLoad = async ({ locals, params, url }) => {
 	const limit = 20;
 
 	const { events, hasMore } = await getGroupActivity(id, user.id, { limit, offset });
+
+	// Tracking analytics : consultation du fil d'activité (vue dérivée, read-only).
+	// Ne doit jamais faire rater la page si l'analytics échoue.
+	try {
+		await captureServer({
+			distinctId: user.id,
+			event: 'activity_feed_viewed',
+			properties: {
+				group_id: group.id,
+				offset,
+				has_more: hasMore
+			}
+		});
+	} catch (err) {
+		console.warn('[analytics] activity_feed_viewed failed:', err);
+	}
 
 	return {
 		group: {

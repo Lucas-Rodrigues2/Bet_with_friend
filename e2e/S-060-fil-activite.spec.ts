@@ -170,6 +170,9 @@ test.describe('S-060 — Fil d activité du groupe', () => {
 			await login(page, 'alice');
 			await page.goto(ACTIVITY_URL);
 
+			await expect(
+				page.getByTestId('activity-item', { hasText: '[E2E] Test Closest' }).first()
+			).toBeVisible();
 			const labels = await page.getByTestId('activity-label').allTextContents();
 			expect(labels).toEqual(
 				expect.arrayContaining([expect.stringContaining('a créé le pari « [E2E] Test Closest »')])
@@ -200,6 +203,9 @@ test.describe('S-060 — Fil d activité du groupe', () => {
 			await login(page, 'alice');
 			await page.goto(ACTIVITY_URL);
 
+			await expect(
+				page.getByTestId('activity-item', { hasText: '[E2E] Résolu' }).first()
+			).toBeVisible();
 			const labels = await page.getByTestId('activity-label').allTextContents();
 			expect(labels).toEqual(
 				expect.arrayContaining([expect.stringContaining('Alice a gagné le pari « [E2E] Résolu »')])
@@ -234,6 +240,9 @@ test.describe('S-060 — Fil d activité du groupe', () => {
 			await login(page, 'alice');
 			await page.goto(ACTIVITY_URL);
 
+			await expect(
+				page.getByTestId('activity-item', { hasText: '[E2E] Duel accepté' }).first()
+			).toBeVisible();
 			const labels = await page.getByTestId('activity-label').allTextContents();
 			expect(labels).toEqual(
 				expect.arrayContaining([expect.stringContaining('Bob a accepté le duel de Alice')])
@@ -263,6 +272,9 @@ test.describe('S-060 — Fil d activité du groupe', () => {
 			await login(page, 'alice');
 			await page.goto(ACTIVITY_URL);
 
+			await expect(
+				page.getByTestId('activity-item', { hasText: '[E2E] Annulé' }).first()
+			).toBeVisible();
 			const labels = await page.getByTestId('activity-label').allTextContents();
 			expect(labels).toEqual(
 				expect.arrayContaining([expect.stringContaining('Pari « [E2E] Annulé » annulé')])
@@ -297,6 +309,9 @@ test.describe('S-060 — Fil d activité du groupe', () => {
 			await login(page, 'alice');
 			await page.goto(ACTIVITY_URL);
 
+			await expect(
+				page.getByTestId('activity-label', { hasText: 'a accompli son gage' }).first()
+			).toBeVisible();
 			const labels = await page.getByTestId('activity-label').allTextContents();
 			expect(labels).toEqual(
 				expect.arrayContaining([expect.stringContaining('Alice a accompli son gage')])
@@ -309,7 +324,7 @@ test.describe('S-060 — Fil d activité du groupe', () => {
 				const hoursAgo = (i + 1) * 10;
 				const [bet] = await db`
 					INSERT INTO public.bets (group_id, creator_id, type, title, stake_type, stake_amount, hide_answers, jury_mode, status, created_at)
-					VALUES (${SEEDED_GROUP_ID}, ${ALICE_ID}, 'closest', concat('[E2E] Pari ', ${i}), 'points', '10', false, 'majority', 'open', now() - (${hoursAgo} * interval '1 hour'))
+					VALUES (${SEEDED_GROUP_ID}, ${ALICE_ID}, 'closest', '[E2E] Pari ' || ${String(i)}, 'points', '10', false, 'majority', 'open', now() - (${hoursAgo} * interval '1 hour'))
 					RETURNING id
 				`;
 				await db`
@@ -325,6 +340,10 @@ test.describe('S-060 — Fil d activité du groupe', () => {
 			await login(page, 'alice');
 			await page.goto(ACTIVITY_URL);
 
+			// Attendre que les 3 paris soient rendus
+			await expect(page.getByText('[E2E] Pari 0', { exact: false }).first()).toBeVisible();
+			await expect(page.getByText('[E2E] Pari 1', { exact: false }).first()).toBeVisible();
+			await expect(page.getByText('[E2E] Pari 2', { exact: false }).first()).toBeVisible();
 			// Les événements bet_created doivent être dans l'ordre antéchronologique
 			const labels = await page.getByTestId('activity-label').allTextContents();
 			const betEvents = labels.filter((l) => l.includes('[E2E] Pari'));
@@ -406,6 +425,10 @@ test.describe('S-060 — Fil d activité du groupe', () => {
 			await login(page, 'bob');
 			await page.goto(ACTIVITY_URL);
 
+			// Attendre que le pari soit rendu (allTextContents ne retry pas)
+			await expect(
+				page.getByTestId('activity-item', { hasText: '[E2E] Visible par Bob' }).first()
+			).toBeVisible();
 			const labels = await page.getByTestId('activity-label').allTextContents();
 			expect(labels).toEqual(
 				expect.arrayContaining([
@@ -500,7 +523,7 @@ test.describe('S-060 — Fil d activité du groupe', () => {
 				const hoursAgo = (i + 1);
 				const [bet] = await db`
 					INSERT INTO public.bets (group_id, creator_id, type, title, stake_type, stake_amount, hide_answers, jury_mode, status, created_at)
-					VALUES (${SEEDED_GROUP_ID}, ${ALICE_ID}, 'closest', concat('[E2E] Pagination ', ${i}), 'points', '10', false, 'majority', 'open', now() - (${hoursAgo} * interval '1 minute'))
+					VALUES (${SEEDED_GROUP_ID}, ${ALICE_ID}, 'closest', '[E2E] Pagination ' || ${String(i)}, 'points', '10', false, 'majority', 'open', now() - (${hoursAgo} * interval '1 minute'))
 					RETURNING id
 				`;
 				await db`

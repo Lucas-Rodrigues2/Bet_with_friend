@@ -71,6 +71,14 @@ export default defineConfig(
 		}
 	},
 	{
+		// Activity feed: event.link hrefs are path strings already resolved server-side
+		// (deep links from activity.ts). The lint rule cannot trace this pattern.
+		files: ['src/routes/app/groups/\\[id\\]/activity/+page.svelte'],
+		rules: {
+			'svelte/no-navigation-without-resolve': 'off'
+		}
+	},
+	{
 		// e2e files are managed by the QA agent — ignore their linting
 		files: ['e2e/**/*.ts'],
 		rules: {
