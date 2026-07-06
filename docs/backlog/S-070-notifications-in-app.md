@@ -1,7 +1,7 @@
 ---
 id: S-070
 epic: E07 — Notifications
-status: in-progress
+status: done
 depends_on: [S-041]
 ---
 

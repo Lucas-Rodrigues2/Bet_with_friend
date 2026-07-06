@@ -13,6 +13,12 @@ Statuts : `à faire` · `fait` · `ignoré` (avec raison).
 
 ---
 
+## S-070 — Notifications in-app (cloche) — 2026-07-06
+
+- [mineur] `à faire` — NotificationBell.svelte : après « Tout marquer lu », le bouton disparaît instantanément (unreadCount→0) sans feedback visuel de confirmation (toast/snackbar). → Ajouter un toast léger « Tout marqué comme lu » pour confirmer l'action.
+
+---
+
 ## S-060 — Fil d'activité du groupe — 2026-07-05
 
 - [mineur] `à faire` — Page activité (`+page.svelte`) : double tracking de la vue — un event serveur `activity_feed_viewed` (nouveau) ET un event client `activity_viewed` préexistant (déclenché dans `$effect`). Doublon redondant pour la même action. → Conserver un seul (le serveur, plus fiable) ou renommer/documenter la différence sémantique si intentionnelle.
