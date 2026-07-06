@@ -3,6 +3,7 @@ import {
 	bets,
 	betVisibility,
 	betJurors,
+	groups,
 	matches,
 	matchJurors,
 	matchParticipants,
@@ -624,6 +625,279 @@ export async function getGroupBetsForUser(groupId: string, userId: string): Prom
 		propositionStatus: r.propositionStatus ?? null,
 		propositionTargetId: r.propositionTargetId ?? null
 	}));
+}
+
+// ─── Historique des paris (S-062) ───────────────────────────────────────────
+
+export type GroupBetFilter = 'active' | 'judging' | 'resolved' | 'cancelled' | 'all';
+export type BetDisplayStatus = 'active' | 'judging' | 'resolved' | 'cancelled';
+
+export interface BetListEntry extends BetSummary {
+	/** Statut d'affichage agrégé (calculé depuis les matches, sans résolution paresseuse). */
+	displayStatus: BetDisplayStatus;
+	/** Statut du match principal (premier match pour les yesno open). */
+	matchStatus: string | null;
+}
+
+/**
+ * Liste les paris visibles par l'utilisateur dans un groupe, avec calcul du
+ * statut d'affichage (active / judging / resolved / cancelled) agrégé sur les
+ * matches du pari, et applique le filtre + la recherche par titre demandés.
+ *
+ * La liste ne déclenche PAS la résolution paresseuse des deadlines (faite à
+ * l'ouverture du détail) — elle lit le statut stocké pour rester en lecture.
+ */
+export async function getGroupBetsForUserFiltered(
+	groupId: string,
+	userId: string,
+	options: { filter?: GroupBetFilter; search?: string } = {}
+): Promise<BetListEntry[]> {
+	const base = await getGroupBetsForUser(groupId, userId);
+	if (base.length === 0) return [];
+
+	const betIds = base.map((b) => b.id);
+
+	// Statut stocké des matches (pas de résolution paresseuse ici)
+	const matchRows = await db
+		.select({
+			betId: matches.betId,
+			matchId: matches.id,
+			status: matches.status,
+			createdAt: matches.createdAt
+		})
+		.from(matches)
+		.where(inArray(matches.betId, betIds))
+		.orderBy(matches.createdAt);
+
+	const matchesByBet = new Map<string, { status: string }[]>();
+	for (const m of matchRows) {
+		const arr = matchesByBet.get(m.betId) ?? [];
+		arr.push({ status: m.status });
+		matchesByBet.set(m.betId, arr);
+	}
+
+	const entries: BetListEntry[] = base.map((b) => {
+		const ms = matchesByBet.get(b.id) ?? [];
+		const displayStatus = computeDisplayStatus(b.status, b.propositionStatus, ms);
+		// Statut du match principal : pour les paris à match unique (closest /
+		// duel) c'est ce match ; pour les défis ouverts, on prend le premier
+		// match comme représentation grossière (l'affichage reste par pari).
+		const primary = ms[0]?.status ?? null;
+		return { ...b, displayStatus, matchStatus: primary };
+	});
+
+	const filter = options.filter ?? 'all';
+	const search = (options.search ?? '').trim().toLowerCase();
+
+	return entries.filter((e) => {
+		if (filter !== 'all' && e.displayStatus !== filter) return false;
+		if (search && !e.title.toLowerCase().includes(search)) return false;
+		return true;
+	});
+}
+
+/**
+ * Calcule le statut d'affichage agrégé d'un pari à partir :
+ *  - du statut du pari (annulé au niveau bet),
+ *  - du statut de la proposition yesno (encore en négociation = actif),
+ *  - des statuts des matches associés.
+ *
+ * Priorité : cancelled (bet) > active (encore du jeu) > judging > resolved >
+ * cancelled (matches).
+ */
+function computeDisplayStatus(
+	betStatus: string,
+	propositionStatus: string | null,
+	matchesArr: { status: string }[]
+): BetDisplayStatus {
+	if (betStatus === 'cancelled') return 'cancelled';
+
+	// Proposition yesno encore en négociation → pas de match, pari actif.
+	if (propositionStatus === 'negotiating') return 'active';
+
+	const statuses = matchesArr.map((m) => m.status);
+	const hasOpen = statuses.some((s) => s === 'open');
+	const hasJudging = statuses.some((s) => s === 'judging');
+	const hasResolved = statuses.some((s) => s === 'resolved');
+	const hasCancelled = statuses.some((s) => s === 'cancelled');
+
+	// S'il reste au moins un match ouvert, le pari est encore actif.
+	if (hasOpen) return 'active';
+	if (hasJudging) return 'judging';
+	if (hasResolved) return 'resolved';
+	if (hasCancelled) return 'cancelled';
+
+	// Aucun match (pari créé mais non encore accepté pour un duel, ou défi
+	// ouvert sans acceptation) → actif.
+	return 'active';
+}
+
+// ─── Mes paris (transverse aux groupes, S-062) ───────────────────────────────
+
+export type MyBetFilter = 'won' | 'lost' | 'active' | 'all';
+export type MyBetOutcome = 'won' | 'lost' | 'active';
+
+export interface MyBetEntry {
+	id: string;
+	type: 'closest' | 'yesno';
+	title: string;
+	stakeType: 'points' | 'forfeit';
+	createdAt: Date;
+	groupId: string;
+	groupName: string;
+	/** Résultat de l'utilisateur sur ce pari. */
+	outcome: MyBetOutcome;
+	/** Statut d'affichage agrégé du pari (pour badge). */
+	displayStatus: BetDisplayStatus;
+	/** Date de résolution du match pertinent (le plus récent résolu), pour tri. */
+	resolvedAt: Date | null;
+}
+
+/**
+ * Liste les paris de l'utilisateur connecté à travers TOUS ses groupes, avec
+ * le résultat (won / lost / active) calculé depuis match_participants et
+ * match_winners. Ne renvoie que les paris visibles par l'utilisateur
+ * (bet_visibility) appartenant à un groupe dont il est encore membre actif et
+ * non archivé.
+ *
+ * Un pari est :
+ *  - « won » si l'utilisateur figure dans match_winners d'au moins un match
+ *    résolu du pari ;
+ *  - « lost » s'il a participé à au moins un match résolu sans être dans
+ *    match_winners ;
+ *  - « active » sinon (pas de participation résolue).
+ *
+ * Priorité : won > lost > active.
+ */
+export async function getMyBets(
+	userId: string,
+	options: { filter?: MyBetFilter } = {}
+): Promise<MyBetEntry[]> {
+	// Paris visibles par l'utilisateur, dans un groupe dont il est membre actif
+	// et non archivé.
+	const betRows = await db
+		.select({
+			id: bets.id,
+			type: bets.type,
+			title: bets.title,
+			stakeType: bets.stakeType,
+			status: bets.status,
+			createdAt: bets.createdAt,
+			groupId: groups.id,
+			groupName: groups.name,
+			propositionStatus: propositions.status
+		})
+		.from(betVisibility)
+		.innerJoin(bets, eq(bets.id, betVisibility.betId))
+		.innerJoin(groups, eq(groups.id, bets.groupId))
+		.innerJoin(
+			groupMembers,
+			and(
+				eq(groupMembers.groupId, groups.id),
+				eq(groupMembers.userId, userId),
+				isNull(groupMembers.removedAt)
+			)
+		)
+		.leftJoin(propositions, eq(propositions.betId, bets.id))
+		.where(and(eq(betVisibility.userId, userId), isNull(groups.archivedAt)))
+		.orderBy(bets.createdAt);
+
+	if (betRows.length === 0) return [];
+
+	const betIds = betRows.map((r) => r.id);
+
+	// Matches par pari avec statut + date de résolution
+	const matchRows = await db
+		.select({
+			betId: matches.betId,
+			matchId: matches.id,
+			status: matches.status,
+			resolvedAt: matches.resolvedAt
+		})
+		.from(matches)
+		.where(inArray(matches.betId, betIds));
+
+	const matchesByBet = new Map<
+		string,
+		{ matchId: string; status: string; resolvedAt: Date | null }[]
+	>();
+	for (const m of matchRows) {
+		const arr = matchesByBet.get(m.betId) ?? [];
+		arr.push({ matchId: m.matchId, status: m.status, resolvedAt: m.resolvedAt });
+		matchesByBet.set(m.betId, arr);
+	}
+
+	const allMatchIds = matchRows.map((m) => m.matchId);
+	const participantByMatch = new Set<string>();
+	const winnerByMatch = new Set<string>();
+	const resolvedMatchIds = new Set<string>();
+
+	if (allMatchIds.length > 0) {
+		const partRows = await db
+			.select({ matchId: matchParticipants.matchId })
+			.from(matchParticipants)
+			.where(
+				and(eq(matchParticipants.userId, userId), inArray(matchParticipants.matchId, allMatchIds))
+			);
+		for (const r of partRows) participantByMatch.add(r.matchId);
+
+		const winRows = await db
+			.select({ matchId: matchWinners.matchId })
+			.from(matchWinners)
+			.where(and(eq(matchWinners.userId, userId), inArray(matchWinners.matchId, allMatchIds)));
+		for (const r of winRows) winnerByMatch.add(r.matchId);
+	}
+
+	for (const m of matchRows) {
+		if (m.status === 'resolved') resolvedMatchIds.add(m.matchId);
+	}
+
+	const entries: MyBetEntry[] = betRows.map((b) => {
+		const ms = matchesByBet.get(b.id) ?? [];
+		const displayStatus = computeDisplayStatus(b.status, b.propositionStatus ?? null, ms);
+
+		// Résultat de l'utilisateur
+		let outcome: MyBetOutcome = 'active';
+		const userMatches = ms.filter((m) => participantByMatch.has(m.matchId));
+		const userResolvedMatches = userMatches.filter((m) => resolvedMatchIds.has(m.matchId));
+		if (userResolvedMatches.length > 0) {
+			const anyWin = userResolvedMatches.some((m) => winnerByMatch.has(m.matchId));
+			outcome = anyWin ? 'won' : 'lost';
+		}
+
+		// Date de résolution pertinente : la plus récente parmi les matches résolus
+		// où l'utilisateur est impliqué ; sinon null.
+		const resolvedDates = userResolvedMatches
+			.map((m) => m.resolvedAt)
+			.filter((d): d is Date => d !== null)
+			.sort((a, b2) => b2.getTime() - a.getTime());
+		const resolvedAt = resolvedDates[0] ?? null;
+
+		return {
+			id: b.id,
+			type: b.type as 'closest' | 'yesno',
+			title: b.title,
+			stakeType: b.stakeType as 'points' | 'forfeit',
+			createdAt: b.createdAt,
+			groupId: b.groupId,
+			groupName: b.groupName,
+			outcome,
+			displayStatus,
+			resolvedAt
+		};
+	});
+
+	const filter = options.filter ?? 'all';
+	const filtered = filter === 'all' ? entries : entries.filter((e) => e.outcome === filter);
+
+	// Tri antichronologique sur la date de résolution (résolus d'abord), puis
+	// sur la date de création pour les paris en cours.
+	return filtered.sort((a, b) => {
+		const ta = a.resolvedAt ? a.resolvedAt.getTime() : 0;
+		const tb = b.resolvedAt ? b.resolvedAt.getTime() : 0;
+		if (tb !== ta) return tb - ta;
+		return b.createdAt.getTime() - a.createdAt.getTime();
+	});
 }
 
 export interface BetToJudge {

@@ -66,6 +66,7 @@
 	const newYesnoHref = $derived(
 		resolveRoute('/app/groups/[id]/bets/new/yesno', { id: data.group.id })
 	);
+	const betsListHref = $derived(resolveRoute('/app/groups/[id]/bets', { id: data.group.id }));
 	const activityHref = $derived(resolveRoute('/app/groups/[id]/activity', { id: data.group.id }));
 	const leaderboardHref = $derived(
 		resolveRoute('/app/groups/[id]/leaderboard', { id: data.group.id })
@@ -196,8 +197,8 @@
 	<!-- Navigation onglets -->
 	<nav class="mb-8 flex gap-6 border-b pb-2" data-testid="group-tabs">
 		<a
-			href={resolveRoute('/app/groups/[id]', { id: data.group.id })}
-			class="text-foreground border-b-2 border-transparent pb-2 text-sm font-medium transition-colors hover:border-primary"
+			href={betsListHref}
+			class="text-muted-foreground hover:text-foreground border-b-2 border-transparent pb-2 text-sm font-medium transition-colors hover:border-primary"
 			data-testid="tab-bets"
 		>
 			Paris

@@ -87,6 +87,21 @@ export default defineConfig(
 		}
 	},
 	{
+		// Group bets list (S-062): filter/search hrefs are resolveRoute() base +
+		// query params. The lint rule cannot trace this pattern, base is resolved.
+		files: ['src/routes/app/groups/\\[id\\]/bets/+page.svelte'],
+		rules: {
+			'svelte/no-navigation-without-resolve': 'off'
+		}
+	},
+	{
+		// My bets (S-062): filter hrefs are resolveRoute() base + query params.
+		files: ['src/routes/app/my-bets/+page.svelte'],
+		rules: {
+			'svelte/no-navigation-without-resolve': 'off'
+		}
+	},
+	{
 		// e2e files are managed by the QA agent — ignore their linting
 		files: ['e2e/**/*.ts'],
 		rules: {

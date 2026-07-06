@@ -6,12 +6,16 @@
 	let { data }: { data: PageData } = $props();
 
 	const newGroupHref = resolveRoute('/app/groups/new');
+	const myBetsHref = resolveRoute('/app/my-bets');
 </script>
 
 <div class="container mx-auto max-w-3xl px-4 py-10">
 	<div class="mb-8 flex items-center justify-between">
 		<h1 class="text-foreground text-2xl font-bold" data-testid="my-groups-title">Mes groupes</h1>
-		<Button href={newGroupHref} data-testid="create-group-btn">Créer un groupe</Button>
+		<div class="flex items-center gap-2">
+			<Button href={myBetsHref} variant="outline" data-testid="my-bets-link">Mes paris</Button>
+			<Button href={newGroupHref} data-testid="create-group-btn">Créer un groupe</Button>
+		</div>
 	</div>
 
 	{#if data.myGroups.length === 0}
