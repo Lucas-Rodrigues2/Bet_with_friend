@@ -1,5 +1,6 @@
 import { db } from '$lib/server/db/index';
 import { notifications } from '$lib/server/db/schema';
+import { captureServer } from '$lib/server/analytics';
 import type { NotificationType, NotificationPayload } from '$lib/notifications';
 
 /**
@@ -23,5 +24,21 @@ export async function notify(
 		);
 	} catch (err) {
 		console.warn('[notifications] Failed to insert notifications:', err);
+		return;
+	}
+
+	// Tracking PostHog : un event par destinataire, après commit DB.
+	// Pas de PII — distinct_id = userId, propriété notification_type seulement.
+	for (const userId of userIds) {
+		try {
+			await captureServer({
+				distinctId: userId,
+				event: 'notification_sent',
+				properties: { notification_type: type }
+			});
+		} catch (err) {
+			// Ne jamais casser l'action métier pour de l'analytics
+			console.warn('[notifications] Failed to track notification_sent:', err);
+		}
 	}
 }

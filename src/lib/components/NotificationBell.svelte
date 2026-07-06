@@ -5,6 +5,7 @@
 		type NotificationType,
 		type NotificationItem
 	} from '$lib/notifications';
+	import { track } from '$lib/analytics/client';
 
 	let { initialUnreadCount = 0 }: { initialUnreadCount: number } = $props();
 
@@ -96,6 +97,7 @@
 	function togglePanel() {
 		isOpen = !isOpen;
 		if (isOpen) {
+			track('notification_opened', { unread_count: unreadCount });
 			fetchNotifications();
 		}
 	}
