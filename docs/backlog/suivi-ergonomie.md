@@ -13,6 +13,15 @@ Statuts : `à faire` · `fait` · `ignoré` (avec raison).
 
 ---
 
+## S-062 — Historique des paris — 2026-07-06
+
+- [mineur] `à faire` — Champ de recherche `/groups/[id]/bets` (`group-bets-search-input`) : pas de `<label>` ni d'`aria-label` (seulement un `placeholder`). → Ajouter `aria-label="Rechercher un pari par titre"` pour les lecteurs d'écran.
+- [mineur] `à faire` — Liste « Paris » du groupe : le badge de statut d'un pari résolu affiche « Terminé » (singulier) tandis que le filtre correspondant affiche « Terminés » (pluriel). → Uniformiser le libellé.
+- [mineur] `à faire` — Détail d'un pari résolu (closest, spectateur n'ayant pas participé) : un bouton `Participer (pari clôturé)` désactivé s'affiche. Code existant (non touché par S-062). → Préférer un texte simple plutôt qu'un `<button disabled>` en lecture seule.
+- [mineur] `à faire` — « Mes paris » : le sous-titre `{groupName} · résolu le {date}` peut être tronqué sur mobile 390px pour les noms de groupes longs. → Envisager un `truncate` sur le nom du groupe ou un retour à la ligne.
+
+---
+
 ## S-061 — Leaderboard & stats — 2026-07-06
 
 - [mineur] `à faire` — Onglets du groupe (tab-leaderboard inclus) : aucun onglet n'est visuellement marqué comme actif. Sur /leaderboard, l'onglet « Classement » a le même style muted-foreground que les autres → l'utilisateur ne sait pas où il est. Constat pré-existant (S-013 a introduit la nav). → Déduire l'onglet actif du `$page.url.pathname` et appliquer `border-primary text-foreground`.
