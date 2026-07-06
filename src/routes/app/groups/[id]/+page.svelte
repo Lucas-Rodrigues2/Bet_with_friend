@@ -67,6 +67,9 @@
 		resolveRoute('/app/groups/[id]/bets/new/yesno', { id: data.group.id })
 	);
 	const activityHref = $derived(resolveRoute('/app/groups/[id]/activity', { id: data.group.id }));
+	const leaderboardHref = $derived(
+		resolveRoute('/app/groups/[id]/leaderboard', { id: data.group.id })
+	);
 	const settingsHref = $derived(resolveRoute('/app/groups/[id]/settings', { id: data.group.id }));
 	const ledgerHref = $derived(resolveRoute('/app/groups/[id]/ledger', { id: data.group.id }));
 
@@ -212,6 +215,13 @@
 			data-testid="tab-activity"
 		>
 			Activité
+		</a>
+		<a
+			href={leaderboardHref}
+			class="text-muted-foreground hover:text-foreground border-b-2 border-transparent pb-2 text-sm font-medium transition-colors hover:border-primary"
+			data-testid="tab-leaderboard"
+		>
+			Classement
 		</a>
 		<a
 			href={resolveRoute('/app/groups/[id]/members', { id: data.group.id })}

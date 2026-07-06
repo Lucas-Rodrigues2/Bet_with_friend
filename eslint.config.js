@@ -79,6 +79,14 @@ export default defineConfig(
 		}
 	},
 	{
+		// Leaderboard: period toggle href is resolveRoute() + '?period=…' query param.
+		// The lint rule cannot trace this pattern, but the base is always resolved.
+		files: ['src/routes/app/groups/\\[id\\]/leaderboard/+page.svelte'],
+		rules: {
+			'svelte/no-navigation-without-resolve': 'off'
+		}
+	},
+	{
 		// e2e files are managed by the QA agent — ignore their linting
 		files: ['e2e/**/*.ts'],
 		rules: {
