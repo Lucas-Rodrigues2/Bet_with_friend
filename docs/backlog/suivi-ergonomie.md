@@ -13,6 +13,14 @@ Statuts : `à faire` · `fait` · `ignoré` (avec raison).
 
 ---
 
+## S-061 — Leaderboard & stats — 2026-07-06
+
+- [mineur] `à faire` — Onglets du groupe (tab-leaderboard inclus) : aucun onglet n'est visuellement marqué comme actif. Sur /leaderboard, l'onglet « Classement » a le même style muted-foreground que les autres → l'utilisateur ne sait pas où il est. Constat pré-existant (S-013 a introduit la nav). → Déduire l'onglet actif du `$page.url.pathname` et appliquer `border-primary text-foreground`.
+- [mineur] `à faire` — Toggle période : simple `<a href="?period=30d">` → full page reload (réexécute le load serveur + recapture `leaderboard_viewed` à chaque switch). → Envisager un toggle inline (segmented control ou bouton sans navigation) pour éviter le reload et le double-fire analytics.
+- [mineur] `à faire` — Mobile 390px : le tableau a 7 colonnes, dense même avec `overflow-x-auto`. → Afficher moins de colonnes en mobile (ex. fusionner Joués/Gagnés/% en une colonne « 3 j / 1 g · 33% »).
+
+---
+
 ## S-070 — Notifications in-app (cloche) — 2026-07-06
 
 - [mineur] `à faire` — NotificationBell.svelte : après « Tout marquer lu », le bouton disparaît instantanément (unreadCount→0) sans feedback visuel de confirmation (toast/snackbar). → Ajouter un toast léger « Tout marqué comme lu » pour confirmer l'action.
