@@ -13,6 +13,13 @@ Statuts : `à faire` · `fait` · `ignoré` (avec raison).
 
 ---
 
+## S-072 — Notifications email — 2026-07-07
+
+- [mineur] `à faire` — Email footer (texte brut) : le libellé du lien « gérer vos notifications » est l'URL complète plutôt qu'un libellé humain. → Côté texte simple, formuler « gérer mes notifications : <url> » au lieu de l'URL seule (le HTML a déjà un `<a>` correct).
+- [mineur] `à faire` — Email corps (texte brut) : pas de sauts de ligne structurés entre corps/CTA/footer. → Ajouter des séparations pour la lisibilité mobile.
+
+---
+
 ## S-062 — Historique des paris — 2026-07-06
 
 - [mineur] `à faire` — Champ de recherche `/groups/[id]/bets` (`group-bets-search-input`) : pas de `<label>` ni d'`aria-label` (seulement un `placeholder`). → Ajouter `aria-label="Rechercher un pari par titre"` pour les lecteurs d'écran.
