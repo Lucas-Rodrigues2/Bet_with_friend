@@ -1,5 +1,11 @@
 // ─── Notification types (shared client + server) ─────────────────────────────
 
+// Canaux de notification. Déclaré ici (shared) car utilisé côté client pour
+// le typage de la matrice de préférences ET côté serveur.
+export type NotifChannel = 'in_app' | 'email' | 'push';
+
+export const NOTIF_CHANNELS: NotifChannel[] = ['in_app', 'email', 'push'];
+
 export const NOTIFICATION_TYPES = [
 	'invitation_accepted',
 	'proposition_received',

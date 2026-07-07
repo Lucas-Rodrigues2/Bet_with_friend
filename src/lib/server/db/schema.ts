@@ -419,6 +419,28 @@ export const notifications = pgTable('notifications', {
 	createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
 });
 
+// ─── Notification preferences ─────────────────────────────────────────────────
+// Préférences par utilisateur pour chaque type d'événement × canal.
+// Stocke uniquement les choix explicites : l'absence de ligne applique le défaut
+// (tout activé en in-app ; événements « importants » activés en email/push).
+// RLS : un utilisateur ne gère que ses propres préférences.
+
+export const notifChannelEnum = pgEnum('notif_channel', ['in_app', 'email', 'push']);
+
+export const notificationPreferences = pgTable(
+	'notification_preferences',
+	{
+		userId: uuid('user_id')
+			.notNull()
+			.references(() => profiles.id, { onDelete: 'cascade' }),
+		type: text('type').notNull(),
+		channel: notifChannelEnum('channel').notNull(),
+		enabled: boolean('enabled').notNull(),
+		updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow()
+	},
+	(t) => [primaryKey({ columns: [t.userId, t.type, t.channel] })]
+);
+
 // ─── Analytics (test sink — écrite uniquement quand ANALYTICS_TEST_SINK=db) ───
 
 export const analyticsEventsTest = pgTable('analytics_events_test', {

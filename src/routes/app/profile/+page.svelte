@@ -221,5 +221,11 @@
 				<p>Compte sécurisé.</p>
 			{/if}
 		</div>
+
+		<div class="mt-4">
+			<Button href="/app/settings/notifications" variant="outline" size="sm">
+				Préférences de notifications
+			</Button>
+		</div>
 	</section>
 </div>
