@@ -68,7 +68,7 @@ chaque fichier story ; ce tableau doit rester synchronisé.
 | [S-061](S-061-leaderboard.md)               | Leaderboard & stats           | done        | S-050     |
 | [S-062](S-062-historique.md)                | Historique des paris          | done        | S-041     |
 | [S-070](S-070-notifications-in-app.md)      | Notifications in-app (cloche) | done        | S-041     |
-| [S-071](S-071-preferences-notifications.md) | Préférences par canal/type    | in-progress | S-070     |
+| [S-071](S-071-preferences-notifications.md) | Préférences par canal/type    | done   | S-070     |
 | [S-072](S-072-notifications-email.md)       | Notifications email           | todo        | S-071     |
 | [S-073](S-073-web-push.md)                  | Web push                      | todo        | S-071     |
 
