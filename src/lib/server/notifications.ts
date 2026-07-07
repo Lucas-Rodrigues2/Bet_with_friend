@@ -1,7 +1,10 @@
 import { db } from '$lib/server/db/index';
 import { notifications, notificationPreferences } from '$lib/server/db/schema';
 import { captureServer } from '$lib/server/analytics';
-import { and, eq, inArray } from 'drizzle-orm';
+import { sendEmail, EmailSendError } from '$lib/server/email';
+import { renderEmail } from '$lib/server/email-templates';
+import { env } from '$env/dynamic/private';
+import { and, eq, inArray, sql } from 'drizzle-orm';
 import type { NotificationType, NotificationPayload, NotifChannel } from '$lib/notifications';
 import { NOTIFICATION_TYPES, NOTIF_CHANNELS } from '$lib/notifications';
 
@@ -71,15 +74,16 @@ export async function getEffectivePrefs(userId: string): Promise<PrefsMap> {
 }
 
 /**
- * Récupère en UNE requête les préférences in-app explicites d'un ensemble
- * de destinataires pour un type donné. Renvoie une map userId -> enabled
- * (uniquement pour les lignes explicites ; l'absence applique le défaut).
+ * Récupère en UNE requête les préférences explicites d'un ensemble
+ * de destinataires pour un type et un canal donnés. Renvoie une map userId ->
+ * enabled (uniquement pour les lignes explicites ; l'absence applique le défaut).
  *
  * Utilisé par notify() pour filtrer à l'émission sans N+1.
  */
-async function getExplicitInAppPrefs(
+async function getExplicitPrefs(
 	userIds: string[],
-	type: NotificationType
+	type: NotificationType,
+	channel: NotifChannel
 ): Promise<Map<string, boolean>> {
 	if (userIds.length === 0) return new Map();
 	const rows = await db
@@ -92,12 +96,38 @@ async function getExplicitInAppPrefs(
 			and(
 				inArray(notificationPreferences.userId, userIds),
 				eq(notificationPreferences.type, type),
-				eq(notificationPreferences.channel, 'in_app')
+				eq(notificationPreferences.channel, channel)
 			)
 		);
 	const map = new Map<string, boolean>();
 	for (const row of rows) map.set(row.userId, row.enabled);
 	return map;
+}
+
+/**
+ * Récupère les adresses email d'un ensemble d'utilisateurs depuis auth.users
+ * (table gérée par Supabase Auth, non exposée par le schéma Drizzle).
+ * Renvoie une map userId -> email (uniquement ceux qui ont un email).
+ */
+async function getEmailsForUsers(userIds: string[]): Promise<Map<string, string>> {
+	if (userIds.length === 0) return new Map();
+	try {
+		const idsList = sql.join(
+			userIds.map((id) => sql`${id}::uuid`),
+			sql`, `
+		);
+		const rows = (await db.execute(
+			sql`SELECT id::text as id, email FROM auth.users WHERE id IN (${idsList})`
+		)) as unknown as { id: string; email: string | null }[];
+		const map = new Map<string, string>();
+		for (const row of rows) {
+			if (row.email) map.set(row.id, row.email);
+		}
+		return map;
+	} catch (err) {
+		console.warn('[notifications] Failed to fetch emails from auth.users:', err);
+		return new Map();
+	}
 }
 
 /**
@@ -118,16 +148,16 @@ export async function notify(
 ): Promise<void> {
 	if (userIds.length === 0) return;
 
-	// Filtrage à l'émission selon les préférences in-app.
+	// ── Filtrage à l'émission selon les préférences in-app ──────────────────
 	// Une seule requête pour tous les destinataires (pas de N+1).
 	let recipients = userIds;
 	try {
-		const explicit = await getExplicitInAppPrefs(userIds, type);
+		const explicit = await getExplicitPrefs(userIds, type, 'in_app');
 		recipients = userIds.filter((uid) => explicit.get(uid) ?? defaultEnabled(type, 'in_app'));
 	} catch (err) {
 		// En cas d'erreur de lecture des préférences, on ne bloque pas l'envoi :
 		// on retombe sur le défaut (tout activé en in-app) pour tous.
-		console.warn('[notifications] Failed to read prefs, falling back to defaults:', err);
+		console.warn('[notifications] Failed to read in-app prefs, falling back to defaults:', err);
 	}
 
 	if (recipients.length === 0) return;
@@ -158,6 +188,85 @@ export async function notify(
 		} catch (err) {
 			// Ne jamais casser l'action métier pour de l'analytics
 			console.warn('[notifications] Failed to track notification_sent:', err);
+		}
+	}
+
+	// ── Canal email — envoi asynchrone best-effort après commit DB ──────────
+	// Détaché (setImmediate) : ne bloque jamais le retour de notify() et ne
+	// fait jamais échouer l'action métier. Les échecs sont loggés + trackés
+	// (notification_email_failed), jamais propagés.
+	//
+	// On filtre indépendamment du canal in-app : un utilisateur peut avoir
+	// l'email activé sans avoir la cloche activée (et inversement).
+	setImmediate(() => {
+		void sendEmailNotifications(userIds, type, payload).catch((err) => {
+			console.warn('[notifications] Unexpected error in email channel:', err);
+		});
+	});
+}
+
+/**
+ * Envoie les emails pour une notification donnée, aux destinataires dont la
+ * préférence `email` du type est activée. Best-effort, jamais throw.
+ *
+ * Émet un event PostHog `notification_email_sent` (ou `notification_email_failed`)
+ * par destinataire, sans PII dans les propriétés.
+ *
+ * Appelé en arrière-plan (setImmediate) par notify() — ne doit jamais rejeter.
+ */
+async function sendEmailNotifications(
+	userIds: string[],
+	type: NotificationType,
+	payload: NotificationPayload
+): Promise<void> {
+	if (userIds.length === 0) return;
+
+	// Destinataires email = ceux dont la préférence email est activée.
+	let emailRecipients = userIds;
+	try {
+		const explicit = await getExplicitPrefs(userIds, type, 'email');
+		emailRecipients = userIds.filter((uid) => explicit.get(uid) ?? defaultEnabled(type, 'email'));
+	} catch (err) {
+		// En cas d'erreur de lecture des prefs, on retombe sur le défaut.
+		console.warn('[notifications] Failed to read email prefs, falling back to defaults:', err);
+	}
+	if (emailRecipients.length === 0) return;
+
+	// Emails des destinataires (depuis auth.users — table Supabase Auth).
+	const emails = await getEmailsForUsers(emailRecipients);
+	if (emails.size === 0) return;
+
+	const origin = env.PUBLIC_SITE_URL ?? 'http://localhost:5173';
+	const template = renderEmail(type, payload, origin);
+
+	// Un envoi par destinataire : un échec n'empêche pas les autres.
+	// Séquentiel et simple (volumes faibles) ; tracking par envoi.
+	for (const userId of emailRecipients) {
+		const to = emails.get(userId);
+		if (!to) continue;
+		try {
+			await sendEmail({ to, subject: template.subject, text: template.text, html: template.html });
+			try {
+				await captureServer({
+					distinctId: userId,
+					event: 'notification_email_sent',
+					properties: { notification_type: type }
+				});
+			} catch (err) {
+				console.warn('[notifications] Failed to track notification_email_sent:', err);
+			}
+		} catch (err) {
+			const code = err instanceof EmailSendError ? err.code : 'unknown';
+			console.warn(`[notifications] Email send failed (code=${code}) for user ${userId}:`, err);
+			try {
+				await captureServer({
+					distinctId: userId,
+					event: 'notification_email_failed',
+					properties: { notification_type: type, error_code: code }
+				});
+			} catch (trackErr) {
+				console.warn('[notifications] Failed to track notification_email_failed:', trackErr);
+			}
 		}
 	}
 }

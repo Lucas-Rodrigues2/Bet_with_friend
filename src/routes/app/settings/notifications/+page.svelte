@@ -38,7 +38,7 @@
 	}
 
 	function isChannelComingSoon(channel: NotifChannel): boolean {
-		return channel === 'email' || channel === 'push';
+		return channel === 'push';
 	}
 
 	function handleChange(type: NotificationType, channel: NotifChannel, event: Event) {
@@ -94,9 +94,10 @@
 	</div>
 
 	<p class="text-muted-foreground mb-8 text-sm">
-		Choisissez, pour chaque type d'événement et chaque canal, ce que vous souhaitez recevoir. Les
-		canaux email et push sont affichés « bientôt » — l'état est néanmoins sauvegardé pour quand ils
-		seront disponibles.
+		Choisissez, pour chaque type d'événement et chaque canal, ce que vous souhaitez recevoir. Le
+		canal email est actif : vous recevrez un mail à votre adresse pour les événements activés. Le
+		canal push est affiché « bientôt » — l'état est néanmoins sauvegardé pour quand il sera
+		disponible.
 	</p>
 
 	<div class="flex flex-col gap-8" data-testid="notif-prefs-matrix">
