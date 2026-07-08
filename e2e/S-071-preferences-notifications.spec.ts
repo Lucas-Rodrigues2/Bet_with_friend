@@ -12,7 +12,7 @@
  *    importants (proposition_received, verdict_rendered, forfeit_to_do,
  *    forfeit_to_confirm).
  * 6. Reset : bouton reset-prefs-btn remet les défauts (supprime les surcharges).
- * 7. Canaux email/push marqués « bientôt » (texte visible).
+ * 7. Aucun canal n'est marqué « bientôt » (email et push actifs depuis S-072/S-073).
  */
 import { test, expect, type Page } from '@playwright/test';
 import postgres from 'postgres';
@@ -390,21 +390,22 @@ test('Reset : reset-prefs-btn remet les défauts (supprime les surcharges)', asy
 	expect(Number(prefsAfter[0].n)).toBe(0);
 });
 
-// ─── Scénario 6 : Canaux email/push marqués « bientôt » ──────────────────────
+// ─── Scénario 6 : Canaux email et push actifs (mis à jour par S-072/S-073) ──
+// À la livraison de S-071, email et push étaient marqués « bientôt ». S-072
+// (email) puis S-073 (push) ont livré ces canaux → le badge « bientôt » a
+// disparu. On vérifie désormais qu'aucun canal n'est plus marqué « bientôt ».
 
-test('Les canaux email et push sont marqués « bientôt »', async ({ page }) => {
+test('Aucun canal n est marqué « bientôt » (email et push actifs)', async ({ page }) => {
 	await login(page, 'alice');
 	await page.goto(PREFS_URL);
 	await page.waitForLoadState("networkidle");
 
 	await expect(page.getByTestId('notif-prefs-matrix')).toBeVisible();
 
-	// La page contient le texte « bientôt » au moins 2 fois (email + push,
-	// répété pour chaque thème — on vérifie qu'il apparaît).
-	// On compte les occurrences du badge « bientôt ».
+	// Les canaux email et push sont désormais actifs (S-072/S-073) :
+	// aucun badge « bientôt » ne doit subsister.
 	const bientotBadges = page.locator('text=/bientôt/i');
-	const count = await bientotBadges.count();
-	expect(count).toBeGreaterThanOrEqual(2);
+	await expect(bientotBadges).toHaveCount(0);
 });
 
 // ─── Scénario 7 : Les 4 thèmes sont présents ─────────────────────────────────

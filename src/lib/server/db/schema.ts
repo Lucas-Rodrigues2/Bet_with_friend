@@ -441,6 +441,26 @@ export const notificationPreferences = pgTable(
 	(t) => [primaryKey({ columns: [t.userId, t.type, t.channel] })]
 );
 
+// ─── Push subscriptions (Web Push API) ────────────────────────────────────────
+// Abonnements push navigateur par utilisateur. Un user peut en avoir plusieurs
+// (un par navigateur/appareil). L'endpoint est unique (un push service ne
+// délivre qu'un seul abonnement par endpoint).
+// RLS : un utilisateur ne gère que ses propres abonnements (SELECT/INSERT/DELETE).
+// Les écritures applicatives passent par le service_role côté serveur SvelteKit.
+
+export const pushSubscriptions = pgTable('push_subscriptions', {
+	id: uuid('id')
+		.primaryKey()
+		.default(sql`gen_random_uuid()`),
+	userId: uuid('user_id')
+		.notNull()
+		.references(() => profiles.id, { onDelete: 'cascade' }),
+	endpoint: text('endpoint').notNull().unique(),
+	// Clés P-256dh + auth, JSON brut tel que fourni par PushManager.subscribe().
+	keys: jsonb('keys').notNull(),
+	createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
+});
+
 // ─── Analytics (test sink — écrite uniquement quand ANALYTICS_TEST_SINK=db) ───
 
 export const analyticsEventsTest = pgTable('analytics_events_test', {

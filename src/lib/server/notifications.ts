@@ -3,10 +3,16 @@ import { notifications, notificationPreferences } from '$lib/server/db/schema';
 import { captureServer } from '$lib/server/analytics';
 import { sendEmail, EmailSendError } from '$lib/server/email';
 import { renderEmail } from '$lib/server/email-templates';
+import { sendPushNotifications } from '$lib/server/push';
 import { env } from '$env/dynamic/private';
 import { and, eq, inArray, sql } from 'drizzle-orm';
 import type { NotificationType, NotificationPayload, NotifChannel } from '$lib/notifications';
-import { NOTIFICATION_TYPES, NOTIF_CHANNELS } from '$lib/notifications';
+import {
+	NOTIFICATION_TYPES,
+	NOTIF_CHANNELS,
+	getNotificationLabel,
+	getNotificationHref
+} from '$lib/notifications';
 
 // ─── Notification channel & preferences ──────────────────────────────────────
 
@@ -102,6 +108,17 @@ async function getExplicitPrefs(
 	const map = new Map<string, boolean>();
 	for (const row of rows) map.set(row.userId, row.enabled);
 	return map;
+}
+
+/**
+ * Récupère en UNE requête les préférences push explicites d'un ensemble de
+ * destinataires pour un type donné. Exposé pour le canal push (src/lib/server/push.ts).
+ */
+export async function getExplicitPushPrefs(
+	userIds: string[],
+	type: NotificationType
+): Promise<Map<string, boolean>> {
+	return getExplicitPrefs(userIds, type, 'push');
 }
 
 /**
@@ -203,6 +220,35 @@ export async function notify(
 			console.warn('[notifications] Unexpected error in email channel:', err);
 		});
 	});
+
+	// ── Canal push — envoi asynchrone best-effort après commit DB ───────────
+	// Même pattern que l'email : détaché (setImmediate), best-effort, jamais
+	// ne throw ni ne bloque l'action métier. Un envoi par abonnement (un user
+	// peut avoir plusieurs navigateurs) ; les échecs sont trackés
+	// (notification_push_failed) et les endpoints morts (404/410) sont supprimés.
+	setImmediate(() => {
+		void sendPushNotifications(userIds, type, buildPushPayload(type, payload)).catch((err) => {
+			console.warn('[notifications] Unexpected error in push channel:', err);
+		});
+	});
+}
+
+/**
+ * Construit le payload push (titre / corps / lien profond) pour une notif.
+ * Le titre est le label humain, le corps est une formulation courte, et le
+ * lien profond est résolu via getNotificationHref (relatif, complété côté
+ * serveur avec l'origin).
+ */
+function buildPushPayload(
+	type: NotificationType,
+	payload: NotificationPayload
+): { title: string; body: string; url: string | null } {
+	const title = 'Bet With Friend';
+	const body = getNotificationLabel(type, payload);
+	const href = getNotificationHref(type, payload);
+	const origin = env.PUBLIC_SITE_URL ?? 'http://localhost:5173';
+	const url = href ? `${origin}${href}` : null;
+	return { title, body, url };
 }
 
 /**

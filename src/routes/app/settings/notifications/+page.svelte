@@ -1,8 +1,17 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
 	import { invalidateAll } from '$app/navigation';
+	import { onMount } from 'svelte';
 	import { toast } from 'svelte-sonner';
 	import { Button } from '$lib/components/ui/button/index.js';
+	import {
+		isPushSupported,
+		subscribeToPush,
+		unsubscribeFromPush,
+		getCurrentEndpoint,
+		getPermissionState,
+		type PushPermissionState
+	} from '$lib/push';
 	import type { ActionData, PageData } from './$types';
 	import type { NotifChannel, NotificationType } from '$lib/notifications';
 
@@ -37,8 +46,84 @@
 		return data.prefs[type][channel];
 	}
 
-	function isChannelComingSoon(channel: NotifChannel): boolean {
-		return channel === 'push';
+	// ─── Web Push : état de l'abonnement sur cet appareil ───────────────────────
+	// La colonne « push » de la matrice n'est plus « bientôt » : elle est
+	// active (les cases à cocher pilotent la préférence serveur ; le bouton
+	// ci-dessous pilote l'abonnement navigateur « cet appareil »).
+	let pushSupported = $state(false);
+	let permission = $state<PushPermissionState>('default');
+	let currentEndpoint = $state<string | null>(null);
+	let pushBusy = $state(false);
+
+	async function refreshPushState() {
+		pushSupported = isPushSupported();
+		permission = getPermissionState();
+		currentEndpoint = await getCurrentEndpoint();
+	}
+
+	onMount(() => {
+		void refreshPushState();
+	});
+
+	// true si cet appareil a un abonnement push actif enregistré côté serveur.
+	// On compare l'endpoint courant (navigateur) avec la DB ; le serveur ne
+	// renvoie que le compte, donc on se base sur la présence d'un endpoint
+	// courant + l'existence d'au moins un abonnement serveur.
+	let pushActiveHere = $derived(currentEndpoint !== null && (data.pushSubscriptionCount ?? 0) > 0);
+
+	async function handleEnablePush() {
+		pushBusy = true;
+		try {
+			const res = await subscribeToPush();
+			if (!res.ok) {
+				if (res.error === 'denied') {
+					toast.error('Permission de notifications refusée.');
+				} else if (res.error === 'unsupported') {
+					toast.error('Votre navigateur ne supporte pas les notifications push.');
+				} else {
+					toast.error("Impossible de s'abonner aux notifications push.");
+				}
+				permission = getPermissionState();
+				return;
+			}
+			// Enregistre l'abonnement côté serveur via form action (POST).
+			const fd = new FormData();
+			fd.set('endpoint', res.endpoint ?? '');
+			fd.set('keys_p256dh', res.keys?.p256dh ?? '');
+			fd.set('keys_auth', res.keys?.auth ?? '');
+			const r = await fetch('?/subscribe_push', { method: 'POST', body: fd });
+			if (!r.ok) {
+				toast.error("Erreur lors de l'enregistrement de l'abonnement.");
+				return;
+			}
+			toast.success('Notifications push activées sur cet appareil.');
+			await invalidateAll();
+			await refreshPushState();
+		} finally {
+			pushBusy = false;
+		}
+	}
+
+	async function handleDisablePush() {
+		pushBusy = true;
+		try {
+			// Désabonne le navigateur d'abord (best-effort).
+			const unsub = await unsubscribeFromPush();
+			// Supprime la ligne serveur même si le client n'a pas réussi à
+			// unsubscribe (ex: abonnement expiré côté push service).
+			const fd = new FormData();
+			fd.set('endpoint', unsub.endpoint ?? currentEndpoint ?? '');
+			const r = await fetch('?/unsubscribe_push', { method: 'POST', body: fd });
+			if (!r.ok) {
+				toast.error("Erreur lors de la suppression de l'abonnement.");
+				return;
+			}
+			toast.success('Notifications push désactivées sur cet appareil.');
+			await invalidateAll();
+			await refreshPushState();
+		} finally {
+			pushBusy = false;
+		}
 	}
 
 	function handleChange(type: NotificationType, channel: NotifChannel, event: Event) {
@@ -96,9 +181,70 @@
 	<p class="text-muted-foreground mb-8 text-sm">
 		Choisissez, pour chaque type d'événement et chaque canal, ce que vous souhaitez recevoir. Le
 		canal email est actif : vous recevrez un mail à votre adresse pour les événements activés. Le
-		canal push est affiché « bientôt » — l'état est néanmoins sauvegardé pour quand il sera
-		disponible.
+		canal push envoie une notification système sur vos appareils abonnés (activez-le ci-dessous pour
+		cet appareil).
 	</p>
+
+	<!-- ─── Web Push : abonnement « cet appareil » ─────────────────────────── -->
+	<section class="bg-card mb-8 rounded-lg border p-4" data-testid="push-subscription-section">
+		<h2 class="text-foreground mb-2 text-lg font-semibold">Notifications push sur cet appareil</h2>
+		<p class="text-muted-foreground mb-4 text-sm">
+			Les cases de la colonne « Push » ci-dessous décident quels types d'événements déclenchent un
+			push. Pour recevoir effectivement les notifications sur cet appareil, vous devez aussi
+			l'autoriser ici.
+		</p>
+
+		{#if !pushSupported}
+			<p class="text-muted-foreground text-sm" data-testid="push-unsupported-msg">
+				Votre navigateur ne supporte pas les notifications push (Service Worker / Push API
+				indisponibles).
+			</p>
+		{:else if pushActiveHere}
+			<div class="flex flex-wrap items-center gap-3">
+				<span class="text-sm font-medium text-green-600" data-testid="push-active-indicator">
+					✓ Notifications push activées sur cet appareil
+				</span>
+				<Button
+					type="button"
+					variant="outline"
+					size="sm"
+					disabled={pushBusy}
+					onclick={handleDisablePush}
+					data-testid="disable-push-btn"
+				>
+					{pushBusy ? 'Désactivation…' : 'Désactiver sur cet appareil'}
+				</Button>
+			</div>
+		{:else if permission === 'denied'}
+			<p class="text-muted-foreground text-sm" data-testid="push-denied-msg">
+				Vous avez refusé les notifications. Réautorisez-les dans les réglages du navigateur pour
+				réessayer.
+			</p>
+		{:else}
+			<div class="flex flex-wrap items-center gap-3">
+				<Button
+					type="button"
+					size="sm"
+					disabled={pushBusy}
+					onclick={handleEnablePush}
+					data-testid="enable-push-btn"
+				>
+					{pushBusy ? 'Activation…' : 'Activer les notifications push sur cet appareil'}
+				</Button>
+			</div>
+		{/if}
+
+		{#if (data.pushSubscriptionCount ?? 0) > 0}
+			<p class="text-muted-foreground mt-3 text-xs" data-testid="push-subscription-count">
+				{data.pushSubscriptionCount}
+				abonnement{data.pushSubscriptionCount > 1 ? 's' : ''} push enregistré{data.pushSubscriptionCount >
+				1
+					? 's'
+					: ''}
+				sur votre compte (tous appareils confondus).
+			</p>
+		{/if}
+	</section>
 
 	<div class="flex flex-col gap-8" data-testid="notif-prefs-matrix">
 		{#each data.themes as theme (theme.title)}
@@ -118,13 +264,6 @@
 									>
 										<div class="flex flex-col items-center gap-0.5">
 											<span>{data.channelLabels[channel]}</span>
-											{#if isChannelComingSoon(channel)}
-												<span
-													class="bg-muted text-muted-foreground rounded-full px-1.5 py-0.5 text-[10px] font-normal normal-case"
-												>
-													bientôt
-												</span>
-											{/if}
 										</div>
 									</th>
 								{/each}

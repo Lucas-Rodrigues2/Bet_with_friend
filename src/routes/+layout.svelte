@@ -8,6 +8,7 @@
 	import NotificationBell from '$lib/components/NotificationBell.svelte';
 	import { onMount } from 'svelte';
 	import { initAnalytics, identifyUser } from '$lib/analytics/client';
+	import { registerServiceWorker } from '$lib/push';
 
 	let { children, data } = $props();
 
@@ -18,6 +19,10 @@
 		initAnalytics();
 		if (data.session?.user?.id) {
 			identifyUser(data.session.user.id);
+			// Enregistre le service worker Web Push (nécessaire pour les
+			// notifications push côté navigateur). Idempotent et best-effort :
+			// no-op si le navigateur ne supporte pas les SW / si déjà enregistré.
+			void registerServiceWorker();
 		}
 	});
 

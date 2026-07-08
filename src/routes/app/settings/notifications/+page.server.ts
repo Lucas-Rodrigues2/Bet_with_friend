@@ -1,8 +1,8 @@
 import { fail, redirect } from '@sveltejs/kit';
 import { z } from 'zod';
 import { db } from '$lib/server/db/index';
-import { notificationPreferences } from '$lib/server/db/schema';
-import { eq } from 'drizzle-orm';
+import { notificationPreferences, pushSubscriptions } from '$lib/server/db/schema';
+import { eq, and } from 'drizzle-orm';
 import { captureServer } from '$lib/server/analytics';
 import { getEffectivePrefs, NOTIF_CHANNELS, type NotifChannel } from '$lib/server/notifications';
 import { type NotificationType } from '$lib/notifications';
@@ -67,6 +67,18 @@ export const load: PageServerLoad = async ({ locals }) => {
 		console.warn('[notif-prefs] Failed to check custom prefs:', err);
 	}
 
+	// Abonnements push de l'utilisateur (nombre + endpoints, pour l'UI push).
+	let pushSubscriptionCount = 0;
+	try {
+		const subs = await db
+			.select({ id: pushSubscriptions.id })
+			.from(pushSubscriptions)
+			.where(eq(pushSubscriptions.userId, user.id));
+		pushSubscriptionCount = subs.length;
+	} catch (err) {
+		console.warn('[notif-prefs] Failed to count push subscriptions:', err);
+	}
+
 	// Tracking : consultation de la page. Pas de PII.
 	try {
 		await captureServer({
@@ -84,7 +96,8 @@ export const load: PageServerLoad = async ({ locals }) => {
 		channelLabels: NOTIF_CHANNEL_LABELS,
 		channels: NOTIF_CHANNELS,
 		prefs,
-		hasCustomPrefs
+		hasCustomPrefs,
+		pushSubscriptionCount
 	};
 };
 
@@ -202,5 +215,154 @@ export const actions: Actions = {
 		}
 
 		return { action: 'reset', success: true };
+	},
+
+	// ─── Web Push : enregistrement d'un abonnement (cet appareil) ──────────────
+	// Reçoit l'endpoint + les clés p256dh/auth depuis le navigateur (après
+	// demande de permission + pushManager.subscribe côté client). Upsert par
+	// endpoint (unique) : si l'appareil se ré-abonne, on ne crée pas de doublon.
+	subscribe_push: async ({ request, locals }) => {
+		const { session, user } = await locals.safeGetSession();
+		if (!session || !user) {
+			return fail(401, { action: 'subscribe_push', message: 'Non authentifié.' });
+		}
+
+		const formData = await request.formData();
+		const endpoint = formData.get('endpoint');
+		const p256dh = formData.get('keys_p256dh');
+		const auth = formData.get('keys_auth');
+
+		if (
+			typeof endpoint !== 'string' ||
+			!endpoint.startsWith('https://') ||
+			typeof p256dh !== 'string' ||
+			p256dh.length === 0 ||
+			typeof auth !== 'string' ||
+			auth.length === 0
+		) {
+			return fail(400, { action: 'subscribe_push', message: 'Abonnement push invalide.' });
+		}
+
+		// Domaine de l'endpoint (push service provider), pour tracking PostHog
+		// sans fuiter l'endpoint complet (qui est un identifiant).
+		let endpointDomain: string | undefined;
+		try {
+			endpointDomain = new URL(endpoint).hostname;
+		} catch {
+			endpointDomain = undefined;
+		}
+
+		try {
+			// Vérifie l'ownership AVANT d'écrire : l'endpoint est UNIQUE global
+			// (un endpoint = un appareil/navigateur). Sur un appareil partagé, si
+			// l'endpoint existe déjà pour un autre user, on refuse (409) sans
+			// écraser ses keys. Si l'endpoint appartient au user courant, on met
+			// à jour les keys (réabonnement du même appareil).
+			const existing = await db
+				.select({ userId: pushSubscriptions.userId })
+				.from(pushSubscriptions)
+				.where(eq(pushSubscriptions.endpoint, endpoint))
+				.limit(1);
+
+			if (existing.length > 0 && existing[0].userId !== user.id) {
+				return fail(409, {
+					action: 'subscribe_push',
+					message: 'Cet appareil est déjà abonné pour un autre compte.'
+				});
+			}
+
+			if (existing.length > 0) {
+				await db
+					.update(pushSubscriptions)
+					.set({ keys: { p256dh, auth }, createdAt: new Date() })
+					.where(eq(pushSubscriptions.endpoint, endpoint));
+			} else {
+				await db.insert(pushSubscriptions).values({
+					userId: user.id,
+					endpoint,
+					keys: { p256dh, auth }
+				});
+			}
+		} catch (err) {
+			console.warn('[notif-prefs] Failed to upsert push subscription:', err);
+			return fail(500, {
+				action: 'subscribe_push',
+				message: "Erreur lors de l'enregistrement de l'abonnement push."
+			});
+		}
+
+		// Tracking PostHog : pas d'endpoint complet (PII/identifiant), juste le
+		// domaine du push service si disponible.
+		try {
+			const properties: Record<string, unknown> = {};
+			if (endpointDomain) properties.endpoint_domain = endpointDomain;
+			await captureServer({
+				distinctId: user.id,
+				event: 'push_subscription_created',
+				properties
+			});
+		} catch (err) {
+			console.warn('[notif-prefs] Failed to track push_subscription_created:', err);
+		}
+
+		return { action: 'subscribe_push', success: true };
+	},
+
+	// ─── Web Push : suppression d'un abonnement (cet appareil) ────────────────
+	// Reçoit l'endpoint à supprimer (récupéré côté client via getSubscription()).
+	// On supprime la ligne serveur ; le désabonnement navigateur (unsubscribe)
+	// est fait côté client AVANT l'appel (best-effort : on supprime quand même
+	// la ligne serveur même si le client n'a pas réussi à unsubscribe).
+	unsubscribe_push: async ({ request, locals }) => {
+		const { session, user } = await locals.safeGetSession();
+		if (!session || !user) {
+			return fail(401, { action: 'unsubscribe_push', message: 'Non authentifié.' });
+		}
+
+		const formData = await request.formData();
+		const endpoint = formData.get('endpoint');
+		if (typeof endpoint !== 'string' || endpoint.length === 0) {
+			return fail(400, { action: 'unsubscribe_push', message: 'Endpoint manquant.' });
+		}
+
+		// On ne supprime QUE les abonnements appartenant à l'utilisateur : la
+		// clause user_id est OBLIGATOIRE car la connexion Drizzle tourne en
+		// service_role (bypass RLS). Sans elle, un user authentifié connaissant
+		// l'endpoint d'un autre user pourrait le supprimer (DoS ciblé).
+		try {
+			const deleted = await db
+				.delete(pushSubscriptions)
+				.where(and(eq(pushSubscriptions.endpoint, endpoint), eq(pushSubscriptions.userId, user.id)))
+				.returning({ id: pushSubscriptions.id });
+
+			// 0 ligne supprimée : l'endpoint n'existe pas OU n'appartient pas au
+			// user. On renvoie 404 sans tracker (ne pas leak « cet endpoint existe
+			// mais ne m'appartient pas »).
+			if (deleted.length === 0) {
+				return fail(404, {
+					action: 'unsubscribe_push',
+					message: 'Abonnement introuvable.'
+				});
+			}
+		} catch (err) {
+			console.warn('[notif-prefs] Failed to delete push subscription:', err);
+			return fail(500, {
+				action: 'unsubscribe_push',
+				message: "Erreur lors de la suppression de l'abonnement push."
+			});
+		}
+
+		// Tracking PostHog : pas de PII.
+		try {
+			await captureServer({
+				distinctId: user.id,
+				event: 'push_subscription_removed',
+				properties: {}
+			});
+		} catch (err) {
+			console.warn('[notif-prefs] Failed to track push_subscription_removed:', err);
+		}
+
+		return { action: 'unsubscribe_push', success: true };
 	}
 };

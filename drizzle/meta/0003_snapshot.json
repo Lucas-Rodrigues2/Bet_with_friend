@@ -1,6 +1,6 @@
 {
-  "id": "53aac03c-26a2-4264-8837-158e55b5d0b2",
-  "prevId": "f90f4dd0-d1b3-4237-a265-72cbba592e85",
+  "id": "6d3f9b3a-e9bd-4cb6-8682-8393d80b2323",
+  "prevId": "53aac03c-26a2-4264-8837-158e55b5d0b2",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -45,6 +45,66 @@
       "indexes": {},
       "foreignKeys": {},
       "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.bet_jurors": {
+      "name": "bet_jurors",
+      "schema": "",
+      "columns": {
+        "bet_id": {
+          "name": "bet_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "bet_jurors_bet_id_bets_id_fk": {
+          "name": "bet_jurors_bet_id_bets_id_fk",
+          "tableFrom": "bet_jurors",
+          "tableTo": "bets",
+          "columnsFrom": [
+            "bet_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "bet_jurors_user_id_profiles_id_fk": {
+          "name": "bet_jurors_user_id_profiles_id_fk",
+          "tableFrom": "bet_jurors",
+          "tableTo": "profiles",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "bet_jurors_bet_id_user_id_pk": {
+          "name": "bet_jurors_bet_id_user_id_pk",
+          "columns": [
+            "bet_id",
+            "user_id"
+          ]
+        }
+      },
       "uniqueConstraints": {},
       "policies": {},
       "checkConstraints": {},
@@ -288,6 +348,12 @@
           "primaryKey": false,
           "notNull": true,
           "default": "'pending'"
+        },
+        "claimed_at": {
+          "name": "claimed_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
         },
         "proof_url": {
           "name": "proof_url",
@@ -598,6 +664,12 @@
           "primaryKey": false,
           "notNull": true,
           "default": "now()"
+        },
+        "archived_at": {
+          "name": "archived_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
         }
       },
       "indexes": {},
@@ -617,6 +689,66 @@
         }
       },
       "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.jury_vote_losers": {
+      "name": "jury_vote_losers",
+      "schema": "",
+      "columns": {
+        "vote_id": {
+          "name": "vote_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "loser_user_id": {
+          "name": "loser_user_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "jury_vote_losers_vote_id_jury_votes_id_fk": {
+          "name": "jury_vote_losers_vote_id_jury_votes_id_fk",
+          "tableFrom": "jury_vote_losers",
+          "tableTo": "jury_votes",
+          "columnsFrom": [
+            "vote_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "jury_vote_losers_loser_user_id_profiles_id_fk": {
+          "name": "jury_vote_losers_loser_user_id_profiles_id_fk",
+          "tableFrom": "jury_vote_losers",
+          "tableTo": "profiles",
+          "columnsFrom": [
+            "loser_user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "jury_vote_losers_vote_id_loser_user_id_pk": {
+          "name": "jury_vote_losers_vote_id_loser_user_id_pk",
+          "columns": [
+            "vote_id",
+            "loser_user_id"
+          ]
+        }
+      },
       "uniqueConstraints": {},
       "policies": {},
       "checkConstraints": {},
@@ -1239,6 +1371,74 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
+    "public.notification_preferences": {
+      "name": "notification_preferences",
+      "schema": "",
+      "columns": {
+        "user_id": {
+          "name": "user_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "type": {
+          "name": "type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "channel": {
+          "name": "channel",
+          "type": "notif_channel",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "enabled": {
+          "name": "enabled",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "notification_preferences_user_id_profiles_id_fk": {
+          "name": "notification_preferences_user_id_profiles_id_fk",
+          "tableFrom": "notification_preferences",
+          "tableTo": "profiles",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "notification_preferences_user_id_type_channel_pk": {
+          "name": "notification_preferences_user_id_type_channel_pk",
+          "columns": [
+            "user_id",
+            "type",
+            "channel"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
     "public.notifications": {
       "name": "notifications",
       "schema": "",
@@ -1444,19 +1644,6 @@
           "primaryKey": false,
           "notNull": false
         },
-        "forfeit_description": {
-          "name": "forfeit_description",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        },
         "forfeit_creator": {
           "name": "forfeit_creator",
           "type": "text",
@@ -1468,6 +1655,13 @@
           "type": "text",
           "primaryKey": false,
           "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
         }
       },
       "indexes": {},
@@ -1540,8 +1734,14 @@
           "primaryKey": false,
           "notNull": false
         },
-        "forfeit_description": {
-          "name": "forfeit_description",
+        "forfeit_creator": {
+          "name": "forfeit_creator",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "forfeit_target": {
+          "name": "forfeit_target",
           "type": "text",
           "primaryKey": false,
           "notNull": false
@@ -1572,18 +1772,6 @@
           "primaryKey": false,
           "notNull": true,
           "default": "now()"
-        },
-        "forfeit_creator": {
-          "name": "forfeit_creator",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "forfeit_target": {
-          "name": "forfeit_target",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
         }
       },
       "indexes": {},
@@ -1643,6 +1831,73 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
+    "public.push_subscriptions": {
+      "name": "push_subscriptions",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "endpoint": {
+          "name": "endpoint",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "keys": {
+          "name": "keys",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "push_subscriptions_user_id_profiles_id_fk": {
+          "name": "push_subscriptions_user_id_profiles_id_fk",
+          "tableFrom": "push_subscriptions",
+          "tableTo": "profiles",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "push_subscriptions_endpoint_unique": {
+          "name": "push_subscriptions_endpoint_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "endpoint"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
     "public.yesno_bets": {
       "name": "yesno_bets",
       "schema": "",
@@ -1690,6 +1945,30 @@
           "primaryKey": false,
           "notNull": true,
           "default": 0
+        },
+        "open_stake_creator": {
+          "name": "open_stake_creator",
+          "type": "numeric(12, 2)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "open_stake_opponent": {
+          "name": "open_stake_opponent",
+          "type": "numeric(12, 2)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "open_forfeit_creator": {
+          "name": "open_forfeit_creator",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "open_forfeit_opponent": {
+          "name": "open_forfeit_opponent",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
         }
       },
       "indexes": {},
@@ -1785,6 +2064,15 @@
       "values": [
         "admin",
         "member"
+      ]
+    },
+    "public.notif_channel": {
+      "name": "notif_channel",
+      "schema": "public",
+      "values": [
+        "in_app",
+        "email",
+        "push"
       ]
     },
     "public.proposition_status": {
