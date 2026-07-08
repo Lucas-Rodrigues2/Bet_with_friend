@@ -69,11 +69,11 @@ chaque fichier story ; ce tableau doit rester synchronisé.
 | [S-062](S-062-historique.md)                | Historique des paris          | done        | S-041     |
 | [S-070](S-070-notifications-in-app.md)      | Notifications in-app (cloche) | done        | S-041     |
 | [S-071](S-071-preferences-notifications.md) | Préférences par canal/type    | done        | S-070     |
-| [S-072](S-072-notifications-email.md)       | Notifications email           | done   | S-071     |
-| [S-073](S-073-web-push.md)                  | Web push                      | todo        | S-071     |
+| [S-072](S-072-notifications-email.md)       | Notifications email           | done        | S-071     |
+| [S-073](S-073-web-push.md)                  | Web push                      | done   | S-071     |
 
 ## E08 — Post-MVP
 
 | Story                              | Titre                             | Statut | Dépend de           |
 | ---------------------------------- | --------------------------------- | ------ | ------------------- |
-| [S-080](S-080-mobile-capacitor.md) | App mobile Capacitor + push natif | todo   | S-050, S-051, S-073 |
+| [S-080](S-080-mobile-pwa.md) | App mobile PWA installable (sans store) | todo   | S-050, S-051, S-073 |

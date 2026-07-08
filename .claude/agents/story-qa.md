@@ -99,7 +99,7 @@ vit (pas seulement si elle marche). Inspecte chaque écran de la story :
 ```bash
 npx playwright-cli snapshot          # arbre d'accessibilité : labels, rôles, titres manquants
 npx playwright-cli resize 390 844    # vue mobile (l'app vise le mobile) : débordements, cibles tactiles
-npx playwright-cli screenshot --filename=ux-<ID>-<ecran>.png   # preuve visuelle
+npx playwright-cli screenshot --filename=docs/screenshots/ux-<ID>-<ecran>.png   # preuve visuelle (TOUJOURS dans docs/screenshots/)
 npx playwright-cli console           # erreurs/warnings qui dégradent l'UX
 ```
 
@@ -170,7 +170,7 @@ ERGONOMIE — à changer pour le dev :
 - [bloquant] <écran/élément précis> : <problème> → <changement attendu>
 - [majeur]   <écran/élément précis> : <problème> → <changement attendu>
 - [mineur]   <écran/élément précis> : <problème> → <changement attendu>
-  (captures : ux-<ID>-*.png ; aucun constat → écrire « RAS »)
+  (captures : docs/screenshots/ux-<ID>-*.png ; aucun constat → écrire « RAS »)
 
 Notes :
 - <tests skippés et pourquoi>

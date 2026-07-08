@@ -13,6 +13,14 @@ Statuts : `à faire` · `fait` · `ignoré` (avec raison).
 
 ---
 
+## S-073 — Web push — 2026-07-08
+
+- [mineur] `à faire` — Page `/app/settings/notifications`, état « permission denied » : le message `push-denied-msg` est clair mais aucun lien/bouton ne guide l'utilisateur vers les réglages navigateur. → Ajouter un court texte d'aide (« Chrome : ⚙️ à gauche de la barre d'adresse → Notifications ») pour réduire la friction.
+- [mineur] `à faire` — Section push, compteur d'abonnements : « X abonnements push enregistrés sur votre compte » suppose que l'utilisateur distingue « appareil » et « compte ». Risque de confusion entre la case Push de la matrice (préférence type) et le bouton « Activer sur cet appareil » (abonnement navigateur). → Une infobulle (?) sur l'en-tête de colonne « Push » renvoyant vers la section abonnement.
+- [mineur] `à faire` — Bouton « Activer les notifications push sur cet appareil » : pas d'`aria-live` pour annoncer la transition « Activation… → activé ». Le toast sonner couvre le retour. → Laisser ou ajouter `aria-live`.
+
+---
+
 ## S-072 — Notifications email — 2026-07-07
 
 - [mineur] `à faire` — Email footer (texte brut) : le libellé du lien « gérer vos notifications » est l'URL complète plutôt qu'un libellé humain. → Côté texte simple, formuler « gérer mes notifications : <url> » au lieu de l'URL seule (le HTML a déjà un `<a>` correct).

@@ -104,3 +104,8 @@ npx supabase start|stop|status            # instance Supabase locale (Docker)
 - Prettier : tabs, single quotes, width 100 (`.prettierrc`) — `npm run format`.
 - Commits : `feat(S-0XX): titre` pour les stories, conventionnels sinon.
 - Textes UI en **français** (utilisateurs cibles francophones).
+- **Captures d'écran UX** : toutes dans `docs/screenshots/` (nom
+  `ux-S-0XX-<ecran>.png`). Les agents qui prennent des screenshots (QA,
+  exploration) les écrivent **uniquement** là ; les agents qui ont besoin de
+  voir une capture existante les cherchent dans `docs/screenshots/`. Ne jamais
+  laisser de `.png` UX à la racine du repo.

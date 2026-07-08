@@ -1,7 +1,7 @@
 ---
 id: S-073
 epic: E07 — Notifications
-status: todo
+status: done
 depends_on: [S-071]
 ---
 
