@@ -13,6 +13,14 @@ Statuts : `à faire` · `fait` · `ignoré` (avec raison).
 
 ---
 
+## S-080 — App mobile PWA installable — 2026-07-09
+
+- [mineur] `à faire` — Bouton PWA : libellé « Installer l'app sur mon téléphone » affiché y compris sur desktop, où la formulation « sur mon téléphone » est décalée. → Libellé neutre (« Installer l'application ») ou conditionné à `detectPlatform()` mobile.
+- [mineur] `à faire` — Panneau d'instructions desktop (Chrome) : tombe sur la branche générique (« Ouvrez le menu du navigateur… ») plutôt que d'indiquer `⋮ → Installer l'application` comme pour Android. → Affiner la détection desktop Chrome.
+- [mineur] `à faire` — Aucun feedback visuel pendant l'affichage du prompt natif (le bouton reste statique). → État `disabled`/loading pendant `await deferredPrompt.prompt()`.
+
+---
+
 ## S-073 — Web push — 2026-07-08
 
 - [mineur] `à faire` — Page `/app/settings/notifications`, état « permission denied » : le message `push-denied-msg` est clair mais aucun lien/bouton ne guide l'utilisateur vers les réglages navigateur. → Ajouter un court texte d'aide (« Chrome : ⚙️ à gauche de la barre d'adresse → Notifications ») pour réduire la friction.

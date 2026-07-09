@@ -1,7 +1,7 @@
 ---
 id: S-080
 epic: E08 — Post-MVP
-status: in-progress
+status: done
 depends_on: [S-050, S-051, S-073]
 ---
 

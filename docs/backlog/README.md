@@ -76,4 +76,4 @@ chaque fichier story ; ce tableau doit rester synchronisé.
 
 | Story                        | Titre                                   | Statut      | Dépend de           |
 | ---------------------------- | --------------------------------------- | ----------- | ------------------- |
-| [S-080](S-080-mobile-pwa.md) | App mobile PWA installable (sans store) | in-progress | S-050, S-051, S-073 |
+| [S-080](S-080-mobile-pwa.md) | App mobile PWA installable (sans store) | done | S-050, S-051, S-073 |
