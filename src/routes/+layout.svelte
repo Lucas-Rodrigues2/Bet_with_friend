@@ -8,7 +8,8 @@
 	import NotificationBell from '$lib/components/NotificationBell.svelte';
 	import { onMount } from 'svelte';
 	import { initAnalytics, identifyUser } from '$lib/analytics/client';
-	import { registerServiceWorker } from '$lib/push';
+	// Effet de bord : enregistre le service worker PWA au chargement (S-080).
+	import '../service-worker-companion';
 
 	let { children, data } = $props();
 
@@ -19,10 +20,6 @@
 		initAnalytics();
 		if (data.session?.user?.id) {
 			identifyUser(data.session.user.id);
-			// Enregistre le service worker Web Push (nécessaire pour les
-			// notifications push côté navigateur). Idempotent et best-effort :
-			// no-op si le navigateur ne supporte pas les SW / si déjà enregistré.
-			void registerServiceWorker();
 		}
 	});
 
@@ -37,6 +34,24 @@
 					.slice(0, 2)
 			: '?'
 	);
+
+	// Au logout, on vide le Cache Storage du service worker PWA AVANT que la
+	// navigation n'ait lieu : les pages et assets ont pu être rendus avec des
+	// PII pour l'utilisateur courant (S-080 : correction de fuite sur appareil
+	// partagé). Best-effort : si l'API CacheStorage n'existe pas, on laisse la
+	// navigation continuer.
+	async function clearPwaCachesOnLogout(event: SubmitEvent) {
+		event.preventDefault();
+		try {
+			if (typeof caches !== 'undefined' && caches.keys) {
+				const keys = await caches.keys();
+				await Promise.all(keys.map((k) => caches.delete(k)));
+			}
+		} catch {
+			/* best-effort */
+		}
+		(event.target as HTMLFormElement).submit();
+	}
 </script>
 
 <svelte:head>
@@ -45,7 +60,10 @@
 </svelte:head>
 
 <div class="flex min-h-screen flex-col">
-	<header class="border-border bg-background sticky top-0 z-50 border-b">
+	<header
+		class="border-border bg-background sticky top-0 z-50 border-b"
+		style="padding-top: env(safe-area-inset-top);"
+	>
 		<div class="container mx-auto flex h-14 items-center justify-between px-4">
 			<a href={homeHref} class="flex items-center gap-2 font-semibold">
 				<span class="text-primary text-xl">🎲</span>
@@ -82,11 +100,11 @@
 							>
 						</span>
 					</a>
-					<form method="POST" action="/logout">
+					<form method="POST" action="/logout" onsubmit={clearPwaCachesOnLogout}>
 						<Button type="submit" variant="outline" size="sm">Déconnexion</Button>
 					</form>
 				{:else if data.session}
-					<form method="POST" action="/logout">
+					<form method="POST" action="/logout" onsubmit={clearPwaCachesOnLogout}>
 						<Button type="submit" variant="outline" size="sm">Déconnexion</Button>
 					</form>
 				{:else}
@@ -101,7 +119,7 @@
 		<GuestBanner />
 	{/if}
 
-	<main class="flex-1">
+	<main class="flex-1" style="padding-bottom: env(safe-area-inset-bottom);">
 		{@render children()}
 	</main>
 </div>

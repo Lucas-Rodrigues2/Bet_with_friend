@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { Button } from '$lib/components/ui/button/index.js';
+	import PwaInstallButton from '$lib/components/PwaInstallButton.svelte';
 
 	let { data } = $props();
 </script>
@@ -27,5 +28,10 @@
 				<Button href="/signup" variant="outline" size="lg">Créer un compte</Button>
 			</div>
 		{/if}
+
+		<!-- Installation PWA (S-080) -->
+		<div class="mt-2">
+			<PwaInstallButton />
+		</div>
 	</div>
 </div>

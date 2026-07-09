@@ -1,7 +1,7 @@
 ---
 id: S-080
 epic: E08 — Post-MVP
-status: todo
+status: in-progress
 depends_on: [S-050, S-051, S-073]
 ---
 
@@ -55,6 +55,7 @@ hébergé — aucun build natif à maintenir, pas de store à publier.
 
 ⚠️ L'installation PWA réelle n'est pas automatisable dans la boucle QA
 Playwright (pas d'émulateur). La QA de cette story se limite à :
+
 - `npm run build` OK, `manifest.webmanifest` et SW servis correctement.
 - Non-régression complète de la suite E2E.
 - Vérification du bouton « Installer l'app » : présent, affiche les

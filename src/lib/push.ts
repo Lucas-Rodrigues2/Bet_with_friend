@@ -4,9 +4,12 @@
 // abonnement push auprès du navigateur, et le synchroniser avec le serveur
 // (POST/DELETE vers la form action de /app/settings/notifications).
 //
-// Le service worker `/sw.js` est enregistré au chargement de l'app (layout)
-// via registerServiceWorker() ; il doit être actif avant d'appeler
-// `pushManager.subscribe` (qui requiert un SW actif sur le scope).
+// Le service worker PWA est servi par SvelteKit à `/service-worker.js`
+// (construit depuis `src/service-worker.ts`, S-080). Il est enregistré au
+// chargement de l'app (layout) via registerServiceWorker() / companion, et
+// aussi automatiquement par SvelteKit (`kit.serviceWorker.register = true` par
+// défaut) ; il doit être actif avant d'appeler `pushManager.subscribe` (qui
+// requiert un SW actif sur le scope).
 
 import { browser } from '$app/environment';
 import { PUBLIC_VAPID_PUBLIC_KEY } from '$env/static/public';
@@ -49,18 +52,21 @@ function urlBase64ToUint8Array(base64String: string): Uint8Array<ArrayBuffer> {
 let _swRegistration: ServiceWorkerRegistration | null = null;
 
 /**
- * Enregistre le service worker `/sw.js`. Idempotent : ne réenregistre pas
+ * Enregistre le service worker PWA (`/service-worker.js`, construit par
+ * SvelteKit depuis `src/service-worker.ts`). Idempotent : ne réenregistre pas
  * s'il l'est déjà. Retourne la registration (active ou pas) pour permettre
  * `pushManager.subscribe`.
  *
- * Appelé au montage du layout app (browser-only).
+ * Appelé au montage du layout app (browser-only) et par `subscribeToPush`.
  */
 export async function registerServiceWorker(): Promise<ServiceWorkerRegistration | null> {
 	if (!browser || !('serviceWorker' in navigator)) return null;
 	if (_swRegistration) return _swRegistration;
 	try {
 		// scope racine : le SW contrôle tout le site.
-		_swRegistration = await navigator.serviceWorker.register('/sw.js', { scope: '/' });
+		_swRegistration = await navigator.serviceWorker.register('/service-worker.js', {
+			scope: '/'
+		});
 		// S'assurer que le SW est actif avant de retourner.
 		await navigator.serviceWorker.ready;
 		return _swRegistration;
