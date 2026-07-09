@@ -14,7 +14,7 @@ import {
 	setMemberCanInvite
 } from '$lib/server/invitations';
 import { removeMember, promoteMember } from '$lib/server/groups';
-import { getGroupBetsForUser, getJudgingBetsForJuror } from '$lib/server/bets';
+import { getGroupBetsForUserFiltered, getJudgingBetsForJuror } from '$lib/server/bets';
 import { getMyNetBalance } from '$lib/server/ledger';
 import { getMyPendingForfeitsForGroup } from '$lib/server/forfeits';
 import type { Actions, PageServerLoad } from './$types';
@@ -81,8 +81,10 @@ export const load: PageServerLoad = async ({ locals, params }) => {
 	const canSeeInvitations = isAdmin || group.canInvite;
 	const invitations = canSeeInvitations ? await getGroupInvitations(id) : [];
 
-	// Charger les paris visibles par cet utilisateur
-	const bets = await getGroupBetsForUser(id, user.id);
+	// Charger les paris visibles par cet utilisateur (displayStatus agrégé calculé
+	// depuis les matches — cf. S-062. On ne peut pas afficher bet.status brut qui
+	// reste 'open' même après résolution d'un duel/closest).
+	const bets = await getGroupBetsForUserFiltered(id, user.id);
 
 	// Charger les paris en jugement où l'utilisateur est juré mais pas dans la liste de visibilité
 	const betsToJudge = await getJudgingBetsForJuror(id, user.id);
@@ -141,6 +143,7 @@ export const load: PageServerLoad = async ({ locals, params }) => {
 			stakeAmount: b.stakeAmount,
 			forfeitDescription: b.forfeitDescription,
 			status: b.status,
+			displayStatus: b.displayStatus,
 			createdAt: b.createdAt,
 			propositionStatus: b.propositionStatus,
 			propositionTargetId: b.propositionTargetId

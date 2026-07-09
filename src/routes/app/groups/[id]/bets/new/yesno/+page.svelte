@@ -540,7 +540,7 @@
 				Les jurés désignent le gagnant. Un juré peut aussi être participant.
 			</p>
 			<div class="border-border divide-border rounded-md border divide-y" data-testid="jury-list">
-				{#each data.otherMembers as member (member.userId)}
+				{#each data.allMembers as member (member.userId)}
 					<label
 						class="flex cursor-pointer items-center gap-3 px-3 py-2 hover:bg-accent/50"
 						data-testid="jury-member-{member.userId}"
@@ -552,7 +552,9 @@
 							bind:checked={jurySelected[member.userId]}
 							class="h-4 w-4 rounded border-border"
 						/>
-						<span class="text-foreground text-sm">{member.pseudo}</span>
+						<span class="text-foreground text-sm">
+							{member.pseudo}{member.userId === data.currentUserId ? ' (moi)' : ''}
+						</span>
 					</label>
 				{/each}
 			</div>

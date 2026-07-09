@@ -11,6 +11,20 @@
 
 	const appHref = resolveRoute('/app');
 
+	// Libellés / styles du badge de statut d'affichage (cf. S-062 displayStatus).
+	const displayStatusLabels: Record<string, string> = {
+		active: 'En cours',
+		judging: 'En jugement',
+		resolved: 'Terminé',
+		cancelled: 'Annulé'
+	};
+	const displayStatusClasses: Record<string, string> = {
+		active: 'bg-green-100 text-green-700',
+		judging: 'bg-amber-100 text-amber-700',
+		resolved: 'bg-blue-100 text-blue-700',
+		cancelled: 'bg-muted text-muted-foreground'
+	};
+
 	let showNewBetMenu = $state(false);
 	let showInviteForm = $state(false);
 	let inviteLoading = $state(false);
@@ -319,11 +333,12 @@
 								</p>
 							</div>
 							<span
-								class="shrink-0 rounded-full px-2 py-0.5 text-xs font-medium {bet.status === 'open'
-									? 'bg-green-100 text-green-700'
-									: 'bg-muted text-muted-foreground'}"
+								class="shrink-0 rounded-full px-2 py-0.5 text-xs font-medium {displayStatusClasses[
+									bet.displayStatus
+								] ?? 'bg-muted text-muted-foreground'}"
+								data-testid="bet-status"
 							>
-								{bet.status === 'open' ? 'Ouvert' : bet.status}
+								{displayStatusLabels[bet.displayStatus] ?? bet.displayStatus}
 							</span>
 						</a>
 					</li>
