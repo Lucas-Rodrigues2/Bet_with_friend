@@ -9,10 +9,14 @@ ARG PUBLIC_SUPABASE_URL
 ARG PUBLIC_SUPABASE_ANON_KEY
 ARG PUBLIC_POSTHOG_KEY
 ARG PUBLIC_POSTHOG_HOST
+ARG PUBLIC_VAPID_PUBLIC_KEY
 ENV PUBLIC_SUPABASE_URL=$PUBLIC_SUPABASE_URL
 ENV PUBLIC_SUPABASE_ANON_KEY=$PUBLIC_SUPABASE_ANON_KEY
 ENV PUBLIC_POSTHOG_KEY=$PUBLIC_POSTHOG_KEY
 ENV PUBLIC_POSTHOG_HOST=$PUBLIC_POSTHOG_HOST
+# Clé publique VAPID, baked dans le bundle client (lib/push.ts) et lue côté
+# serveur ($env/static/public). Les clés privées VAPID sont des secrets runtime.
+ENV PUBLIC_VAPID_PUBLIC_KEY=$PUBLIC_VAPID_PUBLIC_KEY
 
 # Variables privées — placeholder uniquement pour que le build ne plante pas.
 # postgres-js est lazy : aucune vraie connexion n'est établie pendant le build.
