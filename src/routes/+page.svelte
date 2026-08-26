@@ -47,6 +47,7 @@
 		name="description"
 		content="Créez un groupe, lancez des paris entre amis avec des points ou des gages, puis laissez votre jury désigner les gagnants."
 	/>
+	<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
 	<link rel="canonical" href="https://bet-with-friends.fly.dev/" />
 	<meta property="og:type" content="website" />
 	<meta property="og:url" content="https://bet-with-friends.fly.dev/" />

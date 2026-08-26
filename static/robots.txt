@@ -1,5 +1,4 @@
-# Allow crawling everything by default.
 User-agent: *
-Disallow:
+Allow: /
 
 Sitemap: https://bet-with-friends.fly.dev/sitemap.xml
