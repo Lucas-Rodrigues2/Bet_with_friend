@@ -237,7 +237,7 @@
 			</div>
 
 			<div class="mt-14 grid gap-px overflow-hidden rounded-3xl bg-white/15 md:grid-cols-3">
-					{#each steps as step (step.number)}
+				{#each steps as step (step.number)}
 					<div class="group relative bg-slate-950 p-7 sm:p-9">
 						<div class="flex items-start justify-between">
 							<div

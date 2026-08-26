@@ -26,10 +26,3 @@ vite.config.ts.timestamp-*
 /playwright-report/
 /test-results/
 e2e/.auth/
-.playwright-cli/
-
-# Worktrees isolés des stories parallèles (gérés par scripts/worktree.mjs)
-/.worktrees/
-
-# Claude local settings (can contain credentials from playwright-cli allow-list)
-.claude/settings.local.json

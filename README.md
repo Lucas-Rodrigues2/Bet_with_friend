@@ -1,42 +1,53 @@
-# sv
+# Bet With Friend
 
-Everything you need to build a Svelte project, powered by [`sv`](https://github.com/sveltejs/cli).
+Application web de paris entre amis, basée sur des points virtuels et des gages — jamais d'argent réel.
 
-## Creating a project
+## Stack
 
-If you're seeing this, you've probably already done this step. Congrats!
+- SvelteKit 2 et Svelte 5
+- Supabase (PostgreSQL, authentification, Realtime et Storage)
+- Drizzle ORM
+- Tailwind CSS 4 et shadcn-svelte
+- Playwright pour les tests E2E
+- Déploiement Docker sur Fly.io
 
-```sh
-# create a new project
-npx sv create my-app
+## Installation
+
+```bash
+npm install
+cp .env.example .env
 ```
 
-To recreate this project with the same configuration:
+Renseigner ensuite les variables requises dans `.env`.
 
-```sh
-# recreate this project
-npx sv@0.16.1 create --template minimal --types ts --add prettier eslint tailwindcss="plugins:none" drizzle="database:postgresql+postgresql:postgres.js+docker:no" --no-download-check --install npm .
-```
+## Développement
 
-## Developing
-
-Once you've created a project and installed dependencies with `npm install` (or `pnpm install` or `yarn`), start a development server:
-
-```sh
+```bash
 npm run dev
-
-# or start the server and open the app in a new browser tab
-npm run dev -- --open
 ```
 
-## Building
+Le serveur de développement est disponible par défaut sur `http://localhost:5173`.
 
-To create a production version of your app:
+## Vérifications
 
-```sh
+```bash
+npm run check
+npm run lint
+npm run test:e2e
 npm run build
 ```
 
-You can preview the production build with `npm run preview`.
+## Base de données
 
-> To deploy your app, you may need to install an [adapter](https://svelte.dev/docs/kit/adapters) for your target environment.
+```bash
+npm run db:push       # synchroniser le schéma en développement
+npm run db:generate   # générer une migration Drizzle
+npm run db:migrate    # appliquer les migrations
+npm run db:reset      # réinitialiser la base Supabase locale
+```
+
+Le schéma applicatif se trouve dans `src/lib/server/db/schema.ts`. Les migrations Supabase sont conservées dans `supabase/migrations/`.
+
+## Déploiement
+
+L'image de production est construite avec le `Dockerfile`. Le workflow `.github/workflows/deploy.yml` déploie la branche `master` sur Fly.io.

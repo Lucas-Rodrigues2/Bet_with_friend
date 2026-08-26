@@ -9,11 +9,8 @@ bun.lockb
 /static/
 /drizzle/
 
-# QA agent — managed separately, may use French characters in string literals
+# Tests E2E — formatés séparément pour préserver les scénarios existants
 /e2e/
 
 # Temporary data files
 init-data.json
-
-# Local Claude settings (managed by Claude Code, not subject to project formatting)
-.claude/settings.local.json

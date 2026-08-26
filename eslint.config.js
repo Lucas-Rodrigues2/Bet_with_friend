@@ -102,7 +102,7 @@ export default defineConfig(
 		}
 	},
 	{
-		// e2e files are managed by the QA agent — ignore their linting
+		// Les tests E2E utilisent des helpers dynamiques qui nécessitent des règles assouplies.
 		files: ['e2e/**/*.ts'],
 		rules: {
 			'@typescript-eslint/no-unused-vars': 'off',

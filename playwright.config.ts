@@ -2,10 +2,7 @@ import { defineConfig, devices } from '@playwright/test';
 import fs from 'node:fs';
 import path from 'node:path';
 
-// Charge le .env du worktree courant (isolation parallèle) puis .env.test en
-// repli. N'écrase jamais une variable déjà présente dans l'environnement.
-// En mode parallèle, scripts/worktree.mjs écrit un .env avec les ports décalés
-// (PUBLIC_SUPABASE_URL, DATABASE_URL, PLAYWRIGHT_PORT) propres au slot.
+// Charge .env puis .env.test en repli, sans écraser les variables déjà définies.
 for (const file of ['.env', '.env.test']) {
 	const p = path.resolve(process.cwd(), file);
 	if (!fs.existsSync(p)) continue;
