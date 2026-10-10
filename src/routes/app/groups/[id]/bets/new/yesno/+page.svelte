@@ -82,7 +82,7 @@
 		</a>
 	</div>
 
-	<h1 class="text-foreground mb-2 text-2xl font-bold">Nouveau pari Oui / Non</h1>
+	<h1 class="text-foreground mb-2 text-2xl font-bold">Nouveau défi</h1>
 	<p class="text-muted-foreground mb-6 text-sm">
 		Choisissez le mode : duel direct ou défi ouvert à plusieurs.
 	</p>
@@ -108,7 +108,7 @@
 					: 'bg-muted text-muted-foreground hover:bg-muted/80'}"
 				data-testid="mode-open"
 			>
-				Défi ouvert (plusieurs)
+				Ouvert à tous (plusieurs)
 			</button>
 		</div>
 		<p class="text-muted-foreground mt-2 text-xs">

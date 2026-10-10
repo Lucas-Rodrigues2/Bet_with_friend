@@ -166,7 +166,7 @@ test.describe('S-013 — Tracking PostHog page groupe', () => {
 		expect(ev!.properties['type']).toBe('closest');
 	});
 
-	test('new_bet_type_selected — event client avec type=yesno au clic « Oui / Non »', async ({
+	test('new_bet_type_selected — event client avec type=yesno au clic « Défi »', async ({
 		page
 	}) => {
 		const { getCapturedEvents, exposeSpyPromise } = interceptPosthog(page);

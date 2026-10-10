@@ -153,7 +153,7 @@
 							</p>
 							<p class="text-muted-foreground text-xs">
 								{#if bet.type === 'yesno'}
-									Duel Oui/Non
+									Défi
 								{:else if bet.stakeType === 'points'}
 									{bet.stakeAmount} pts
 								{:else}

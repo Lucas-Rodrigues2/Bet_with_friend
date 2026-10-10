@@ -243,7 +243,7 @@ function buildPushPayload(
 	type: NotificationType,
 	payload: NotificationPayload
 ): { title: string; body: string; url: string | null } {
-	const title = 'Bet With Friend';
+	const title = 'Bet With Friends';
 	const body = getNotificationLabel(type, payload);
 	const href = getNotificationHref(type, payload);
 	const origin = env.PUBLIC_SITE_URL ?? 'http://localhost:5173';

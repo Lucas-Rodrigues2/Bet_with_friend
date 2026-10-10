@@ -1,5 +1,5 @@
 /**
- * S-030 — Tracking PostHog (créer un duel Oui/Non)
+ * S-030 — Tracking PostHog (créer un défi)
  *
  * Events instrumentés dans cette story :
  *   Serveur :

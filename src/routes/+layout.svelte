@@ -56,7 +56,7 @@
 
 <svelte:head>
 	<link rel="icon" href={favicon} />
-	<title>Bet With Friend</title>
+	<title>Bet With Friends</title>
 </svelte:head>
 
 <div class="flex min-h-screen flex-col">
@@ -67,7 +67,7 @@
 		<div class="container mx-auto flex h-14 items-center justify-between px-4">
 			<a href={homeHref} class="flex items-center gap-2 font-semibold">
 				<span class="text-primary text-xl">🎲</span>
-				<span class="text-foreground text-lg font-bold">Bet With Friend</span>
+				<span class="text-foreground text-lg font-bold">Bet With Friends</span>
 			</a>
 
 			<nav class="flex items-center gap-3">

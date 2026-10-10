@@ -152,7 +152,7 @@ test('formulaire yesno affiche le toggle mode duel/open', async ({ page }) => {
 	await page.goto(NEW_YESNO_URL);
 
 	// Le titre de la page a changé pour refléter les deux modes
-	await expect(page.getByRole('heading', { name: 'Nouveau pari Oui / Non' })).toBeVisible();
+	await expect(page.getByRole('heading', { name: 'Nouveau défi' })).toBeVisible();
 
 	// Toggle visible
 	await expect(page.getByTestId('mode-toggle')).toBeVisible();
@@ -737,6 +737,6 @@ test('non-régression : créer un duel (mode duel) via le nouveau formulaire', a
 		new RegExp(`/app/groups/${SEEDED_GROUP_ID}/bets/[0-9a-f-]+`)
 	);
 
-	// Badge = Duel Oui / Non (pas Défi ouvert)
-	await expect(page.getByTestId('bet-type-badge')).toHaveText('Duel Oui / Non');
+	// Badge = Défi (pas un pari au plus proche)
+	await expect(page.getByTestId('bet-type-badge')).toHaveText('Défi');
 });

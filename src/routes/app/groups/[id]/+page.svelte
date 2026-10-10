@@ -285,7 +285,7 @@
 							data-testid="new-bet-yesno"
 							onclick={() => selectBetType('yesno')}
 						>
-							Oui / Non
+							Défi
 						</a>
 					</div>
 				{/if}
@@ -324,7 +324,7 @@
 								</div>
 								<p class="text-muted-foreground text-xs">
 									{#if bet.type === 'yesno'}
-										Duel Oui/Non
+										Défi
 									{:else if bet.stakeType === 'points'}
 										{bet.stakeAmount} pts
 									{:else}

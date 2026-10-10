@@ -39,7 +39,7 @@ test.describe('S-080 — Manifest & assets PWA servis', () => {
 		expect(ct).toMatch(/manifest\+json|json/i);
 
 		const manifest = await res.json();
-		expect(manifest['name']).toBe('Bet With Friend');
+		expect(manifest['name']).toBe('Bet With Friends');
 		expect(manifest['short_name']).toBe('BetWF');
 		expect(manifest['display']).toBe('standalone');
 		expect(manifest['theme_color']).toMatch(/^#[0-9a-fA-F]{6}$/);

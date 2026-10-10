@@ -1,5 +1,5 @@
 /**
- * S-030 — Créer un duel Oui/Non
+ * S-030 — Créer un défi
  *
  * Critères d'acceptation :
  * 1. Formulaire /app/groups/[id]/bets/new/yesno : titre, description, choix A/B,
@@ -161,7 +161,7 @@ test('formulaire de création yesno affiché pour Alice', async ({ page }) => {
 	await page.goto(NEW_YESNO_URL);
 
 	// Titre de la page
-	await expect(page.getByRole('heading', { name: 'Nouveau pari Oui / Non' })).toBeVisible();
+	await expect(page.getByRole('heading', { name: 'Nouveau défi' })).toBeVisible();
 
 	// Champ titre
 	await expect(page.getByTestId('input-title')).toBeVisible();
@@ -297,8 +297,8 @@ test('page duel affiche badge type, titre, camps, mises et échéance', async ({
 		new RegExp(`/app/groups/${SEEDED_GROUP_ID}/bets/[0-9a-f-]+`)
 	);
 
-	// Type badge : Duel Oui / Non
-	await expect(page.getByTestId('bet-type-badge')).toHaveText('Duel Oui / Non');
+	// Type badge : Défi
+	await expect(page.getByTestId('bet-type-badge')).toHaveText('Défi');
 
 	// Titre
 	await expect(page.getByTestId('bet-title')).toHaveText('[E2E] Il pleuvra demain détail');

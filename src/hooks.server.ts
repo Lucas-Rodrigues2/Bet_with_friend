@@ -52,9 +52,16 @@ export const handle: Handle = async ({ event, resolve }) => {
 		});
 	}
 
+	// La page /en/ est en anglais : on adapte la balise <html lang> en conséquence.
+	// Les autres routes (application incluse) restent en français.
+	const isEnglishPage = event.url.pathname.startsWith('/en');
+
 	return resolve(event, {
 		filterSerializedResponseHeaders(name) {
 			return name === 'content-range' || name === 'x-supabase-api-version';
+		},
+		transformPageChunk({ html }) {
+			return isEnglishPage ? html.replace('<html lang="fr">', '<html lang="en">') : html;
 		}
 	});
 };

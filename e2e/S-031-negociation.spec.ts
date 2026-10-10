@@ -1,5 +1,5 @@
 /**
- * S-031 — Négociation du duel Oui/Non
+ * S-031 — Négociation du défi
  *
  * Critères d'acceptation :
  * 1. La cible (Bob) a Accepter / Refuser / Contre-proposer ; le créateur (Alice) attend.

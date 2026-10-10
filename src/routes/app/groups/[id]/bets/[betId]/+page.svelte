@@ -335,7 +335,7 @@
 						class="bg-blue-100 text-blue-700 rounded-full px-2 py-0.5 text-xs font-medium"
 						data-testid="bet-type-badge"
 					>
-						Duel Oui / Non
+						Défi
 					</span>
 				{:else}
 					<span

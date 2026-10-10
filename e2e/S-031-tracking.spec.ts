@@ -1,5 +1,5 @@
 /**
- * S-031 — Tracking PostHog (Négociation du duel Oui/Non)
+ * S-031 — Tracking PostHog (Négociation du défi)
  *
  * Events instrumentés (serveur uniquement — les mutations de négociation
  * sont des faits métier; pas d'events client ajoutés pour cette story) :

@@ -45,7 +45,7 @@
 		{:else}
 			<div class="mb-8 text-center">
 				<h1 class="text-foreground text-3xl font-bold">Créer un compte</h1>
-				<p class="text-muted-foreground mt-2">Rejoignez vos amis sur Bet With Friend !</p>
+				<p class="text-muted-foreground mt-2">Rejoignez vos amis sur Bet With Friends !</p>
 			</div>
 
 			<div class="mb-6">

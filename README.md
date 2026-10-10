@@ -1,4 +1,4 @@
-# Bet With Friend
+# Bet With Friends
 
 Application web de paris entre amis, basée sur des points virtuels et des gages — jamais d'argent réel.
 

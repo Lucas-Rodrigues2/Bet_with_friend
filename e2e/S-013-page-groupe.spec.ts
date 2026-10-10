@@ -3,7 +3,7 @@
  *
  * Critères d'acceptation :
  * 1. /app/groups/[id] affiche : nom, image, devise, sections « Paris », « Membres », « Ardoise »
- * 2. Section Paris : état vide propre + bouton « Nouveau pari » (menu : « Au plus proche » / « Oui/Non »)
+ * 2. Section Paris : état vide propre + bouton « Nouveau pari » (menu : « Au plus proche » / « Défi »)
  * 3. Solde ardoise « 0 » affiché dans la devise du groupe
  * 4. Non-membre → 404/403
  *
@@ -11,7 +11,7 @@
  * - Alice ouvre son groupe → nom + sections visibles, état vide des paris
  * - Dave (non membre) accède à l'URL → refus (404)
  * - Le bouton « Nouveau pari » propose les deux types
- * - Liens « Au plus proche » et « Oui / Non » pointent vers /bets/new?type=...
+ * - Liens « Au plus proche » et « Défi » pointent vers /bets/new?type=...
  * - Guard auth : non connecté → redirigé vers /login
  * - Guard auth pour /bets/new : non connecté → /login
  * - Dave (non membre) ne peut pas accéder à /bets/new → 404
@@ -122,7 +122,7 @@ test.describe('S-013 — Page groupe (dashboard)', () => {
 		await expect(page.getByTestId('new-bet-btn')).toBeVisible();
 	});
 
-	test('bouton « Nouveau pari » propose « Au plus proche » et « Oui / Non »', async ({ page }) => {
+	test('bouton « Nouveau pari » propose « Au plus proche » et « Défi »', async ({ page }) => {
 		await login(page, 'alice');
 		await page.goto(GROUP_URL);
 		// Attendre hydratation complète avant de cliquer
@@ -157,7 +157,7 @@ test.describe('S-013 — Page groupe (dashboard)', () => {
 		await page.goto(`${GROUP_URL}/bets/new/yesno`);
 
 		await expect(page).toHaveURL(`${GROUP_URL}/bets/new/yesno`);
-		await expect(page.getByRole('heading', { name: /Nouveau pari Oui/ })).toBeVisible();
+		await expect(page.getByRole('heading', { name: /Nouveau défi/ })).toBeVisible();
 	});
 
 	test('page /bets/new/closest a un lien de retour vers le groupe', async ({ page }) => {

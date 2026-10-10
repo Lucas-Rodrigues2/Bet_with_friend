@@ -37,7 +37,7 @@ export function deepLinkFor(
 /** Sujet FR (préfixe marque + libellé court). */
 function subjectFor(type: NotificationType, payload: NotificationPayload): string {
 	const label = shortLabel(type, payload);
-	return `[Bet With Friend] ${label}`;
+	return `[Bet With Friends] ${label}`;
 }
 
 /** Libellé court pour le sujet. */
@@ -96,7 +96,7 @@ function bodyFor(type: NotificationType, payload: NotificationPayload): string {
 		case 'dispute_opened':
 			return `Un litige a été ouvert pour le pari « ${title} ».`;
 		default:
-			return 'Vous avez une nouvelle notification sur Bet With Friend.';
+			return 'Vous avez une nouvelle notification sur Bet With Friends.';
 	}
 }
 
@@ -167,7 +167,7 @@ export function renderEmail(
     ${ctaBlock}
     <hr style="margin:32px 0;border:none;border-top:1px solid #e4e4e7;" />
     <p style="margin:0;font-size:12px;color:#71717a;line-height:1.5;">
-      Vous recevez cet email car les notifications email sont activées pour cet événement sur Bet With Friend.
+      Vous recevez cet email car les notifications email sont activées pour cet événement sur Bet With Friends.
       <br />Gérer vos notifications : <a href="${escapeHtml(manageUrl)}" style="color:#3f3f46;">${escapeHtml(manageUrl)}</a>
     </p>
   </div>

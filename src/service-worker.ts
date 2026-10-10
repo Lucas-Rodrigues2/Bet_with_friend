@@ -175,7 +175,7 @@ self.addEventListener('fetch', (event) => {
 self.addEventListener('push', (event) => {
 	/** @type {{ title?: string, body?: string, url?: string|null }} */
 	let data: { title?: string; body?: string; url?: string | null } = {
-		title: 'Bet With Friend',
+		title: 'Bet With Friends',
 		body: 'Nouvelle notification',
 		url: null
 	};
@@ -196,7 +196,7 @@ self.addEventListener('push', (event) => {
 		}
 	}
 
-	const title = data.title || 'Bet With Friend';
+	const title = data.title || 'Bet With Friends';
 	const options = {
 		body: data.body || '',
 		// Lien profond transmis au click via `data`.

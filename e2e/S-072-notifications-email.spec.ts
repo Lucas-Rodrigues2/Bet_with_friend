@@ -316,7 +316,7 @@ test('Alice défie Bob (pref email activée par défaut) → Mailpit contient un
 	// Expéditeur configuré (EMAIL_FROM).
 	expect(mail.From.Address).toBe('noreply@betwithfriend.app');
 	// Sujet FR préfixé marque + libellé.
-	expect(mail.Subject).toMatch(/Bet With Friend/);
+	expect(mail.Subject).toMatch(/Bet With Friends/);
 	expect(mail.Subject.toLowerCase()).toContain('défie');
 	expect(mail.Subject).toContain(title);
 

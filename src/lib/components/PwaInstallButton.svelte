@@ -141,7 +141,8 @@
 						<li>Confirmez en touchant <strong>« Ajouter »</strong>.</li>
 					</ol>
 					<p class="text-muted-foreground mt-3 text-xs">
-						L'icône de Bet With Friend apparaît sur votre écran d'accueil et s'ouvre en plein écran.
+						L'icône de Bet With Friends apparaît sur votre écran d'accueil et s'ouvre en plein
+						écran.
 					</p>
 				{:else if detectPlatform() === 'android'}
 					<h3 class="mb-2 font-semibold">Installer sur Android (Chrome)</h3>
