@@ -19,6 +19,36 @@
 
 	let { data } = $props();
 
+	const jsonLd = {
+		'@context': 'https://schema.org',
+		'@graph': [
+			{
+				'@type': 'WebSite',
+				name: 'Bet With Friend',
+				url: 'https://bet-with-friends.fly.dev/',
+				description:
+					'Paris entre amis avec points virtuels ou gages, sans jamais d\u2019argent réel.'
+			},
+			{
+				'@type': 'SoftwareApplication',
+				name: 'Bet With Friend',
+				url: 'https://bet-with-friends.fly.dev/',
+				applicationCategory: 'GameApplication',
+				operatingSystem: 'Web',
+				description:
+					'Créez un groupe, lancez des paris entre amis avec des points ou des gages, puis laissez votre jury désigner les gagnants.',
+				offers: {
+					'@type': 'Offer',
+					price: '0',
+					priceCurrency: 'EUR'
+				}
+			}
+		]
+	};
+
+	const jsonLdTag =
+		'<script type="application/ld+json">' + JSON.stringify(jsonLd) + '</scr' + 'ipt>';
+
 	const steps = [
 		{
 			number: '01',
@@ -56,6 +86,8 @@
 		property="og:description"
 		content="Paris entre amis avec points virtuels ou gages, sans jamais d'argent réel."
 	/>
+	<!-- eslint-disable-next-line svelte/no-at-html-tags -- balise JSON-LD statique, aucune donnée utilisateur -->
+	{@html jsonLdTag}
 </svelte:head>
 
 <div class="overflow-hidden bg-[#fbfaf7] text-slate-950">

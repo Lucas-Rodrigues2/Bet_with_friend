@@ -2,6 +2,8 @@
 
 Application web de paris entre amis, basée sur des points virtuels et des gages — jamais d'argent réel.
 
+**En ligne : [bet-with-friends.fly.dev](https://bet-with-friends.fly.dev/)**
+
 ## Stack
 
 - SvelteKit 2 et Svelte 5
