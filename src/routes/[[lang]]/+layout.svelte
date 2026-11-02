@@ -1,6 +1,5 @@
 <script lang="ts">
 	import './layout.css';
-	import favicon from '$lib/assets/favicon.svg';
 	import { Toaster } from '$lib/components/ui/sonner/index.js';
 	import { Button } from '$lib/components/ui/button/index.js';
 	import GuestBanner from '$lib/components/GuestBanner.svelte';
@@ -65,10 +64,6 @@
 	}
 </script>
 
-<svelte:head>
-	<link rel="icon" href={favicon} />
-</svelte:head>
-
 <div class="flex min-h-screen flex-col">
 	<header
 		class="sticky top-0 z-50 border-b border-[var(--bw-line)] bg-[var(--bw-paper)]/95 backdrop-blur"
@@ -76,10 +71,11 @@
 	>
 		<div class="container mx-auto flex h-16 items-center justify-between px-4">
 			<a href={homeHref} class="flex items-center gap-2.5">
-				<span
-					class="flex h-9 w-9 items-center justify-center rounded-full border border-[var(--bw-line)] bg-white text-lg"
-					aria-hidden="true">🎲</span
-				>
+				<img
+					src="/icons/icon-192.png"
+					alt=""
+					class="h-9 w-9 rounded-full border border-[var(--bw-line)] object-cover"
+				/>
 				<span class="text-[17px] font-bold tracking-[-0.02em]">Bet With Friends</span>
 			</a>
 

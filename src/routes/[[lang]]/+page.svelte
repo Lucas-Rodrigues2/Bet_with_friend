@@ -59,6 +59,13 @@
 	<link rel="alternate" hreflang="en" href="{SITE}/en" />
 	<link rel="alternate" hreflang="x-default" href="{SITE}/" />
 	<meta property="og:type" content="website" />
+	<meta property="og:image" content="{SITE}/og.png" />
+	<meta property="og:image:width" content="1200" />
+	<meta property="og:image:height" content="630" />
+	<meta property="og:image:alt" content="Bet With Friends" />
+	<meta name="twitter:card" content="summary_large_image" />
+	<meta name="twitter:title" content="Bet With Friends" />
+	<meta name="twitter:image" content="{SITE}/og.png" />
 	<meta property="og:url" content={canonical} />
 	<meta property="og:title" content="Bet With Friends" />
 	<meta property="og:description" content={description} />
