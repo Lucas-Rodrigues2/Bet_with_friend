@@ -26,6 +26,14 @@
 
 	let loading = $state(false);
 
+	// bind:value préserve la saisie pendant l'hydratation ; un simple
+	// value={...} (ou un texte réactif dans le textarea) est ré-écrit par
+	// Svelte à chaque re-rendu et efface la saisie en cours.
+	let nameValue = $state((form as { values?: { name?: string } } | null)?.values?.name ?? '');
+	let descriptionValue = $state(
+		(form as { values?: { description?: string } } | null)?.values?.description ?? ''
+	);
+
 	const appHref = resolveRoute('/app');
 
 	const typedForm = $derived(
@@ -77,7 +85,7 @@
 				maxlength={50}
 				placeholder={english ? 'e.g. Office friends' : 'Ex : Les potes du bureau'}
 				required
-				value={typedForm?.values?.name ?? ''}
+				bind:value={nameValue}
 				data-testid="group-name-input"
 			/>
 			{#if typedForm?.errors?.name}
@@ -103,8 +111,9 @@
 				maxlength={500}
 				placeholder={english ? 'A short group description…' : 'Une petite description du groupe…'}
 				class="border-input bg-background ring-offset-background placeholder:text-muted-foreground focus-visible:ring-ring flex min-h-[80px] w-full rounded-md border px-3 py-2 text-sm focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
-				data-testid="group-description-input">{typedForm?.values?.description ?? ''}</textarea
-			>
+				bind:value={descriptionValue}
+				data-testid="group-description-input"
+			></textarea>
 			{#if typedForm?.errors?.description}
 				<p class="text-destructive text-sm" data-testid="group-description-error">
 					{english
