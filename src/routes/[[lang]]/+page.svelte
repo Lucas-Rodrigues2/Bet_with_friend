@@ -5,7 +5,7 @@
 
 	let { data }: { data: PageData } = $props();
 
-	const SITE = 'https://bet-with-friends.fly.dev';
+	const SITE = 'https://gentlewagers.com';
 	const L = $derived(data.lang ?? 'fr');
 	const content = $derived(L === 'en' ? en : fr);
 	const canonical = $derived(L === 'en' ? `${SITE}/en` : `${SITE}/`);

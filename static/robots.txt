@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://bet-with-friends.fly.dev/sitemap.xml
+Sitemap: https://gentlewagers.com/sitemap.xml

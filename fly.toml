@@ -8,10 +8,16 @@ primary_region = "cdg"
     PUBLIC_POSTHOG_KEY = "phc_oT5Nwn9CLgYxRc5JE8ehfUq6TxyWCYRHEb95YkpsNGXG"
     PUBLIC_POSTHOG_HOST = "https://eu.i.posthog.com"
     PUBLIC_VAPID_PUBLIC_KEY = "BJBzHVhXqfaSWKKTeivZNFVbSp8U0jsdEbRsmmiXTVlzwqqvXEfTIjpw-l5M01LBL7EmVLwkelcmocA6-gQ8QG8"
+    PUBLIC_SITE_URL = "https://gentlewagers.com"
 
 [env]
   PORT = "3000"
-  ORIGIN = "https://bet-with-friends.fly.dev"
+  # Multi-domaines (gentlewagers.com + alias) : l'origine est déduite de
+  # l'en-tête Host de chaque requête au lieu d'être figée. PROTOCOL_HEADER
+  # fait confiance à X-Forwarded-Proto du proxy Fly pour reconstruire https://
+  # (indispensable : protection CSRF SvelteKit + redirections OAuth).
+  PROTOCOL_HEADER = "x-forwarded-proto"
+  PUBLIC_SITE_URL = "https://gentlewagers.com"
 
 [http_service]
   internal_port = 3000

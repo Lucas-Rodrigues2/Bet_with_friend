@@ -2,7 +2,7 @@
 
 Application web de paris entre amis, basée sur des points virtuels et des gages — jamais d'argent réel.
 
-**En ligne : [bet-with-friends.fly.dev](https://bet-with-friends.fly.dev/)**
+**En ligne : [gentlewagers.com](https://gentlewagers.com/)**
 
 ## Stack
 

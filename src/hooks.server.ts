@@ -6,6 +6,25 @@ import { PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY } from '$env/static/publi
 import { dev } from '$app/environment';
 
 export const handle: Handle = async ({ event, resolve }) => {
+	// Multi-domaines : tout alias (www, .fr, ancienne URL Fly) est redirigé en
+	// 301 vers le domaine canonique, chemin et query conservés. Les hôtes de
+	// dev/test (localhost) ne sont pas concernés.
+	const CANONICAL_HOST = 'gentlewagers.com';
+	const aliasHosts = new Set([
+		'www.gentlewagers.com',
+		'gentlewagers.fr',
+		'www.gentlewagers.fr',
+		'bet-with-friends.fly.dev'
+	]);
+	if (aliasHosts.has(event.url.hostname)) {
+		return new Response(null, {
+			status: 301,
+			headers: {
+				Location: `https://${CANONICAL_HOST}${event.url.pathname}${event.url.search}`
+			}
+		});
+	}
+
 	const route = event.route.id?.replace(/^\/\[\[lang\]\]/, '') || event.url.pathname;
 	const path = route.replace(/^\/(en|fr)(?=\/|$)/, '') || '/';
 	const method = event.request.method;

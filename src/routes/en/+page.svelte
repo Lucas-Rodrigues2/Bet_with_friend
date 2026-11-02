@@ -7,7 +7,7 @@
 
 	let { data }: { data: PageData } = $props();
 
-	const SITE = 'https://bet-with-friends.fly.dev';
+	const SITE = 'https://gentlewagers.com';
 	const jsonLd = {
 		'@context': 'https://schema.org',
 		'@graph': [
