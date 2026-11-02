@@ -93,9 +93,9 @@ export const fr: LandingContent = {
 	langSwitchLabel: 'English',
 	hero: {
 		badge: 'Sans argent réel. Juste l\u2019honneur.',
-		headlineLine1: 'Le groupe',
-		headlineLine2: 'a des',
-		headlineEm: 'enjeux.',
+		headlineLine1: 'Les paris entre potes',
+		headlineLine2: 'ont du',
+		headlineEm: 'piquant.',
 		tagline: 'Transforme les « je te parie que… » en vrais défis entre amis.',
 		sub: "Un groupe, une prédiction, un jury. L'app se souvient de qui avait raison et tient les comptes. Jamais d'argent réel.",
 		ctaPrimary: 'Créer un compte',
@@ -236,8 +236,8 @@ export const en: LandingContent = {
 	langSwitchLabel: 'Français',
 	hero: {
 		badge: 'No real money. Just bragging rights.',
-		headlineLine1: 'The group chat',
-		headlineLine2: 'has',
+		headlineLine1: 'Friendly bets with',
+		headlineLine2: 'real',
 		headlineEm: 'stakes.',
 		tagline: 'Turn \u201cI bet you can\u2019t\u2026\u201d into real challenges between friends.',
 		sub: 'One group, one prediction, one jury. The app remembers who was right and keeps score. Never any real money.',
