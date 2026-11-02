@@ -13,13 +13,13 @@
 		'@graph': [
 			{
 				'@type': 'WebSite',
-				name: 'Bet With Friends',
+				name: 'Gentle Wagers',
 				url: `${SITE}/en`,
 				description: 'Bet with friends online: virtual points or forfeits \u2014 never real money.'
 			},
 			{
 				'@type': 'SoftwareApplication',
-				name: 'Bet With Friends',
+				name: 'Gentle Wagers',
 				url: `${SITE}/en`,
 				applicationCategory: 'GameApplication',
 				operatingSystem: 'Web',
@@ -46,7 +46,7 @@
 </script>
 
 <svelte:head>
-	<title>Bet With Friends — Bet with friends online, no real money</title>
+	<title>Gentle Wagers — Bet with friends online, no real money</title>
 	<meta
 		name="description"
 		content="The free app to bet with friends: create challenges, stake virtual points or forfeits, let a jury decide. No credit card, never real money."
@@ -60,12 +60,12 @@
 	<meta property="og:image" content="{SITE}/og.png" />
 	<meta property="og:image:width" content="1200" />
 	<meta property="og:image:height" content="630" />
-	<meta property="og:image:alt" content="Bet With Friends" />
+	<meta property="og:image:alt" content="Gentle Wagers" />
 	<meta name="twitter:card" content="summary_large_image" />
-	<meta name="twitter:title" content="Bet With Friends" />
+	<meta name="twitter:title" content="Gentle Wagers" />
 	<meta name="twitter:image" content="{SITE}/og.png" />
 	<meta property="og:url" content="{SITE}/en" />
-	<meta property="og:title" content="Bet With Friends" />
+	<meta property="og:title" content="Gentle Wagers" />
 	<meta
 		property="og:description"
 		content="Bets between friends with virtual points or forfeits — never real money."

@@ -16,7 +16,7 @@ import type { Lang } from './index';
 
 export const messages = {
 	// ─── En-tête, navigation, générique ────────────────────────────────────────
-	'Bet With Friends': 'Bet With Friends',
+	'Gentle Wagers': 'Gentle Wagers',
 	'Se connecter': 'Log in',
 	'Créer un compte': 'Create an account',
 	Déconnexion: 'Log out',

@@ -76,7 +76,7 @@
 					alt=""
 					class="h-9 w-9 rounded-full border border-[var(--bw-line)] object-cover"
 				/>
-				<span class="text-[17px] font-bold tracking-[-0.02em]">Bet With Friends</span>
+				<span class="text-[17px] font-bold tracking-[-0.02em]">Gentle Wagers</span>
 			</a>
 
 			<nav class="flex items-center gap-2 sm:gap-3">

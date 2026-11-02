@@ -53,7 +53,7 @@ function senderAddress(): string {
 }
 
 function senderName(): string {
-	return env.EMAIL_FROM_NAME ?? 'Bet With Friends';
+	return env.EMAIL_FROM_NAME ?? 'Gentle Wagers';
 }
 
 function fromHeader(): string {

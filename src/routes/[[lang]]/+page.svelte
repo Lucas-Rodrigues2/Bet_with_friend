@@ -11,8 +11,8 @@
 	const canonical = $derived(L === 'en' ? `${SITE}/en` : `${SITE}/`);
 	const title = $derived(
 		L === 'en'
-			? 'Bet With Friends — Bet with friends online, no real money'
-			: 'Bet With Friends — Application de paris entre amis sans argent réel'
+			? 'Gentle Wagers — Bet with friends online, no real money'
+			: 'Gentle Wagers — Application de paris entre amis sans argent réel'
 	);
 	const description = $derived(
 		L === 'en'
@@ -25,13 +25,13 @@
 		'@graph': [
 			{
 				'@type': 'WebSite',
-				name: 'Bet With Friends',
+				name: 'Gentle Wagers',
 				url: canonical,
 				description
 			},
 			{
 				'@type': 'SoftwareApplication',
-				name: 'Bet With Friends',
+				name: 'Gentle Wagers',
 				url: canonical,
 				applicationCategory: 'GameApplication',
 				operatingSystem: 'Web',
@@ -70,12 +70,12 @@
 	<meta property="og:image" content="{SITE}/og.png" />
 	<meta property="og:image:width" content="1200" />
 	<meta property="og:image:height" content="630" />
-	<meta property="og:image:alt" content="Bet With Friends" />
+	<meta property="og:image:alt" content="Gentle Wagers" />
 	<meta name="twitter:card" content="summary_large_image" />
-	<meta name="twitter:title" content="Bet With Friends" />
+	<meta name="twitter:title" content="Gentle Wagers" />
 	<meta name="twitter:image" content="{SITE}/og.png" />
 	<meta property="og:url" content={canonical} />
-	<meta property="og:title" content="Bet With Friends" />
+	<meta property="og:title" content="Gentle Wagers" />
 	<meta property="og:description" content={description} />
 	<meta property="og:locale" content={L === 'en' ? 'en_US' : 'fr_FR'} />
 	<meta property="og:locale:alternate" content={L === 'en' ? 'fr_FR' : 'en_US'} />

@@ -234,7 +234,7 @@ export const fr: LandingContent = {
 		text: "Crée ton groupe en quelques secondes et ne laisse plus aucun « je te l'avais dit » sans preuve."
 	},
 	footer: {
-		claim: 'Bet With Friends — Paris entre amis, sans argent réel.',
+		claim: 'Gentle Wagers — Paris entre amis, sans argent réel.',
 		note: 'Points virtuels et gages uniquement.'
 	}
 };
@@ -385,7 +385,7 @@ export const en: LandingContent = {
 		text: 'Create your group in seconds and never let a \u201ctold you so\u201d go unproven again.'
 	},
 	footer: {
-		claim: 'Bet With Friends \u2014 Bets between friends, no real money.',
+		claim: 'Gentle Wagers \u2014 Bets between friends, no real money.',
 		note: 'Virtual points and forfeits only.'
 	}
 };

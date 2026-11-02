@@ -12,7 +12,7 @@ test.describe('S-001 — Layout et page accueil', () => {
 	test('/ repond 200 et affiche le nom de app', async ({ page }) => {
 		const response = await page.goto('/');
 		expect(response?.status()).toBe(200);
-		await expect(page.getByRole('banner').getByRole('link', { name: 'Bet With Friends' })).toBeVisible();
+		await expect(page.getByRole('banner').getByRole('link', { name: 'Gentle Wagers' })).toBeVisible();
 		await expect(page.getByRole('main').getByRole('heading', { level: 1 })).toBeVisible();
 	});
 
@@ -43,25 +43,25 @@ test.describe('S-001 — Layout et page accueil', () => {
 		await page.goto('/');
 		await expect(page.getByRole('banner')).toBeVisible();
 		// Logo / nom de app dans le header
-		await expect(page.getByRole('banner').getByText('Bet With Friends')).toBeVisible();
+		await expect(page.getByRole('banner').getByText('Gentle Wagers')).toBeVisible();
 	});
 
 	test('header present sur /login', async ({ page }) => {
 		await page.goto('/login');
 		await expect(page.getByRole('banner')).toBeVisible();
-		await expect(page.getByRole('banner').getByText('Bet With Friends')).toBeVisible();
+		await expect(page.getByRole('banner').getByText('Gentle Wagers')).toBeVisible();
 	});
 
 	test('header present sur /signup', async ({ page }) => {
 		await page.goto('/signup');
 		await expect(page.getByRole('banner')).toBeVisible();
-		await expect(page.getByRole('banner').getByText('Bet With Friends')).toBeVisible();
+		await expect(page.getByRole('banner').getByText('Gentle Wagers')).toBeVisible();
 	});
 
 	test('logo dans header ramene a /', async ({ page }) => {
 		// Naviguer vers /login puis cliquer sur le logo
 		await page.goto('/login');
-		await page.getByRole('banner').getByRole('link', { name: 'Bet With Friends' }).click();
+		await page.getByRole('banner').getByRole('link', { name: 'Gentle Wagers' }).click();
 		await expect(page).toHaveURL('/');
 	});
 
