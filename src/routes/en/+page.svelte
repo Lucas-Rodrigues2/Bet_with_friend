@@ -1,11 +1,13 @@
 <script lang="ts">
+	// Page d'accueil anglaise (route historique /en).
+	// Même composant partagé que la page française — contenu 100 % anglais.
 	import Landing from '$lib/components/Landing.svelte';
 	import { en } from '$lib/landing/content';
+	import type { PageData } from './$types';
 
-	let { data } = $props();
+	let { data }: { data: PageData } = $props();
 
 	const SITE = 'https://bet-with-friends.fly.dev';
-
 	const jsonLd = {
 		'@context': 'https://schema.org',
 		'@graph': [
@@ -31,7 +33,6 @@
 			}
 		]
 	};
-
 	const jsonLdTag =
 		'<script type="application/ld+json">' + JSON.stringify(jsonLd) + '</scr' + 'ipt>';
 </script>

@@ -118,6 +118,34 @@ async function fillDuelForm(
 		await page.getByTestId('input-stake-target').fill(opts.stakeTarget);
 	}
 
+	// 4bis. Stabilisation : un remplissage ultérieur peut faire retomber un
+	// champ rempli avant (re-render Svelte). On revérifie tous les champs et
+	// on corrige jusqu'à ce qu'ils tiennent ensemble.
+	const fields: Array<[string, string]> = [
+		['input-choice-a', choiceA],
+		['input-choice-b', choiceB]
+	];
+	if (opts.title !== undefined) fields.push(['input-title', opts.title]);
+	if (opts.stakeCreator !== undefined) fields.push(['input-stake-creator', opts.stakeCreator]);
+	if (opts.stakeTarget !== undefined) fields.push(['input-stake-target', opts.stakeTarget]);
+	for (let pass = 0; pass < 3; pass++) {
+		let ok = true;
+		for (const [testid, value] of fields) {
+			const loc = page.getByTestId(testid);
+			if ((await loc.inputValue().catch(() => '')) !== value) {
+				ok = false;
+				await loc.fill(value);
+			}
+		}
+		const jury = page.getByTestId(`jury-member-${juryId}`).getByRole('checkbox');
+		if (!(await jury.isChecked().catch(() => false))) {
+			ok = false;
+			await jury.check();
+		}
+		if (ok) break;
+		await page.waitForTimeout(150);
+	}
+
 	// 5. Sélection de la cible EN TOUT DERNIER pour éviter la race condition Svelte 5.
 	// S-032 a placé le select dans un {#if mode === 'duel'}, ce qui ajoute `mode`
 	// dans les dépendances réactives du sous-arbre. Les fills précédents planifient
@@ -427,6 +455,8 @@ test('Alice crée un duel avec gage par camp', async ({ page }) => {
 test('Bob (cible) voit le duel avec badge Proposition reçue, Carol ne le voit pas', async ({
 	browser
 }) => {
+	// Scénario multi-utilisateur (3 contextes) : lent.
+	test.slow();
 	const aliceContext = await browser.newContext();
 	const alicePage = await aliceContext.newPage();
 	await login(alicePage, 'alice');

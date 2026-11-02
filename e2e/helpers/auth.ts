@@ -1,4 +1,4 @@
-import { type Page } from '@playwright/test';
+import { expect, type Page } from '@playwright/test';
 
 const PASSWORD = process.env.TEST_USER_PASSWORD ?? 'test-password-123';
 
@@ -18,10 +18,24 @@ export type TestUser = keyof typeof USERS;
 export async function login(page: Page, user: TestUser) {
 	const { email, password } = USERS[user];
 	await page.goto('/login');
-	await page.getByLabel(/email/i).fill(email);
-	await page.getByLabel(/mot de passe|password/i).fill(password);
+	const emailInput = page.getByLabel(/email/i);
+	const passwordInput = page.getByLabel(/mot de passe|password/i);
+	// La ré-hydratation Svelte peut réinitialiser les champs juste après le
+	// remplissage : on ne soumet que lorsque les valeurs sont stables.
+	await expect(async () => {
+		await emailInput.fill(email);
+		await expect(emailInput).toHaveValue(email);
+	}).toPass();
+	await expect(async () => {
+		await passwordInput.fill(password);
+		await expect(passwordInput).toHaveValue(password);
+	}).toPass();
 	await page.getByRole('button', { name: /se connecter|connexion|login/i }).click();
-	await page.waitForURL((url) => !url.pathname.startsWith('/login'));
+	// 'domcontentloaded' suffit pour constater la navigation ; attendre 'load'
+	// rendait le helper sensible aux requêtes tierces lentes (analytics).
+	await page.waitForURL((url) => !url.pathname.startsWith('/login'), {
+		waitUntil: 'domcontentloaded'
+	});
 }
 
 /**

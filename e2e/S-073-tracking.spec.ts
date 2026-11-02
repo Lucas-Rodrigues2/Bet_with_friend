@@ -131,6 +131,38 @@ async function resetPrefs(...userIds: string[]): Promise<void> {
 	}
 }
 
+/**
+ * Active les notifications push via l'UI, avec retries bornés.
+ *
+ * L'enregistrement du service worker peut être encore en cours au premier
+ * clic (« script evaluation failed ») : le clic « Activer » ne crée alors
+ * aucune ligne en base. Une seconde tentative bornée est permise.
+ */
+async function ensurePushSubscribed(page: Page): Promise<void> {
+	// Clic unique par tentative (max 2) : ré-cliquer pendant que la
+	// souscription est en cours perturbe le flux (AbortError). La deuxième
+	// tentative couvre un service worker pas encore actif au premier clic.
+	for (let attempt = 1; attempt <= 2; attempt++) {
+		const btn = page.getByTestId('enable-push-btn');
+		await expect(btn).toBeVisible({ timeout: 5_000 });
+		await btn.click();
+		try {
+			await expect
+				.poll(
+					async () => {
+						const r = await dbOwn`SELECT COUNT(*)::int AS n FROM public.push_subscriptions WHERE user_id = ${BOB_ID}`;
+						return Number(r[0].n);
+					},
+					{ timeout: 20_000, intervals: [400, 800, 1500] }
+				)
+				.toBeGreaterThanOrEqual(1);
+			return;
+		} catch (err) {
+			if (attempt === 2) throw err;
+		}
+	}
+}
+
 async function cleanBetsAndNotifs(tag: string): Promise<void> {
 	try {
 		await dbOwn`DELETE FROM public.notifications WHERE payload LIKE ${'%' + tag + '%'}`;
@@ -173,23 +205,17 @@ test.afterAll(async () => {
 // ─── Scénario 1 : push_subscription_created — endpoint_domain, pas de PII ─────
 
 test('push_subscription_created — properties {endpoint_domain}, pas d\'endpoint complet ni PII, distinct_id = user.id', async () => {
+	// Flux headed (Xvfb + contexte persistant) + attente de l'abonnement : lent.
+	test.slow();
 	const headed = await launchHeadedPushContext();
 	const page = headed.context.pages()[0] ?? (await headed.context.newPage());
 	try {
 		await login(page, 'bob');
 		await page.goto(PREFS_URL);
-		await page.getByTestId('enable-push-btn').click();
 
-		// L'abonnement serveur doit être créé.
-		await expect
-			.poll(
-				async () =>
-					await dbOwn
-						`SELECT COUNT(*)::int AS n FROM public.push_subscriptions WHERE user_id = ${BOB_ID}`
-						.then((r) => Number(r[0].n)),
-				{ timeout: 25_000, intervals: [400, 800, 1500] }
-			)
-			.toBeGreaterThanOrEqual(1);
+		// L'abonnement serveur doit être créé (retries bornés : l'enregistrement
+		// du service worker peut échouer transitoirement sous charge).
+		await ensurePushSubscribed(page);
 
 		// L'event push_subscription_created est écrit pour Bob.
 		await expect
@@ -239,22 +265,14 @@ test('push_subscription_created — properties {endpoint_domain}, pas d\'endpoin
 // ─── Scénario 2 : push_subscription_removed — properties vides ────────────────
 
 test('push_subscription_removed — properties {} (aucune), distinct_id = user.id', async () => {
+	// Flux headed (Xvfb + contexte persistant) + attente de suppression : lent.
+	test.slow();
 	const headed = await launchHeadedPushContext();
 	const page = headed.context.pages()[0] ?? (await headed.context.newPage());
 	try {
 		await login(page, 'bob');
 		await page.goto(PREFS_URL);
-		await page.getByTestId('enable-push-btn').click();
-
-		await expect
-			.poll(
-				async () =>
-					await dbOwn
-						`SELECT COUNT(*)::int AS n FROM public.push_subscriptions WHERE user_id = ${BOB_ID}`
-						.then((r) => Number(r[0].n)),
-				{ timeout: 25_000, intervals: [400, 800, 1500] }
-			)
-			.toBeGreaterThanOrEqual(1);
+		await ensurePushSubscribed(page);
 
 		await page.getByTestId('disable-push-btn').click();
 

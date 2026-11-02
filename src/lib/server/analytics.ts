@@ -48,17 +48,9 @@ export async function captureServer({
 	event,
 	properties
 }: CaptureOptions): Promise<void> {
-	const client = getClient();
-
-	if (client) {
-		client.capture({ distinctId, event, properties: properties ?? {} });
-		// flush immédiat en non-prod pour les tests
-		if (isDev) {
-			await client.flush();
-		}
-	}
-
-	// Sink DB pour les tests E2E
+	// Sink DB pour les tests E2E — écrit AVANT tout envoi réseau : les specs
+	// doivent voir l'event dès le retour de l'action, sans dépendre de la
+	// latence du réseau sortant (PostHog).
 	if (env.ANALYTICS_TEST_SINK === 'db') {
 		try {
 			await db.insert(analyticsEventsTest).values({
@@ -69,6 +61,18 @@ export async function captureServer({
 		} catch (err) {
 			// Ne jamais faire rater une action métier pour de l'analytics
 			console.warn('[analytics] Failed to write to test sink:', err);
+		}
+	}
+
+	const client = getClient();
+
+	if (client) {
+		client.capture({ distinctId, event, properties: properties ?? {} });
+		// Flush immédiat en non-prod pour faciliter le débogage. En mode sink
+		// de test, inutile (on n'observe pas PostHog) : surtout ne pas bloquer
+		// la réponse des actions métier sur le réseau sortant.
+		if (isDev && env.ANALYTICS_TEST_SINK !== 'db') {
+			await client.flush();
 		}
 	}
 }

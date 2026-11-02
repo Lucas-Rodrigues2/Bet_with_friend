@@ -46,8 +46,8 @@ test.describe('S-003 — Tracking PostHog connexion Google', () => {
 	}) => {
 		await page.goto('/auth/callback');
 
-		// Vérifier la redirection vers /login avec erreur
-		await expect(page).toHaveURL(/\/login\?error=missing_code/);
+		// Doit être redirigé vers /login avec un paramètre d'erreur stable
+		await expect(page).toHaveURL(/\/login\?error=oauth_failed/);
 
 		// Aucun event ne doit être émis sur ce chemin d'erreur
 		const events = await readServerEvents(db);
@@ -118,7 +118,7 @@ test.describe('S-003 — Tracking PostHog connexion Google', () => {
 		const btn = page.getByRole('link', { name: 'Continuer avec Google' });
 		await expect(btn).toBeVisible();
 		const href = await btn.getAttribute('href');
-		expect(href).toMatch(/\/auth\/google$/);
+		expect(href).toMatch(/^\/auth\/google(\?.*)?$/);
 	});
 
 	test('bouton Google présent sur /signup — UX instrumentable côté client', async ({ page }) => {
@@ -126,6 +126,6 @@ test.describe('S-003 — Tracking PostHog connexion Google', () => {
 		const btn = page.getByRole('link', { name: 'Continuer avec Google' });
 		await expect(btn).toBeVisible();
 		const href = await btn.getAttribute('href');
-		expect(href).toMatch(/\/auth\/google$/);
+		expect(href).toMatch(/^\/auth\/google(\?.*)?$/);
 	});
 });

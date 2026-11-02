@@ -123,12 +123,13 @@ test.describe('S-013 — Tracking PostHog page groupe', () => {
 		await login(page, 'alice');
 		await page.goto(GROUP_URL);
 		await expect(page.getByTestId('new-bet-btn')).toBeVisible();
-		// Attendre l'hydratation Svelte (les event listeners sont attachés après le rendu SSR)
-		await page.waitForTimeout(500);
-
-		await page.getByTestId('new-bet-btn').click();
-		// Laisser le temps au spy d'être appelé (synchrone via window.__playwright_trackSpy)
-		await page.waitForTimeout(300);
+		// Le clic peut être avalé pendant l'hydratation Svelte : on réessaie
+		// jusqu'à ouverture du menu (le spy est appelé synchrônement).
+		await expect(async () => {
+			await page.getByTestId('new-bet-btn').click();
+			await expect(page.getByTestId('new-bet-closest')).toBeVisible({ timeout: 800 });
+		}).toPass({ timeout: 15_000, intervals: [500] });
+		await page.waitForTimeout(200);
 
 		const events = getCapturedEvents();
 		const ev = events.find((e) => e.event === 'new_bet_menu_opened');
@@ -147,11 +148,12 @@ test.describe('S-013 — Tracking PostHog page groupe', () => {
 		await login(page, 'alice');
 		await page.goto(GROUP_URL);
 		await expect(page.getByTestId('new-bet-btn')).toBeVisible();
-		// Attendre l'hydratation Svelte
-		await page.waitForTimeout(500);
-
-		// Ouvrir le menu
-		await page.getByTestId('new-bet-btn').click();
+		// Le clic peut être avalé pendant l'hydratation Svelte : on réessaie
+		// jusqu'à ouverture du menu.
+		await expect(async () => {
+			await page.getByTestId('new-bet-btn').click();
+			await expect(page.getByTestId('new-bet-closest')).toBeVisible({ timeout: 800 });
+		}).toPass({ timeout: 15_000, intervals: [500] });
 		// Attendre que le menu soit dans le DOM
 		await expect(page.getByTestId('new-bet-closest')).toBeVisible();
 
@@ -175,11 +177,12 @@ test.describe('S-013 — Tracking PostHog page groupe', () => {
 		await login(page, 'alice');
 		await page.goto(GROUP_URL);
 		await expect(page.getByTestId('new-bet-btn')).toBeVisible();
-		// Attendre l'hydratation Svelte
-		await page.waitForTimeout(500);
-
-		// Ouvrir le menu
-		await page.getByTestId('new-bet-btn').click();
+		// Le clic peut être avalé pendant l'hydratation Svelte : on réessaie
+		// jusqu'à ouverture du menu.
+		await expect(async () => {
+			await page.getByTestId('new-bet-btn').click();
+			await expect(page.getByTestId('new-bet-closest')).toBeVisible({ timeout: 800 });
+		}).toPass({ timeout: 15_000, intervals: [500] });
 		// Attendre que le menu soit dans le DOM
 		await expect(page.getByTestId('new-bet-yesno')).toBeVisible();
 

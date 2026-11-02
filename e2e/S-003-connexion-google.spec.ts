@@ -26,9 +26,9 @@ test.describe('S-003 — Connexion Google OAuth', () => {
 		const googleBtn = page.getByRole('link', { name: 'Continuer avec Google' });
 		await expect(googleBtn).toBeVisible();
 
-		// L'href pointe bien vers /auth/google (peut être relatif ou absolu selon SvelteKit resolveRoute)
+		// L'href pointe vers /auth/google (paramètre de langue optionnel autorisé)
 		const href = await googleBtn.getAttribute('href');
-		expect(href).toMatch(/\/auth\/google$/);
+		expect(href).toMatch(/^\/auth\/google(\?.*)?$/);
 	});
 
 	// ─── Bouton Google sur /signup ────────────────────────────────────────────
@@ -42,9 +42,9 @@ test.describe('S-003 — Connexion Google OAuth', () => {
 		const googleBtn = page.getByRole('link', { name: 'Continuer avec Google' });
 		await expect(googleBtn).toBeVisible();
 
-		// L'href pointe bien vers /auth/google (peut être relatif ou absolu selon SvelteKit resolveRoute)
+		// L'href pointe vers /auth/google (paramètre de langue optionnel autorisé)
 		const href = await googleBtn.getAttribute('href');
-		expect(href).toMatch(/\/auth\/google$/);
+		expect(href).toMatch(/^\/auth\/google(\?.*)?$/);
 	});
 
 	// ─── Callback sans code → erreur propre ──────────────────────────────────
@@ -52,12 +52,13 @@ test.describe('S-003 — Connexion Google OAuth', () => {
 	test('/auth/callback sans code → redirection /login avec message erreur', async ({ page }) => {
 		await page.goto('/auth/callback');
 
-		// Doit être redirigé vers /login avec le paramètre error
-		await expect(page).toHaveURL(/\/login\?error=missing_code/);
+		// Doit être redirigé vers /login avec un paramètre d'erreur stable
+		await expect(page).toHaveURL(/\/login\?error=oauth_failed/);
 
 		// Le message d'erreur doit s'afficher dans un bandeau
 		await expect(page.getByText(/La connexion Google a échoué/i)).toBeVisible();
-		await expect(page.getByText(/missing_code/i)).toBeVisible();
+		// Le code d'erreur interne ne doit pas être exposé à l'utilisateur
+		await expect(page.getByText(/missing_code/i)).toHaveCount(0);
 	});
 
 	// ─── Callback avec error OAuth (accès refusé) ────────────────────────────
@@ -71,8 +72,9 @@ test.describe('S-003 — Connexion Google OAuth', () => {
 		// Doit être redirigé vers /login
 		await expect(page).toHaveURL(/\/login/);
 
-		// Le message d'erreur doit s'afficher (la description encodée doit être décodée)
+		// Message d'erreur stable — la description brute du fournisseur n'est pas exposée
 		await expect(page.getByText(/La connexion Google a échoué/i)).toBeVisible();
+		await expect(page.getByText(/User denied access/i)).toHaveCount(0);
 	});
 
 	// ─── Flux Google complet (skip — non automatisable) ───────────────────────

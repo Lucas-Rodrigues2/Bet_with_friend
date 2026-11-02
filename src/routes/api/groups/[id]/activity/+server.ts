@@ -36,7 +36,11 @@ export const GET: RequestHandler = async ({ locals, params, url }) => {
 		return json({ error: 'Accès refusé.' }, { status: 403 });
 	}
 
-	const offset = parseInt(url.searchParams.get('offset') ?? '0', 10);
+	const rawOffset = url.searchParams.get('offset') ?? '0';
+	if (!/^(0|[1-9]\d{0,5})$/.test(rawOffset)) {
+		return json({ error: 'Pagination invalide.' }, { status: 400 });
+	}
+	const offset = Number(rawOffset);
 	const limit = 20;
 
 	const { events, hasMore } = await getGroupActivity(params.id, user.id, { limit, offset });

@@ -3,7 +3,17 @@ import { db } from '$lib/server/db/index';
 import { notifications } from '$lib/server/db/schema';
 import { captureServer } from '$lib/server/analytics';
 import { and, eq, isNull } from 'drizzle-orm';
+import { z } from 'zod';
 import type { RequestHandler } from './$types';
+
+const requestSchema = z.union([
+	z.object({ all: z.literal(true) }).strict(),
+	z
+		.object({
+			id: z.string().regex(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i)
+		})
+		.strict()
+]);
 
 export const POST: RequestHandler = async ({ locals, request }) => {
 	const { session, user } = await locals.safeGetSession();
@@ -11,16 +21,20 @@ export const POST: RequestHandler = async ({ locals, request }) => {
 		return json({ success: false, error: 'Non authentifié.' }, { status: 401 });
 	}
 
-	let body: { id?: string; all?: boolean };
+	let raw: unknown;
 	try {
-		body = (await request.json()) as { id?: string; all?: boolean };
+		raw = await request.json();
 	} catch {
 		return json({ success: false, error: 'Corps invalide.' }, { status: 400 });
 	}
+	const parsed = requestSchema.safeParse(raw);
+	if (!parsed.success)
+		return json({ success: false, error: 'Paramètres invalides.' }, { status: 400 });
+	const body = parsed.data;
 
 	const now = new Date();
 
-	if (body.all === true) {
+	if ('all' in body) {
 		// Count unread before marking, for analytics.
 		const unreadRows = await db
 			.select({ id: notifications.id })
@@ -44,14 +58,12 @@ export const POST: RequestHandler = async ({ locals, request }) => {
 		} catch (err) {
 			console.warn('[notifications] Failed to track notification_marked_read:', err);
 		}
-	} else if (typeof body.id === 'string') {
+	} else {
 		// Mark a single notification as read (must belong to this user)
 		await db
 			.update(notifications)
 			.set({ readAt: now })
 			.where(and(eq(notifications.id, body.id), eq(notifications.userId, user.id)));
-	} else {
-		return json({ success: false, error: 'Paramètres manquants.' }, { status: 400 });
 	}
 
 	return json({ success: true });

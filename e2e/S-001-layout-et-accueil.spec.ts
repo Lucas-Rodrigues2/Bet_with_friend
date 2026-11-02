@@ -12,7 +12,8 @@ test.describe('S-001 — Layout et page accueil', () => {
 	test('/ repond 200 et affiche le nom de app', async ({ page }) => {
 		const response = await page.goto('/');
 		expect(response?.status()).toBe(200);
-		await expect(page.getByRole('heading', { name: 'Bet With Friends' })).toBeVisible();
+		await expect(page.getByRole('banner').getByRole('link', { name: 'Bet With Friends' })).toBeVisible();
+		await expect(page.getByRole('main').getByRole('heading', { level: 1 })).toBeVisible();
 	});
 
 	test('page accueil affiche accroche et deux boutons action', async ({ page }) => {
@@ -23,7 +24,7 @@ test.describe('S-001 — Layout et page accueil', () => {
 
 		// Boutons presents dans le contenu principal (le header en a aussi depuis S-002)
 		await expect(page.getByRole('main').getByRole('link', { name: 'Se connecter' })).toBeVisible();
-		await expect(page.getByRole('main').getByRole('link', { name: 'Créer un compte' })).toBeVisible();
+		await expect(page.getByRole('main').getByRole('link', { name: 'Créer un compte' }).first()).toBeVisible();
 	});
 
 	test('bouton Se connecter navigue vers /login', async ({ page }) => {
@@ -34,7 +35,7 @@ test.describe('S-001 — Layout et page accueil', () => {
 
 	test('bouton Creer un compte navigue vers /signup', async ({ page }) => {
 		await page.goto('/');
-		await page.getByRole('main').getByRole('link', { name: 'Créer un compte' }).click();
+		await page.getByRole('main').getByRole('link', { name: 'Créer un compte' }).first().click();
 		await expect(page).toHaveURL(/\/signup/);
 	});
 

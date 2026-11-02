@@ -1,0 +1,497 @@
+@import 'tailwindcss';
+@import 'tw-animate-css';
+@import 'shadcn-svelte/tailwind.css';
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+	--color-background: var(--background);
+	--color-foreground: var(--foreground);
+	--color-card: var(--card);
+	--color-card-foreground: var(--card-foreground);
+	--color-popover: var(--popover);
+	--color-popover-foreground: var(--popover-foreground);
+	--color-primary: var(--primary);
+	--color-primary-foreground: var(--primary-foreground);
+	--color-secondary: var(--secondary);
+	--color-secondary-foreground: var(--secondary-foreground);
+	--color-muted: var(--muted);
+	--color-muted-foreground: var(--muted-foreground);
+	--color-accent: var(--accent);
+	--color-accent-foreground: var(--accent-foreground);
+	--color-destructive: var(--destructive);
+	--color-border: var(--border);
+	--color-input: var(--input);
+	--color-ring: var(--ring);
+	--color-chart-1: var(--chart-1);
+	--color-chart-2: var(--chart-2);
+	--color-chart-3: var(--chart-3);
+	--color-chart-4: var(--chart-4);
+	--color-chart-5: var(--chart-5);
+	--color-sidebar: var(--sidebar);
+	--color-sidebar-foreground: var(--sidebar-foreground);
+	--color-sidebar-primary: var(--sidebar-primary);
+	--color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+	--color-sidebar-accent: var(--sidebar-accent);
+	--color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+	--color-sidebar-border: var(--sidebar-border);
+	--color-sidebar-ring: var(--sidebar-ring);
+	--radius-sm: calc(var(--radius) - 4px);
+	--radius-md: calc(var(--radius) - 2px);
+	--radius-lg: var(--radius);
+	--radius-xl: calc(var(--radius) + 4px);
+}
+
+/* ─── Jetons de design « Wispr » (bw-*) ─────────────────────────────────────
+   Palette papier/écrevisse de la landing, appliquée à tout le site via les
+   jetons shadcn ci-dessous. Les composants bw-* réutilisent ces jetons. */
+:root {
+	--bw-ink: #17201d;
+	--bw-paper: #f7f7f2;
+	--bw-paper-deep: #f0f1e9;
+	--bw-line: #d8dcd4;
+	--bw-muted: #66716c;
+	--bw-lime: #d6f36a;
+	--bw-green: #4c761e;
+	--bw-white: #ffffff;
+	--bw-danger: #b3402a;
+	--bw-danger-soft: #f7e7e2;
+
+	--background: var(--bw-paper);
+	--foreground: var(--bw-ink);
+	--card: var(--bw-white);
+	--card-foreground: var(--bw-ink);
+	--popover: var(--bw-white);
+	--popover-foreground: var(--bw-ink);
+	--primary: var(--bw-ink);
+	--primary-foreground: var(--bw-white);
+	--secondary: var(--bw-paper-deep);
+	--secondary-foreground: var(--bw-ink);
+	--muted: var(--bw-paper-deep);
+	--muted-foreground: var(--bw-muted);
+	--accent: var(--bw-lime);
+	--accent-foreground: var(--bw-ink);
+	--destructive: var(--bw-danger);
+	--border: var(--bw-line);
+	--input: var(--bw-line);
+	--ring: var(--bw-green);
+	--chart-1: #87a93f;
+	--chart-2: #4c761e;
+	--chart-3: #648c20;
+	--chart-4: #9aa097;
+	--chart-5: #303a30;
+	--radius: 0.75rem;
+	--sidebar: var(--bw-paper);
+	--sidebar-foreground: var(--bw-ink);
+	--sidebar-primary: var(--bw-ink);
+	--sidebar-primary-foreground: var(--bw-white);
+	--sidebar-accent: var(--bw-paper-deep);
+	--sidebar-accent-foreground: var(--bw-ink);
+	--sidebar-border: var(--bw-line);
+	--sidebar-ring: var(--bw-green);
+}
+
+.dark {
+	--background: #141a17;
+	--foreground: #f2f3ec;
+	--card: #1c2420;
+	--card-foreground: #f2f3ec;
+	--popover: #1c2420;
+	--popover-foreground: #f2f3ec;
+	--primary: var(--bw-lime);
+	--primary-foreground: #17201d;
+	--secondary: #232c27;
+	--secondary-foreground: #f2f3ec;
+	--muted: #232c27;
+	--muted-foreground: #a8b0a5;
+	--accent: var(--bw-lime);
+	--accent-foreground: #17201d;
+	--destructive: #e0705a;
+	--border: #f2f3ec1f;
+	--input: #f2f3ec2b;
+	--ring: var(--bw-lime);
+	--sidebar: #141a17;
+	--sidebar-foreground: #f2f3ec;
+	--sidebar-primary: var(--bw-lime);
+	--sidebar-primary-foreground: #17201d;
+	--sidebar-accent: #232c27;
+	--sidebar-accent-foreground: #f2f3ec;
+	--sidebar-border: #f2f3ec1f;
+	--sidebar-ring: var(--bw-lime);
+}
+
+@layer base {
+	* {
+		@apply border-border outline-ring/50;
+	}
+	html {
+		-webkit-text-size-adjust: 100%;
+	}
+	body {
+		@apply bg-background text-foreground;
+		font-family: Arial, Helvetica, sans-serif;
+		letter-spacing: -0.011em;
+	}
+	h1,
+	h2,
+	h3 {
+		letter-spacing: -0.035em;
+	}
+}
+
+/* ─── Style éditorial « landing » (titres display, kickers, ombres dures,
+   tickets) — utilisé partout pour l'unité visuelle du site. ───────────── */
+
+/* Titre display : gros, serré, avec accents en italique sérif (cf. hero). */
+.bw-display {
+	font-family: Arial, Helvetica, sans-serif;
+	font-weight: 800;
+	letter-spacing: -0.045em;
+	line-height: 0.98;
+	margin: 0;
+}
+.bw-display em {
+	font-family: Georgia, 'Times New Roman', serif;
+	font-weight: 400;
+	font-style: italic;
+	letter-spacing: -0.02em;
+}
+
+/* Ombre dure « collant imprimé » : la signature visuelle de la landing. */
+.bg-card {
+	box-shadow: 3px 3px 0 rgba(23, 32, 29, 0.1);
+}
+
+/* Carte « ticket » : bord en pointillés + encoches. */
+.bw-card-ticket {
+	border: 1.5px dashed var(--bw-line);
+	border-radius: 16px;
+	background: var(--bw-white);
+}
+
+/* Inclinaison décorative des cartes-maquettes du hero. */
+.bw-tilt-a {
+	transform: rotate(-1.4deg);
+}
+.bw-tilt-b {
+	transform: rotate(1.2deg);
+}
+
+/* Filet pointillé de séparation (sections). */
+.bw-rule {
+	border: none;
+	border-top: 2px dashed var(--bw-line);
+	margin: 0;
+}
+
+/* Pastille « ticket » de la landing (chips OUI/NON, statuts). */
+.bw-chip {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	padding: 6px 13px;
+	border-radius: 999px;
+	border: 1.5px solid var(--bw-ink);
+	background: var(--bw-white);
+	font-size: 12px;
+	font-weight: 800;
+	letter-spacing: -0.01em;
+	white-space: nowrap;
+}
+.bw-chip-lime {
+	background: var(--bw-lime);
+}
+.bw-chip-ink {
+	background: var(--bw-ink);
+	color: var(--bw-white);
+}
+
+/* Bouton primaire : ombre dure, léger enfoncement au clic. */
+.bw-btn,
+.bg-primary {
+	box-shadow: 2.5px 2.5px 0 rgba(23, 32, 29, 0.22);
+}
+.bw-btn:active,
+.bg-primary:active {
+	box-shadow: 1px 1px 0 rgba(23, 32, 29, 0.22);
+	transform: translate(1.5px, 1.5px);
+}
+
+/* En-tête de page applicative (kicker + titre + description). */
+.bw-page-head {
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+	margin-bottom: 28px;
+}
+.bw-page-head h1 {
+	font-size: clamp(28px, 4vw, 40px);
+}
+
+/* Boutons */
+.bw-btn {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 8px;
+	height: 42px;
+	padding: 0 20px;
+	border-radius: 999px;
+	background: var(--bw-ink);
+	color: var(--bw-white);
+	font-size: 14px;
+	font-weight: 700;
+	letter-spacing: -0.01em;
+	border: 1px solid var(--bw-ink);
+	cursor: pointer;
+	transition:
+		transform 0.12s ease,
+		opacity 0.12s ease;
+	text-decoration: none;
+	white-space: nowrap;
+}
+.bw-btn:hover {
+	opacity: 0.88;
+}
+.bw-btn:active {
+	transform: translateY(1px);
+}
+.bw-btn:focus-visible {
+	outline: 3px solid var(--bw-green);
+	outline-offset: 2px;
+}
+.bw-btn[disabled] {
+	opacity: 0.5;
+	cursor: not-allowed;
+}
+.bw-btn-outline {
+	background: transparent;
+	color: var(--bw-ink);
+	border: 1px solid var(--bw-line);
+}
+.bw-btn-outline:hover {
+	background: var(--bw-paper-deep);
+	opacity: 1;
+}
+.bw-btn-ghost {
+	background: transparent;
+	color: var(--bw-muted);
+	border: 1px solid transparent;
+}
+.bw-btn-ghost:hover {
+	background: var(--bw-paper-deep);
+	color: var(--bw-ink);
+	opacity: 1;
+}
+.bw-btn-danger {
+	background: var(--bw-danger);
+	border-color: var(--bw-danger);
+	color: #fff;
+}
+.bw-btn-sm {
+	height: 34px;
+	padding: 0 14px;
+	font-size: 13px;
+}
+.bw-btn-lg {
+	height: 50px;
+	padding: 0 26px;
+	font-size: 15px;
+}
+.bw-btn-block {
+	width: 100%;
+}
+
+/* Cartes */
+.bw-card {
+	background: var(--card);
+	border: 1px solid var(--bw-line);
+	border-radius: 14px;
+	box-shadow: 3px 3px 0 rgba(23, 32, 29, 0.1);
+}
+.bw-card-pad {
+	padding: 22px;
+}
+.bw-card-title {
+	font-size: 17px;
+	font-weight: 700;
+	letter-spacing: -0.02em;
+	margin: 0;
+}
+.bw-card-sub {
+	color: var(--bw-muted);
+	font-size: 13px;
+	margin: 4px 0 0;
+}
+
+/* Formulaires */
+.bw-field {
+	display: flex;
+	flex-direction: column;
+	gap: 7px;
+}
+.bw-label {
+	font-size: 13px;
+	font-weight: 700;
+	color: var(--bw-ink);
+}
+.bw-input,
+.bw-select,
+.bw-textarea {
+	width: 100%;
+	background: var(--bw-white);
+	border: 1px solid var(--bw-line);
+	border-radius: 12px;
+	padding: 11px 14px;
+	font-size: 14px;
+	color: var(--bw-ink);
+	font-family: inherit;
+	transition: border-color 0.12s ease;
+}
+.bw-input:focus,
+.bw-select:focus,
+.bw-textarea:focus {
+	outline: none;
+	border-color: var(--bw-green);
+	box-shadow: 0 0 0 3px #4c761e26;
+}
+.bw-input::placeholder,
+.bw-textarea::placeholder {
+	color: #9aa097;
+}
+.bw-help {
+	font-size: 12px;
+	color: var(--bw-muted);
+}
+.bw-error {
+	font-size: 12px;
+	color: var(--bw-danger);
+	font-weight: 600;
+}
+
+/* Badges & pastilles d'état */
+.bw-badge {
+	display: inline-flex;
+	align-items: center;
+	gap: 5px;
+	border-radius: 999px;
+	padding: 4px 10px;
+	font-size: 11px;
+	font-weight: 700;
+	letter-spacing: 0.02em;
+	background: var(--bw-paper-deep);
+	color: var(--bw-ink);
+	white-space: nowrap;
+}
+.bw-badge-lime {
+	background: #eaf4d9;
+	color: var(--bw-green);
+}
+.bw-badge-ink {
+	background: var(--bw-ink);
+	color: var(--bw-white);
+}
+.bw-badge-danger {
+	background: var(--bw-danger-soft);
+	color: var(--bw-danger);
+}
+.bw-badge-blue {
+	background: #e3ecf5;
+	color: #3c5a75;
+}
+
+/* Étiquettes éditoriales (kicker) */
+.bw-kicker {
+	font-size: 11px;
+	font-weight: 800;
+	letter-spacing: 0.12em;
+	text-transform: uppercase;
+	color: var(--bw-muted);
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	margin: 0 0 10px;
+}
+.bw-kicker::before {
+	content: '';
+	width: 22px;
+	height: 2px;
+	background: var(--bw-lime);
+	border: 1px solid var(--bw-ink);
+}
+
+/* États vides */
+.bw-empty {
+	border: 1px dashed var(--bw-line);
+	border-radius: 14px;
+	background: #ffffffb3;
+	padding: 40px 24px;
+	text-align: center;
+	color: var(--bw-muted);
+	font-size: 14px;
+}
+
+/* Tableaux */
+.bw-table {
+	width: 100%;
+	border-collapse: collapse;
+	font-size: 14px;
+}
+.bw-table th {
+	text-align: left;
+	font-size: 11px;
+	font-weight: 800;
+	letter-spacing: 0.1em;
+	text-transform: uppercase;
+	color: var(--bw-muted);
+	padding: 10px 12px;
+	border-bottom: 1px solid var(--bw-line);
+}
+.bw-table td {
+	padding: 12px;
+	border-bottom: 1px solid var(--bw-line);
+}
+.bw-table tr:last-child td {
+	border-bottom: none;
+}
+
+/* Ligne de séparation */
+.bw-hr {
+	border: none;
+	border-top: 1px solid var(--bw-line);
+	margin: 20px 0;
+}
+
+/* Liens */
+.bw-link {
+	color: var(--bw-green);
+	font-weight: 700;
+	text-decoration: underline;
+	text-underline-offset: 3px;
+}
+.bw-link:hover {
+	color: var(--bw-ink);
+}
+
+/* Alertes (toasts, messages de formulaire) */
+.bw-alert {
+	border-radius: 12px;
+	padding: 12px 16px;
+	font-size: 13px;
+	font-weight: 600;
+}
+.bw-alert-error {
+	background: var(--bw-danger-soft);
+	color: var(--bw-danger);
+	border: 1px solid #e7c4b8;
+}
+.bw-alert-success {
+	background: #eaf4d9;
+	color: var(--bw-green);
+	border: 1px solid #cfe3ab;
+}
+.bw-alert-info {
+	background: var(--bw-paper-deep);
+	color: var(--bw-ink);
+	border: 1px solid var(--bw-line);
+}

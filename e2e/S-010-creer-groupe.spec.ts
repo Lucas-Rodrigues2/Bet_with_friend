@@ -17,6 +17,7 @@
 import { test, expect } from '@playwright/test';
 import { login } from './helpers/auth';
 import { db } from './helpers/db';
+import { fillSticky } from './helpers/fill';
 
 // Unique name for the group created in the main creation test
 const GROUP_NAME = `[E2E] Groupe-${Date.now()}`;
@@ -162,11 +163,10 @@ test.describe('S-010 — Créer un groupe', () => {
 		const nameWithDesc = `[E2E] Avec-Desc-${Date.now()}`;
 		const description = 'Une description de test';
 
-		await page.getByTestId('group-name-input').fill(nameWithDesc);
-		// Utiliser click+type pour déclencher les input events (fill() seul ne suffit pas
-		// avec les textareas Svelte 5 rendu côté serveur)
-		await page.locator('textarea[name="description"]').click();
-		await page.locator('textarea[name="description"]').type(description);
+		await fillSticky(page.getByTestId('group-name-input'), nameWithDesc);
+		// fillSticky : la ré-hydratation Svelte peut écraser la valeur d'un champ
+		// juste après son remplissage (au clavier, des caractères sont perdus).
+		await fillSticky(page.locator('textarea[name="description"]'), description);
 		await page.getByTestId('submit-create-group').click();
 		await page.waitForURL(GROUP_PAGE_URL_RE);
 

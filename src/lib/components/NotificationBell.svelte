@@ -6,8 +6,13 @@
 		type NotificationItem
 	} from '$lib/notifications';
 	import { track } from '$lib/analytics/client';
+	import { tr, type Lang, type MessageKey } from '$lib/i18n';
+	import { resolveRoute } from '$lib/paths';
 
-	let { initialUnreadCount = 0 }: { initialUnreadCount: number } = $props();
+	let { initialUnreadCount = 0, lang = 'fr' }: { initialUnreadCount: number; lang?: Lang } =
+		$props();
+
+	const t = (k: MessageKey) => tr(lang, k);
 
 	let isOpen = $state(false);
 	// localCountOverride: null means "use server value from initialUnreadCount"
@@ -105,6 +110,14 @@
 	function formatRelativeTime(date: Date): string {
 		const diffMs = Date.now() - date.getTime();
 		const diffMin = Math.floor(diffMs / 60_000);
+		if (lang === 'en') {
+			if (diffMin < 1) return 'just now';
+			if (diffMin < 60) return `${diffMin} min ago`;
+			const diffH = Math.floor(diffMin / 60);
+			if (diffH < 24) return `${diffH} h ago`;
+			const diffD = Math.floor(diffH / 24);
+			return `${diffD} d ago`;
+		}
 		if (diffMin < 1) return "à l'instant";
 		if (diffMin < 60) return `il y a ${diffMin} min`;
 		const diffH = Math.floor(diffMin / 60);
@@ -127,7 +140,7 @@
 	<button
 		type="button"
 		onclick={togglePanel}
-		aria-label="Notifications{unreadCount > 0 ? ` (${unreadCount} non lues)` : ''}"
+		aria-label={`${t('Notifications')}${unreadCount > 0 ? ` (${unreadCount} ${lang === 'en' ? 'unread' : 'non lues'})` : ''}`}
 		aria-expanded={isOpen}
 		data-testid="notification-bell-button"
 		class="relative flex h-8 w-8 items-center justify-center rounded-full text-muted-foreground hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
@@ -175,11 +188,11 @@
 			class="bg-popover text-popover-foreground absolute right-0 top-full z-50 mt-2 w-80 rounded-lg border shadow-lg sm:w-96"
 			data-testid="notification-panel"
 			role="dialog"
-			aria-label="Panneau des notifications"
+			aria-label={t('Panneau des notifications')}
 		>
 			<!-- Header -->
 			<div class="flex items-center justify-between border-b px-4 py-3">
-				<h2 class="text-sm font-semibold">Notifications</h2>
+				<h2 class="text-sm font-semibold">{t('Notifications')}</h2>
 				{#if unreadCount > 0}
 					<button
 						type="button"
@@ -187,18 +200,18 @@
 						class="text-xs text-muted-foreground hover:text-foreground"
 						data-testid="mark-all-read"
 					>
-						Tout marquer lu
+						{t('Tout marquer lu')}
 					</button>
 				{/if}
 			</div>
 
 			<!-- List -->
-			<ul class="max-h-96 overflow-y-auto" aria-label="Liste des notifications">
+			<ul class="max-h-96 overflow-y-auto" aria-label={t('Liste des notifications')}>
 				{#if loading}
-					<li class="p-4 text-center text-sm text-muted-foreground">Chargement…</li>
+					<li class="p-4 text-center text-sm text-muted-foreground">{t('Chargement…')}</li>
 				{:else if items.length === 0}
 					<li class="p-6 text-center text-sm text-muted-foreground">
-						Aucune notification pour l'instant.
+						{t("Aucune notification pour l'instant.")}
 					</li>
 				{:else}
 					{#each items as item (item.id)}
@@ -206,7 +219,7 @@
 						<li class="border-b last:border-b-0">
 							{#if href}
 								<a
-									{href}
+									href={resolveRoute(href)}
 									onclick={() => handleNotificationClick(item)}
 									class="flex w-full items-start gap-3 px-4 py-3 text-left transition-colors hover:bg-accent {item.readAt
 										? 'opacity-60'
@@ -225,7 +238,7 @@
 									</span>
 									<div class="min-w-0 flex-1">
 										<p class="text-sm leading-snug">
-											{getNotificationLabel(item.type, item.payload)}
+											{getNotificationLabel(item.type, item.payload, lang)}
 										</p>
 										<p class="mt-0.5 text-xs text-muted-foreground">
 											{formatRelativeTime(item.createdAt)}
@@ -253,7 +266,7 @@
 									</span>
 									<div class="min-w-0 flex-1">
 										<p class="text-sm leading-snug">
-											{getNotificationLabel(item.type, item.payload)}
+											{getNotificationLabel(item.type, item.payload, lang)}
 										</p>
 										<p class="mt-0.5 text-xs text-muted-foreground">
 											{formatRelativeTime(item.createdAt)}

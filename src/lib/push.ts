@@ -63,17 +63,32 @@ export async function registerServiceWorker(): Promise<ServiceWorkerRegistration
 	if (!browser || !('serviceWorker' in navigator)) return null;
 	if (_swRegistration) return _swRegistration;
 	try {
-		// scope racine : le SW contrôle tout le site.
+		// scope racine : le SW contrôle tout le site. `type: 'module'` car en dev
+		// SvelteKit sert /service-worker.js comme un re-export ESM (`import`),
+		// qu'un worker classique ne peut pas évaluer ; en prod le bundle compilé
+		// reste valide en mode module.
 		_swRegistration = await navigator.serviceWorker.register('/service-worker.js', {
-			scope: '/'
+			scope: '/',
+			type: 'module'
 		});
-		// S'assurer que le SW est actif avant de retourner.
-		await navigator.serviceWorker.ready;
-		return _swRegistration;
 	} catch (err) {
 		console.warn('[push] Failed to register service worker:', err);
-		return null;
+		// Repli : le SW peut déjà être actif (auto-enregistrement SvelteKit).
+		try {
+			_swRegistration = (await navigator.serviceWorker.getRegistration('/')) ?? null;
+		} catch {
+			_swRegistration = null;
+		}
 	}
+	if (_swRegistration) {
+		// S'assurer que le SW est actif avant de retourner.
+		try {
+			await navigator.serviceWorker.ready;
+		} catch {
+			// best-effort
+		}
+	}
+	return _swRegistration;
 }
 
 export interface SubscribeResult {
@@ -101,14 +116,26 @@ export async function subscribeToPush(): Promise<SubscribeResult> {
 	const permission = await Notification.requestPermission();
 	if (permission !== 'granted') return { ok: false, error: 'denied' };
 
-	let subscription: PushSubscription;
-	try {
-		subscription = await reg.pushManager.subscribe({
-			userVisibleOnly: true,
-			applicationServerKey: urlBase64ToUint8Array(PUBLIC_VAPID_PUBLIC_KEY)
-		});
-	} catch (err) {
-		console.warn('[push] pushManager.subscribe failed:', err);
+	let subscription: PushSubscription | null = null;
+	let lastErr: unknown = null;
+	// La souscription peut échouer transitoirement si le service worker vient
+	// d'être activé (AbortError « Registration failed ») : courtes attentes
+	// puis nouvelles tentatives.
+	for (let attempt = 1; attempt <= 3; attempt++) {
+		try {
+			subscription = await reg.pushManager.subscribe({
+				userVisibleOnly: true,
+				applicationServerKey: urlBase64ToUint8Array(PUBLIC_VAPID_PUBLIC_KEY)
+			});
+			lastErr = null;
+			break;
+		} catch (err) {
+			lastErr = err;
+			if (attempt < 3) await new Promise((r) => setTimeout(r, 400 * attempt));
+		}
+	}
+	if (!subscription) {
+		console.warn('[push] pushManager.subscribe failed:', lastErr);
 		return { ok: false, error: 'subscribe_failed' };
 	}
 

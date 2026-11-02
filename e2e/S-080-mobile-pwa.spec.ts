@@ -24,7 +24,7 @@
 import { test, expect } from '@playwright/test';
 import fs from 'node:fs';
 
-const BASE = 'http://localhost:5173';
+const BASE = `http://localhost:${process.env.PLAYWRIGHT_PORT ?? 5173}`;
 
 // ─── Manifest & assets servis ──────────────────────────────────────────────────
 
@@ -67,15 +67,17 @@ test.describe('S-080 — Manifest & assets PWA servis', () => {
 		expect(body.length).toBeGreaterThan(0);
 		// En dev, SvelteKit sert le SW comme un re-export du module source
 		// (`import '/@fs/.../src/service-worker.ts'`) ; en prod il est bundlé.
-		// On vérifie donc le contenu directement depuis la source TypeScript,
-		// qui doit contenir les handlers push / notificationclick (migrés de
-		// static/sw.js — S-073) + le fetch handler (offline fallback).
+		// On vérifie les handlers push / notificationclick (migrés de
+		// static/sw.js — S-073) + le fetch handler (offline fallback) dans la
+		// source TypeScript quand elle est servie (dev), sinon dans le SW compilé.
+		let src = body;
 		const srcRes = await request.get(`${BASE}/src/service-worker.ts`);
-		expect(srcRes.status()).toBe(200);
-		const src = await srcRes.text();
-		expect(src).toMatch(/addEventListener\(['"]push['"]/);
-		expect(src).toMatch(/addEventListener\(['"]notificationclick['"]/);
-		expect(src).toMatch(/addEventListener\(['"]fetch['"]/);
+		if (srcRes.status() === 200) {
+			src = await srcRes.text();
+		}
+		expect(src).toMatch(/addEventListener\(\s*[ '"`]?push[ '"`]?/);
+		expect(src).toMatch(/addEventListener\(\s*[ '"`]?notificationclick[ '"`]?/);
+		expect(src).toMatch(/addEventListener\(\s*[ '"`]?fetch[ '"`]?/);
 		expect(src).toMatch(/offline\.html/);
 	});
 

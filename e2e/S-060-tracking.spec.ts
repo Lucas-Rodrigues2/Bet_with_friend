@@ -122,73 +122,67 @@ test.describe('S-060 — Tracking PostHog fil d activité', () => {
 
 		// Nettoyer au cas où des paris [E2E] subsistent, puis peupler 25 paris
 		// visibles par Alice (>20 → has_more=true sur la 1ère page).
-		await db`DELETE FROM public.match_participants WHERE match_id IN (
-			SELECT m.id FROM public.matches m
-			JOIN public.bets b ON b.id = m.bet_id
-			WHERE b.title LIKE '[E2E]%'
-		)`;
-		await db`DELETE FROM public.match_jurors WHERE match_id IN (
-			SELECT m.id FROM public.matches m
-			JOIN public.bets b ON b.id = m.bet_id
-			WHERE b.title LIKE '[E2E]%'
-		)`;
-		await db`DELETE FROM public.match_winners WHERE match_id IN (
-			SELECT m.id FROM public.matches m
-			JOIN public.bets b ON b.id = m.bet_id
-			WHERE b.title LIKE '[E2E]%'
-		)`;
-		await db`DELETE FROM public.matches WHERE bet_id IN (
-			SELECT id FROM public.bets WHERE title LIKE '[E2E]%'
-		)`;
-		await db`DELETE FROM public.bet_visibility WHERE bet_id IN (
-			SELECT id FROM public.bets WHERE title LIKE '[E2E]%'
-		)`;
-		await db`DELETE FROM public.bets WHERE title LIKE '[E2E]%'`;
+		const cleanupE2EBets = async () => {
+			await db`DELETE FROM public.match_participants WHERE match_id IN (
+				SELECT m.id FROM public.matches m
+				JOIN public.bets b ON b.id = m.bet_id
+				WHERE b.title LIKE '[E2E]%'
+			)`;
+			await db`DELETE FROM public.match_jurors WHERE match_id IN (
+				SELECT m.id FROM public.matches m
+				JOIN public.bets b ON b.id = m.bet_id
+				WHERE b.title LIKE '[E2E]%'
+			)`;
+			await db`DELETE FROM public.match_winners WHERE match_id IN (
+				SELECT m.id FROM public.matches m
+				JOIN public.bets b ON b.id = m.bet_id
+				WHERE b.title LIKE '[E2E]%'
+			)`;
+			await db`DELETE FROM public.matches WHERE bet_id IN (
+				SELECT id FROM public.bets WHERE title LIKE '[E2E]%'
+			)`;
+			await db`DELETE FROM public.bet_visibility WHERE bet_id IN (
+				SELECT id FROM public.bets WHERE title LIKE '[E2E]%'
+			)`;
+			await db`DELETE FROM public.bets WHERE title LIKE '[E2E]%'`;
+		};
+		await cleanupE2EBets();
 
 		await clearServerEvents(db);
 
-		for (let i = 0; i < 25; i++) {
-			const minutesAgo = i + 1;
-			const [bet] = await db`
-				INSERT INTO public.bets (group_id, creator_id, type, title, stake_type, stake_amount, hide_answers, jury_mode, status, created_at)
-				VALUES (${SEEDED_GROUP_ID}, ${ALICE_ID}, 'closest', '[E2E] Track ' || ${String(i)}, 'points', '10', false, 'majority', 'open', now() - (${minutesAgo} * interval '1 minute'))
-				RETURNING id
-			`;
-			await db`
-				INSERT INTO public.bet_visibility (bet_id, user_id)
-				VALUES (${bet.id}, ${ALICE_ID})
-			`;
-			await db`
-				INSERT INTO public.matches (bet_id, status, created_at)
-				VALUES (${bet.id}, 'open', now() - (${minutesAgo} * interval '1 minute'))
-			`;
+		try {
+			for (let i = 0; i < 25; i++) {
+				const minutesAgo = i + 1;
+				const [bet] = await db`
+					INSERT INTO public.bets (group_id, creator_id, type, title, stake_type, stake_amount, hide_answers, jury_mode, status, created_at)
+					VALUES (${SEEDED_GROUP_ID}, ${ALICE_ID}, 'closest', '[E2E] Track ' || ${String(i)}, 'points', '10', false, 'majority', 'open', now() - (${minutesAgo} * interval '1 minute'))
+					RETURNING id
+				`;
+				await db`
+					INSERT INTO public.bet_visibility (bet_id, user_id)
+					VALUES (${bet.id}, ${ALICE_ID})
+				`;
+				await db`
+					INSERT INTO public.matches (bet_id, status, created_at)
+					VALUES (${bet.id}, 'open', now() - (${minutesAgo} * interval '1 minute'))
+				`;
+			}
+
+			await page.goto(ACTIVITY_URL);
+			await expect(page.getByTestId('load-more-btn')).toBeVisible();
+
+			const events = await readServerEvents(db, {
+				event: 'activity_feed_viewed',
+				distinctId: aliceId
+			});
+			expect(events.length).toBeGreaterThanOrEqual(1);
+			const props = events[0].properties as Record<string, unknown>;
+			expect(props['has_more']).toBe(true);
+			expect(props['offset']).toBe(0);
+		} finally {
+			// Nettoyage systématique, même si une assertion échoue en cours de test.
+			await cleanupE2EBets();
 		}
-
-		await page.goto(ACTIVITY_URL);
-		await expect(page.getByTestId('load-more-btn')).toBeVisible();
-
-		const events = await readServerEvents(db, {
-			event: 'activity_feed_viewed',
-			distinctId: aliceId
-		});
-		expect(events.length).toBeGreaterThanOrEqual(1);
-		const props = events[0].properties as Record<string, unknown>;
-		expect(props['has_more']).toBe(true);
-		expect(props['offset']).toBe(0);
-
-		// Nettoyage
-		await db`DELETE FROM public.match_participants WHERE match_id IN (
-			SELECT m.id FROM public.matches m
-			JOIN public.bets b ON b.id = m.bet_id
-			WHERE b.title LIKE '[E2E]%'
-		)`;
-		await db`DELETE FROM public.matches WHERE bet_id IN (
-			SELECT id FROM public.bets WHERE title LIKE '[E2E]%'
-		)`;
-		await db`DELETE FROM public.bet_visibility WHERE bet_id IN (
-			SELECT id FROM public.bets WHERE title LIKE '[E2E]%'
-		)`;
-		await db`DELETE FROM public.bets WHERE title LIKE '[E2E]%'`;
 	});
 
 	test('activity_feed_viewed — Dave (non membre) → aucun event émis', async ({ page }) => {

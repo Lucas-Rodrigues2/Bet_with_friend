@@ -10,7 +10,7 @@ const gitignorePath = path.resolve(import.meta.dirname, '.gitignore');
 
 export default defineConfig(
 	includeIgnoreFile(gitignorePath),
-	{ ignores: ['e2e/**'] },
+	{ ignores: ['e2e/**', 'supabase/.temp/**'] },
 	js.configs.recommended,
 	ts.configs.recommended,
 	svelte.configs.recommended,
@@ -40,63 +40,13 @@ export default defineConfig(
 		rules: {}
 	},
 	{
-		// shadcn-svelte UI components use dynamic href props — disable nav rule
-		files: ['src/lib/components/ui/**/*.svelte'],
-		rules: {
-			'svelte/no-navigation-without-resolve': 'off'
-		}
-	},
-	{
-		// NotificationBell: hrefs come from notification payload (already resolved path strings)
-		files: ['src/lib/components/NotificationBell.svelte'],
-		rules: {
-			'svelte/no-navigation-without-resolve': 'off'
-		}
-	},
-	{
-		// Group page: hrefs are computed from resolveRoute() but with query params appended
-		// (e.g., resolveRoute(...) + '?type=closest'). The lint rule cannot trace this pattern,
-		// but the navigation base is always built from resolveRoute(), so it's safe.
-		files: ['src/routes/app/groups/\\[id\\]/+page.svelte'],
-		rules: {
-			'svelte/no-navigation-without-resolve': 'off'
-		}
-	},
-	{
-		// Bet detail page: proof URLs are absolute external URLs (Supabase Storage).
-		// The lint rule cannot determine that href={f.proofUrl} is always absolute.
-		files: ['src/routes/app/groups/\\[id\\]/bets/\\[betId\\]/+page.svelte'],
-		rules: {
-			'svelte/no-navigation-without-resolve': 'off'
-		}
-	},
-	{
-		// Activity feed: event.link hrefs are path strings already resolved server-side
-		// (deep links from activity.ts). The lint rule cannot trace this pattern.
-		files: ['src/routes/app/groups/\\[id\\]/activity/+page.svelte'],
-		rules: {
-			'svelte/no-navigation-without-resolve': 'off'
-		}
-	},
-	{
-		// Leaderboard: period toggle href is resolveRoute() + '?period=…' query param.
-		// The lint rule cannot trace this pattern, but the base is always resolved.
-		files: ['src/routes/app/groups/\\[id\\]/leaderboard/+page.svelte'],
-		rules: {
-			'svelte/no-navigation-without-resolve': 'off'
-		}
-	},
-	{
-		// Group bets list (S-062): filter/search hrefs are resolveRoute() base +
-		// query params. The lint rule cannot trace this pattern, base is resolved.
-		files: ['src/routes/app/groups/\\[id\\]/bets/+page.svelte'],
-		rules: {
-			'svelte/no-navigation-without-resolve': 'off'
-		}
-	},
-	{
-		// My bets (S-062): filter hrefs are resolveRoute() base + query params.
-		files: ['src/routes/app/my-bets/+page.svelte'],
+		// Tous les liens internes du projet passent par `resolveRoute` de
+		// `$lib/paths`, qui applique le préfixe de langue (`/en/...`) via la
+		// couche i18n. La règle standard ne reconnaît que `$app/paths`, dont
+		// les identifiants de routes incluent désormais `[[lang]]` — donc
+		// incompatible avec le routage bilingue. La localisation est garantie
+		// par le shim, la règle est donc désactivée globalement sur les Svelte.
+		files: ['**/*.svelte'],
 		rules: {
 			'svelte/no-navigation-without-resolve': 'off'
 		}

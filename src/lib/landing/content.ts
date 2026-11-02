@@ -17,12 +17,23 @@ export interface LandingContent {
 	langSwitchLabel: string;
 	hero: {
 		badge: string;
+		/** Ligne 1 du titre principal (avant la 2ᵉ ligne). */
+		headlineLine1: string;
+		headlineLine2: string;
+		/** Partie du titre en italique (accent éditorial). */
+		headlineEm: string;
 		tagline: string;
 		sub: string;
 		ctaPrimary: string;
 		ctaSecondary: string;
 		ctaApp: string;
 		chips: string[];
+		pointsNote: string;
+		sceneCaption: string;
+		sceneStamp1: string;
+		sceneStamp2: string;
+		footLeft: string;
+		footRight: string;
 	};
 	mockup: {
 		groupName: string;
@@ -58,6 +69,8 @@ export interface LandingContent {
 		eyebrow: string;
 		title: string;
 		intro: string;
+		seal1: string;
+		seal2: string;
 		items: { title: string; text: string }[];
 	};
 	faq: {
@@ -80,12 +93,21 @@ export const fr: LandingContent = {
 	langSwitchLabel: 'English',
 	hero: {
 		badge: 'Sans argent réel. Juste l\u2019honneur.',
+		headlineLine1: 'Le groupe',
+		headlineLine2: 'a des',
+		headlineEm: 'enjeux.',
 		tagline: 'Transforme les « je te parie que… » en vrais défis entre amis.',
 		sub: "Un groupe, une prédiction, un jury. L'app se souvient de qui avait raison et tient les comptes. Jamais d'argent réel.",
 		ctaPrimary: 'Créer un compte',
 		ctaSecondary: 'Se connecter',
 		ctaApp: 'Mes groupes',
-		chips: ['Gratuit', 'Sans carte bancaire']
+		chips: ['Gratuit', 'Sans carte bancaire'],
+		pointsNote: "Juste pour le fun. Chaque mise est en points virtuels — jamais d'argent.",
+		sceneCaption: 'CETTE SEMAINE DANS LE GROUPE',
+		sceneStamp1: 'AUCUN ARGENT',
+		sceneStamp2: "QUE L'HONNEUR",
+		footLeft: 'PRENDS POSITION. CHOISIS TON CAMP.',
+		footRight: 'QUE LA RIVALITÉ COMMENCE ↓'
 	},
 	mockup: {
 		groupName: 'Les potes du dimanche',
@@ -135,13 +157,13 @@ export const fr: LandingContent = {
 		intro:
 			"Un pour deviner un chiffre, l'autre pour parier sur un résultat. Les deux se jouent avec des points ou des gages.",
 		closest: {
-			tag: 'Format 1',
+			tag: '01 — LE PLUS PROCHE GAGNE',
 			title: 'Au plus proche',
 			text: "Un chiffre à trouver : le score, le nombre de bières, la température à minuit. Le plus proche rafle la mise, et les réponses restent cachées jusqu'à la fin.",
 			example: '« Combien de buts ce soir ? »'
 		},
 		challenge: {
-			tag: 'Format 2',
+			tag: '02 — OSE LE DÉFI',
 			title: 'Défi',
 			text: 'Tu prédis Oui ou Non. En face-à-face, tu négocies les termes avec ton adversaire. En défi ouvert, les premiers à accepter verrouillent la mise.',
 			example: '« Lucas finira-t-il la course en moins de 2 h ? »'
@@ -152,6 +174,8 @@ export const fr: LandingContent = {
 		title: "L'app garde les règles et les comptes.",
 		intro:
 			"Tout le monde sait ce qui a été accepté, qui doit voter et ce que le résultat change. Il ne reste qu'à se chambrer.",
+		seal1: 'JOUE POUR DES POINTS',
+		seal2: "PAS POUR DE L'ARGENT",
 		items: [
 			{
 				title: 'Points & classement',
@@ -212,12 +236,21 @@ export const en: LandingContent = {
 	langSwitchLabel: 'Français',
 	hero: {
 		badge: 'No real money. Just bragging rights.',
+		headlineLine1: 'The group chat',
+		headlineLine2: 'has',
+		headlineEm: 'stakes.',
 		tagline: 'Turn \u201cI bet you can\u2019t\u2026\u201d into real challenges between friends.',
 		sub: 'One group, one prediction, one jury. The app remembers who was right and keeps score. Never any real money.',
 		ctaPrimary: 'Create an account',
 		ctaSecondary: 'Log in',
 		ctaApp: 'My groups',
-		chips: ['Free', 'No credit card']
+		chips: ['Free', 'No credit card'],
+		pointsNote: 'Just for fun. Every stake is virtual points \u2014 never cash.',
+		sceneCaption: 'THIS WEEK IN THE GROUP CHAT',
+		sceneStamp1: 'NO CASH',
+		sceneStamp2: 'JUST BRAGGING RIGHTS',
+		footLeft: 'MAKE A CALL. PICK YOUR SIDE.',
+		footRight: 'LET THE FRIENDLY RIVALRY BEGIN \u2193'
 	},
 	mockup: {
 		groupName: 'The Sunday crew',
@@ -267,13 +300,13 @@ export const en: LandingContent = {
 		intro:
 			'One for guessing a number, one for betting on an outcome. Both play for points or forfeits.',
 		closest: {
-			tag: 'Format 1',
+			tag: '01 — CLOSEST WINS',
 			title: 'Closest guess',
 			text: 'A number to find: the score, the number of beers, the temperature at midnight. Closest guess takes the pot, and answers stay hidden until the end.',
 			example: '\u201cHow many goals tonight?\u201d'
 		},
 		challenge: {
-			tag: 'Format 2',
+			tag: '02 — CALL YOUR SHOT',
 			title: 'Challenge',
 			text: 'You predict Yes or No. Head to head, you negotiate the terms with your opponent. Open challenge, first to accept lock in the stake.',
 			example: '\u201cWill Lucas finish the race in under 2 hours?\u201d'
@@ -284,6 +317,8 @@ export const en: LandingContent = {
 		title: 'The app keeps the rules and the score.',
 		intro:
 			'Everyone knows what was agreed, who votes and what the result changes. All that\u2019s left is the trash talk.',
+		seal1: 'PLAY FOR POINTS',
+		seal2: 'NOT MONEY',
 		items: [
 			{
 				title: 'Points & leaderboard',

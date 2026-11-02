@@ -19,6 +19,7 @@
 import { test, expect } from '@playwright/test';
 import { login } from './helpers/auth';
 import { db } from './helpers/db';
+import { fillSticky } from './helpers/fill';
 
 // Pseudo unique pour chaque run
 const GUEST_PSEUDO = `[E2E] Invité-${Date.now()}`;
@@ -126,13 +127,13 @@ test.describe('S-004 — Mode invité + réclamation de compte', () => {
 
 		// Étape 3 : soumettre le formulaire email
 		const claimEmail = `e2e-claim-${Date.now()}@test.local`;
-		await page.getByRole('textbox', { name: 'Adresse email' }).fill(claimEmail);
-		await page.getByRole('textbox', { name: 'Choisir un mot de passe' }).fill(CLAIM_PASSWORD);
+		await fillSticky(page.getByRole('textbox', { name: 'Adresse email' }), claimEmail);
+		await fillSticky(page.getByRole('textbox', { name: 'Choisir un mot de passe' }), CLAIM_PASSWORD);
 		await page.getByRole('button', { name: 'Sécuriser avec email' }).click();
 
 		// Après réclamation (fix UX S-004) : la page reste sur /claim et affiche le message de succès.
 		// L'action pose un cookie httpOnly `just_claimed` empêchant load() de rediriger vers /.
-		await expect(page).toHaveURL('/claim');
+		await expect(page).toHaveURL(/\/claim(?:\?\/email)?$/);
 		await expect(page.getByRole('heading', { name: 'Compte sécurisé !' })).toBeVisible();
 
 		// Le bandeau invité doit avoir disparu (is_anonymous=false dans le layout)
@@ -197,7 +198,7 @@ test.describe('S-004 — Mode invité + réclamation de compte', () => {
 		// Créer un compte invité d'abord
 		await page.goto('/guest');
 		const uniquePseudo3 = `[E2E] PwdTest-${Date.now()}`;
-		await page.getByRole('textbox', { name: 'Votre pseudo' }).fill(uniquePseudo3);
+		await fillSticky(page.getByRole('textbox', { name: 'Votre pseudo' }), uniquePseudo3);
 		await page.getByRole('button', { name: 'Continuer en invité' }).click();
 		await expect(page).toHaveURL('/');
 
@@ -206,8 +207,11 @@ test.describe('S-004 — Mode invité + réclamation de compte', () => {
 		await expect(page).toHaveURL('/claim');
 
 		// Saisir un mot de passe trop court
-		await page.getByRole('textbox', { name: 'Adresse email' }).fill(`e2e-pwd-${Date.now()}@test.local`);
-		await page.getByRole('textbox', { name: 'Choisir un mot de passe' }).fill('court');
+		await fillSticky(
+			page.getByRole('textbox', { name: 'Adresse email' }),
+			`e2e-pwd-${Date.now()}@test.local`
+		);
+		await fillSticky(page.getByRole('textbox', { name: 'Choisir un mot de passe' }), 'court');
 		await page.getByRole('button', { name: 'Sécuriser avec email' }).click();
 
 		// Reste sur /claim (SvelteKit named action peut exposer ?/email dans l'URL)

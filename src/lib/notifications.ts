@@ -39,9 +39,38 @@ export interface NotificationItem {
 
 // ─── Label & href helpers ─────────────────────────────────────────────────────
 
-export function getNotificationLabel(type: NotificationType, payload: NotificationPayload): string {
-	const who = payload.actorPseudo ?? "Quelqu'un";
-	const title = payload.betTitle ? `"${payload.betTitle}"` : 'un pari';
+export function getNotificationLabel(
+	type: NotificationType,
+	payload: NotificationPayload,
+	lang: 'fr' | 'en' = 'fr'
+): string {
+	const who = payload.actorPseudo ?? (lang === 'en' ? 'Someone' : "Quelqu'un");
+	const title = payload.betTitle ? `"${payload.betTitle}"` : lang === 'en' ? 'a bet' : 'un pari';
+	if (lang === 'en') {
+		switch (type) {
+			case 'invitation_accepted':
+				return `${who} joined your group`;
+			case 'proposition_received':
+				return `${who} challenges you on ${title}`;
+			case 'counter_offer_received':
+				return `${who} suggests new terms for ${title}`;
+			case 'bet_submitted_to_jury':
+			case 'jury_vote_requested':
+				return `Jury vote required for ${title}`;
+			case 'verdict_rendered':
+				return `Verdict reached for ${title}`;
+			case 'debt_created':
+				return `New debt for ${title}`;
+			case 'forfeit_to_do':
+				return `Forfeit to complete for ${title}`;
+			case 'forfeit_to_confirm':
+				return `Forfeit marked as done for ${title}`;
+			case 'dispute_opened':
+				return `Dispute opened for ${title}`;
+			default:
+				return 'New notification';
+		}
+	}
 	switch (type) {
 		case 'invitation_accepted':
 			return `${who} a rejoint votre groupe`;

@@ -45,7 +45,12 @@ export async function launchHeadedPushContext(): Promise<HeadedPushContext> {
 	const profileDir = mkdtempSync(join(tmpdir(), 'pw-push-'));
 	const context = await chromium.launchPersistentContext(profileDir, {
 		headless: false,
-		permissions: ['notifications']
+		permissions: ['notifications'],
+		// Permet de piloter un Chromium déjà installé (environnements sans le
+		// build Playwright par défaut).
+		...(process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH
+			? { executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH }
+			: {})
 	});
 	return { context, profileDir };
 }

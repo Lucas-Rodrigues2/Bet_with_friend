@@ -51,13 +51,24 @@ test.describe('S-002 — Tracking PostHog auth', () => {
 		await login(page, 'bob');
 		await clearServerEvents(db);
 
-		// Déconnexion via le bouton du header
-		await page.getByRole('button', { name: 'Déconnexion' }).click();
+		// Déconnexion via le bouton du header (clic avalé parfois pendant
+		// l'hydratation : on réessaie jusqu'à disparition du bouton).
+		await expect(async () => {
+			await page.getByRole('button', { name: 'Déconnexion' }).click();
+			await expect(page.getByRole('button', { name: 'Déconnexion' })).toHaveCount(0, {
+				timeout: 1_500
+			});
+		}).toPass({ timeout: 15_000, intervals: [500] });
 		await page.waitForURL('/');
 
-		const events = await readServerEvents(db, { event: 'user_logged_out' });
-		expect(events.length).toBeGreaterThanOrEqual(1);
+		await expect
+			.poll(async () => (await readServerEvents(db, { event: 'user_logged_out' })).length, {
+				timeout: 5_000,
+				intervals: [200, 400, 800]
+			})
+			.toBeGreaterThanOrEqual(1);
 
+		const events = await readServerEvents(db, { event: 'user_logged_out' });
 		const ev = events.find((e) => e.distinct_id === BOB_ID);
 		expect(ev).toBeDefined();
 		expect(ev!.event).toBe('user_logged_out');

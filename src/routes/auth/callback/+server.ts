@@ -16,27 +16,23 @@ import type { RequestHandler } from './$types';
  * Gère également le retour du flux linkIdentity (réclamation de compte invité
  * via Google) : met à jour `is_anonymous = false` si le profil existait.
  */
-export const GET: RequestHandler = async ({ url, locals }) => {
+export const GET: RequestHandler = async ({ url, locals, cookies }) => {
+	const isEnglish = cookies.get('oauth_lang') === 'en';
+	cookies.delete('oauth_lang', { path: '/' });
+	const loginError = `${isEnglish ? '/en' : ''}/login?error=oauth_failed`;
 	const code = url.searchParams.get('code');
 	const errorParam = url.searchParams.get('error');
-	const errorDescription = url.searchParams.get('error_description');
 
-	// Retour OAuth en erreur (ex: accès refusé par l'utilisateur)
-	if (errorParam) {
-		const message = errorDescription ?? errorParam;
-		throw redirect(303, `/login?error=${encodeURIComponent(message)}`);
-	}
-
-	// Pas de code → erreur
-	if (!code) {
-		throw redirect(303, '/login?error=missing_code');
+	// Never expose provider-supplied text in a localized page.
+	if (errorParam || !code) {
+		throw redirect(303, loginError);
 	}
 
 	// Échange du code contre une session
 	const { data, error } = await locals.supabase.auth.exchangeCodeForSession(code);
 
 	if (error || !data.user) {
-		throw redirect(303, `/login?error=${encodeURIComponent(error?.message ?? 'callback_failed')}`);
+		throw redirect(303, loginError);
 	}
 
 	const user = data.user;
@@ -92,5 +88,5 @@ export const GET: RequestHandler = async ({ url, locals }) => {
 		});
 	}
 
-	throw redirect(303, '/');
+	throw redirect(303, isEnglish ? '/en' : '/');
 };
