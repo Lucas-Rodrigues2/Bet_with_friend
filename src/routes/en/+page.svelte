@@ -15,7 +15,7 @@
 				'@type': 'WebSite',
 				name: 'Bet With Friends',
 				url: `${SITE}/en`,
-				description: 'Bets between friends with virtual points or forfeits \u2014 never real money.'
+				description: 'Bet with friends online: virtual points or forfeits \u2014 never real money.'
 			},
 			{
 				'@type': 'SoftwareApplication',
@@ -24,12 +24,20 @@
 				applicationCategory: 'GameApplication',
 				operatingSystem: 'Web',
 				description:
-					'Create a group, start bets between friends with points or forfeits, then let your jury pick the winners.',
+					'The free app to bet with friends: create challenges, stake virtual points or forfeits, let a jury decide. No credit card, never real money.',
 				offers: {
 					'@type': 'Offer',
 					price: '0',
 					priceCurrency: 'EUR'
 				}
+			},
+			{
+				'@type': 'FAQPage',
+				mainEntity: en.faq.items.map((i) => ({
+					'@type': 'Question',
+					name: i.q,
+					acceptedAnswer: { '@type': 'Answer', text: i.a }
+				}))
 			}
 		]
 	};
@@ -38,10 +46,10 @@
 </script>
 
 <svelte:head>
-	<title>Bet With Friends — Bets between friends, no real money</title>
+	<title>Bet With Friends — Bet with friends online, no real money</title>
 	<meta
 		name="description"
-		content="Create a group, start bets between friends with points or forfeits, then let your jury pick the winners."
+		content="The free app to bet with friends: create challenges, stake virtual points or forfeits, let a jury decide. No credit card, never real money."
 	/>
 	<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
 	<link rel="canonical" href="{SITE}/en" />

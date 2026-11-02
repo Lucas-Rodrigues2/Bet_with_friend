@@ -93,11 +93,11 @@ export const fr: LandingContent = {
 	langSwitchLabel: 'English',
 	hero: {
 		badge: 'Sans argent réel. Juste l\u2019honneur.',
-		headlineLine1: 'Les paris entre potes',
+		headlineLine1: 'Les paris entre amis',
 		headlineLine2: 'ont du',
 		headlineEm: 'piquant.',
 		tagline: 'Transforme les « je te parie que… » en vrais défis entre amis.',
-		sub: "Un groupe, une prédiction, un jury. L'app se souvient de qui avait raison et tient les comptes. Jamais d'argent réel.",
+		sub: "L'app de paris entre amis qui se souvient de qui avait raison et tient les comptes. Mises en points virtuels ou gages — jamais d'argent réel.",
 		ctaPrimary: 'Créer un compte',
 		ctaSecondary: 'Se connecter',
 		ctaApp: 'Mes groupes',
@@ -196,15 +196,23 @@ export const fr: LandingContent = {
 		]
 	},
 	faq: {
-		title: 'Questions fréquentes',
+		title: 'Questions fréquentes sur les paris entre amis',
 		items: [
 			{
 				q: 'C\u2019est vraiment gratuit ?',
-				a: "Oui. Pas d'abonnement, pas de carte bancaire, pas de version premium cachée. Tu crées ton groupe et tu joues."
+				a: "Oui. Pas d'abonnement, pas de carte bancaire, pas de version premium cachée : l'application de paris entre amis est gratuite, tu crées ton groupe et tu joues."
 			},
 			{
 				q: 'Il y a de l\u2019argent réel ?',
-				a: "Non, jamais. Les mises sont en points virtuels ou en gages. Aucun paiement ne passe par l'app."
+				a: "Non, jamais. Les mises sont en points virtuels ou en gages : aucun pari en argent réel ne passe par l'app."
+			},
+			{
+				q: 'Comment faire un pari entre amis en ligne ?',
+				a: "Tu crées un groupe, tu envoies le lien, chacun dépose sa prédiction ou relève un défi, et un jury choisi à l'avance tranche. L'app tient les comptes en points ou en gages."
+			},
+			{
+				q: 'On peut parier sur le sport entre amis ?',
+				a: "Oui : le score d'un match, le buteur, le nombre de cartons… ou n'importe quoi d'autre (la météo, un examen, une série). Tu choisis la question, le format et la mise."
 			},
 			{
 				q: 'Mes amis doivent créer un compte ?',
@@ -236,11 +244,11 @@ export const en: LandingContent = {
 	langSwitchLabel: 'Français',
 	hero: {
 		badge: 'No real money. Just bragging rights.',
-		headlineLine1: 'Friendly bets with',
+		headlineLine1: 'Bets between friends,',
 		headlineLine2: 'real',
 		headlineEm: 'stakes.',
 		tagline: 'Turn \u201cI bet you can\u2019t\u2026\u201d into real challenges between friends.',
-		sub: 'One group, one prediction, one jury. The app remembers who was right and keeps score. Never any real money.',
+		sub: 'The bet-with-friends app that remembers who was right and keeps score. Virtual points or forfeits — never real money.',
 		ctaPrimary: 'Create an account',
 		ctaSecondary: 'Log in',
 		ctaApp: 'My groups',
@@ -339,7 +347,7 @@ export const en: LandingContent = {
 		]
 	},
 	faq: {
-		title: 'Frequently asked questions',
+		title: 'Frequently asked questions about betting with friends',
 		items: [
 			{
 				q: 'Is it really free?',
@@ -347,7 +355,15 @@ export const en: LandingContent = {
 			},
 			{
 				q: 'Is there real money involved?',
-				a: 'No, never. Stakes are virtual points or forfeits. No payment ever goes through the app.'
+				a: 'No, never. Stakes are virtual points or forfeits: no real money bet ever goes through the app.'
+			},
+			{
+				q: 'How do I make a bet with friends online?',
+				a: 'Create a group, share the link, everyone drops a guess or takes on a challenge, and a jury picked in advance decides. The app keeps score with points or forfeits.'
+			},
+			{
+				q: 'Can we bet on sports with this?',
+				a: 'Yes: the score of a game, the goal scorer, the number of cards… or anything else (the weather, an exam, a TV show). You pick the question, the format and the stake.'
 			},
 			{
 				q: 'Do my friends need an account?',

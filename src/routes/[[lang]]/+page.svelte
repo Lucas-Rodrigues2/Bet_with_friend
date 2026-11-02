@@ -11,13 +11,13 @@
 	const canonical = $derived(L === 'en' ? `${SITE}/en` : `${SITE}/`);
 	const title = $derived(
 		L === 'en'
-			? 'Bet With Friends — Bets between friends, no real money'
-			: 'Bet With Friends — Les paris entre amis, sans argent réel'
+			? 'Bet With Friends — Bet with friends online, no real money'
+			: 'Bet With Friends — Application de paris entre amis sans argent réel'
 	);
 	const description = $derived(
 		L === 'en'
-			? 'Create a group, start bets between friends with points or forfeits, then let your jury pick the winners.'
-			: 'Créez un groupe, lancez des paris entre amis avec des points ou des gages, puis laissez votre jury désigner les gagnants.'
+			? 'The free app to bet with friends: create challenges, stake virtual points or forfeits, let a jury decide. No credit card, never real money.'
+			: "Application de paris entre amis : créez des défis, pariez en points virtuels ou en gages, laissez un jury trancher. Gratuit, sans carte bancaire, jamais d'argent réel."
 	);
 
 	const jsonLd = $derived({
@@ -41,6 +41,14 @@
 					price: '0',
 					priceCurrency: 'EUR'
 				}
+			},
+			{
+				'@type': 'FAQPage',
+				mainEntity: content.faq.items.map((i) => ({
+					'@type': 'Question',
+					name: i.q,
+					acceptedAnswer: { '@type': 'Answer', text: i.a }
+				}))
 			}
 		]
 	});

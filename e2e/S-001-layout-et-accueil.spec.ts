@@ -19,8 +19,8 @@ test.describe('S-001 — Layout et page accueil', () => {
 	test('page accueil affiche accroche et deux boutons action', async ({ page }) => {
 		await page.goto('/');
 
-		// Accroche presente
-		await expect(page.getByText(/paris entre amis/i)).toBeVisible();
+		// Accroche presente (presente en plusieurs endroits depuis l'optimisation SEO)
+		await expect(page.getByText(/paris entre amis/i).first()).toBeVisible();
 
 		// Boutons presents dans le contenu principal (le header en a aussi depuis S-002)
 		await expect(page.getByRole('main').getByRole('link', { name: 'Se connecter' })).toBeVisible();
