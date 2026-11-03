@@ -195,10 +195,10 @@
 	<footer class="bw-footer">
 		<div class="bw-footer-brand">
 			<img src="/icons/icon-192.png" alt="" class="h-6 w-6 rounded-full" />
-			<strong>BET WITH FRIENDS</strong><span>{content.footer.claim}</span>
+			<strong>GENTLE WAGERS</strong><span>{content.footer.claim}</span>
 		</div>
 		<p>{content.footer.note}</p>
-		<a href={content.lang === 'fr' ? '/en' : '/'} data-testid="lang-switch"
+		<a href={content.lang === 'fr' ? '/lang/en' : '/lang/fr'} data-testid="lang-switch"
 			>{content.langSwitchLabel} ↗</a
 		>
 	</footer>

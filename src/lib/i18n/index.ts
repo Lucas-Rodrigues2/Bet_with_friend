@@ -25,6 +25,28 @@ export function langFromPath(pathname: string): Lang {
 	return isEnglishPath(pathname) ? 'en' : 'fr';
 }
 
+/**
+ * Préférence de langue depuis l'en-tête `Accept-Language` :
+ * `'fr'` si le français arrive en tête des préférences, `'en'` sinon.
+ * `null` si l'en-tête est absent ou inexploitable (ex. robot d'indexation).
+ */
+export function preferredLangFromHeader(header: string | null): Lang | null {
+	if (!header) return null;
+	const entries = header
+		.split(',')
+		.map((part) => {
+			const [tag, ...params] = part.trim().split(';');
+			const qParam = params.find((p) => p.trim().startsWith('q='));
+			const q = qParam ? Number.parseFloat(qParam.split('=')[1] ?? '1') : 1;
+			return { tag: tag.trim().toLowerCase(), q: Number.isNaN(q) ? 0 : q };
+		})
+		.filter((e) => e.tag.length > 0 && e.q > 0);
+	entries.sort((a, b) => b.q - a.q);
+	const top = entries[0];
+	if (!top) return null;
+	return top.tag.startsWith('fr') ? 'fr' : 'en';
+}
+
 /** Locale BCP-47 pour les dates, nombres et montants. */
 export function localeOf(lang: Lang): 'fr-FR' | 'en-GB' {
 	return lang === 'en' ? 'en-GB' : 'fr-FR';

@@ -31,7 +31,9 @@ export default defineConfig({
 	use: {
 		baseURL: BASE_URL,
 		trace: 'on-first-retry',
-		screenshot: 'only-on-failure'
+		screenshot: 'only-on-failure',
+		// Le produit est français par défaut : les tests simulent un navigateur FR.
+		locale: 'fr-FR'
 	},
 	projects: [
 		{

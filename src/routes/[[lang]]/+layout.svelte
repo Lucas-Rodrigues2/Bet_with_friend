@@ -81,7 +81,7 @@
 
 			<nav class="flex items-center gap-2 sm:gap-3">
 				<a
-					href={switchLangPath(page.url.pathname, otherLang)}
+					href={`/lang/${otherLang}`}
 					class="bw-badge hover:bg-[var(--bw-paper-deep)]"
 					data-testid="header-lang-switch"
 					hreflang={otherLang}

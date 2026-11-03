@@ -1,10 +1,24 @@
 import type { LayoutServerLoad } from './$types';
+import { redirect } from '@sveltejs/kit';
 import { db } from '$lib/server/db/index';
 import { profiles, notifications } from '$lib/server/db/schema';
 import { and, eq, isNull, sql } from 'drizzle-orm';
-import { langFromParams } from '$lib/i18n';
+import { langFromParams, preferredLangFromHeader } from '$lib/i18n';
 
-export const load: LayoutServerLoad = async ({ locals, params }) => {
+export const load: LayoutServerLoad = async ({ locals, params, url, request, cookies }) => {
+	// Négociation de langue sur la racine : choix explicite (cookie `bwf_lang`)
+	// > préférence du navigateur (`Accept-Language`) > français par défaut.
+	// Un navigateur non francophone est renvoyé vers `/en` (les robots
+	// d'indexation, sans en-tête, gardent la version française canonique).
+	if (url.pathname === '/') {
+		const choice = cookies.get('bwf_lang');
+		const preferred =
+			choice === 'fr' || choice === 'en'
+				? choice
+				: (preferredLangFromHeader(request.headers.get('accept-language')) ?? 'fr');
+		if (preferred === 'en') redirect(302, '/en');
+	}
+
 	const { session, user } = await locals.safeGetSession();
 
 	// Langue de l'espace courant : `/en/...` = anglais, sinon français.
